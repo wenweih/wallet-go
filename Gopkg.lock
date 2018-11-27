@@ -2,6 +2,58 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:cd98fd45648a2c0eeb1bd30f0a09a5475f0cb80e3010a718ae6c98abd89a6fec"
+  name = "github.com/btcsuite/btcd"
+  packages = [
+    "btcec",
+    "btcjson",
+    "chaincfg",
+    "chaincfg/chainhash",
+    "rpcclient",
+    "txscript",
+    "wire",
+  ]
+  pruneopts = "UT"
+  revision = "3dcf298fed2d5fd65918dc560b3942b2aa0629e8"
+
+[[projects]]
+  branch = "master"
+  digest = "1:30d4a548e09bca4a0c77317c58e7407e2a65c15325e944f9c08a7b7992f8a59e"
+  name = "github.com/btcsuite/btclog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "84c8d2346e9fc8c7b947e243b9c24e6df9fd206a"
+
+[[projects]]
+  branch = "master"
+  digest = "1:d0a31b77988b04afbfa2c5ee38567a7a35d5a95de2266a644a7bc8d5c898e68d"
+  name = "github.com/btcsuite/btcutil"
+  packages = [
+    ".",
+    "base58",
+    "bech32",
+  ]
+  pruneopts = "UT"
+  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+
+[[projects]]
+  branch = "master"
+  digest = "1:1e6b2f7aa98b082c30a1303c29a702c369b2ec6d86b74a599bc8bbe2333db299"
+  name = "github.com/btcsuite/go-socks"
+  packages = ["socks"]
+  pruneopts = "UT"
+  revision = "4720035b7bfd2a9bb130b1c184f8bbe41b6f0d0f"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0b2242fd2f4f51fb491e97e204464f75da680897a0db10ec7554c87b71b5afc3"
+  name = "github.com/btcsuite/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "31079b6807923eb23992c421b114992b95131b55"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
@@ -67,6 +119,14 @@
   pruneopts = "UT"
   revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:81e02c4edb639c80559c0650f9401d3e2dcc3256d1fa215382bb7c83c1db9126"
+  name = "github.com/shopspring/decimal"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cd690d0c9e2447b1ef2a129a6b7b49077da89b8e"
+  version = "1.1.0"
 
 [[projects]]
   digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
@@ -152,6 +212,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b69153653dbbbd9b2be2be289dfb94014284c00bb92e73b800f8f8c239c1ca80"
+  name = "golang.org/x/crypto"
+  packages = ["ripemd160"]
+  pruneopts = "UT"
+  revision = "e657309f52e71501f9934566ac06dc5c2f7f11a1"
+
+[[projects]]
+  branch = "master"
   digest = "1:225564f71149334315118db714e1ea87513e4a11cf4acb27e26bc7577cebfa0b"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -185,7 +253,15 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/btcsuite/btcd/btcjson",
+    "github.com/btcsuite/btcd/chaincfg",
+    "github.com/btcsuite/btcd/chaincfg/chainhash",
+    "github.com/btcsuite/btcd/rpcclient",
+    "github.com/btcsuite/btcd/txscript",
+    "github.com/btcsuite/btcd/wire",
+    "github.com/btcsuite/btcutil",
     "github.com/mitchellh/go-homedir",
+    "github.com/shopspring/decimal",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "go.uber.org/zap",

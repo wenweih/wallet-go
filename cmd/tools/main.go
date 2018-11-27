@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"wallet-transition/pkg/configure"
+	"wallet-transition/pkg/blockchain"
 )
 
 var rootCmd = &cobra.Command{
@@ -20,6 +21,7 @@ var migrateWallet = &cobra.Command{
 	Use:   "migrate",
 	Short: "Migrate wallet from blockchain node",
 	Run: func(cmd *cobra.Command, args []string) {
+		btcClient := blockchain.BitcoinClientAlias{blockchain.NewbitcoinClient()}
 	},
 }
 
