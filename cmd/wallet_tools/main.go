@@ -22,6 +22,11 @@ var migrateWallet = &cobra.Command{
 	Short: "Migrate wallet from blockchain node",
 	Run: func(cmd *cobra.Command, args []string) {
 		btcClient := blockchain.BitcoinClientAlias{blockchain.NewbitcoinClient()}
+		amounts, err := btcClient.ListAccounts()
+		if err != nil {
+			configure.Sugar.Warn(err.Error())
+		}
+		configure.Sugar.Info(amounts)
 	},
 }
 

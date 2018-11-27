@@ -1,0 +1,5 @@
+btc_host: "127.0.0.1:8790"
+btc_usr: "hashtest"
+btc_pass: "qwgsfdhrtytbvcbsfdslo"
+btc_http_mode: true
+btc_disable_tls: true

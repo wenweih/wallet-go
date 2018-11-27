@@ -38,7 +38,7 @@ func InitConfig() *Configure {
 	var conf Configure
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(util.HomeDir())
-	viper.SetConfigName("wallet-service")
+	viper.SetConfigName("wallet-transition")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
