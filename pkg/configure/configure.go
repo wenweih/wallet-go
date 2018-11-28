@@ -6,6 +6,10 @@ import (
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/ssh"
+	"strings"
+	"net/url"
+	"errors"
 )
 
 var (
@@ -24,6 +28,8 @@ type Configure struct {
 	BTCPass         string
 	BTCHTTPPostMode bool
 	BTCDisableTLS   bool
+	BTCServerUser   string
+	BTCServerPwd    string
 	MQ              string
 	DB              string
 	WalletRPCURL    string
@@ -77,11 +83,33 @@ func InitConfig() *Configure {
 			conf.BTCHTTPPostMode = value.(bool)
 		case "btc_disable_tls":
 			conf.BTCDisableTLS = value.(bool)
+		case "btc_server_username":
+			conf.BTCServerUser = value.(string)
+		case "btc_server_pwd":
+			conf.BTCServerPwd = value.(string)
 		case "redis":
 			conf.Redis = value.(string)
 		}
 	}
 	return &conf
+}
+
+func(c *Configure) sshSession() (*ssh.Session, error){
+	sshConfig := &ssh.ClientConfig{
+		User: c.BTCUser,
+		Auth: []ssh.AuthMethod{ssh.Password(c.BTCServerPwd)},
+	}
+	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	url, _ := url.Parse(strings.Join([]string{"http://", c.BTCRPCHTTP}, ""))
+	client, err := ssh.Dial("tcp", url.Hostname(), sshConfig)
+	if err != nil {
+		return nil, errors.New(strings.Join([]string{"ssh dial error: ", err.Error()}, ""))
+	}
+	session, err := client.NewSession()
+	if err != nil {
+		return nil, errors.New(strings.Join([]string{"ssh session error: ", err.Error()}, ""))
+	}
+	return session, nil
 }
 
 func init() {

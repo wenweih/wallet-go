@@ -18,7 +18,7 @@ func HomeDir() string {
 	return home
 }
 
-// Handles Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting.
+// HandleSigterm Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting.
 func HandleSigterm(handleExit func()) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -30,6 +30,7 @@ func HandleSigterm(handleExit func()) {
 	}()
 }
 
+// RemoveDuplicatesForSlice remove duplicate item from slice
 func RemoveDuplicatesForSlice(slice ...interface{}) []string {
 	encountered := map[string]bool{}
 	for _, v := range slice {
