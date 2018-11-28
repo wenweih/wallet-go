@@ -10,8 +10,39 @@ import (
   "os"
 )
 
-// NewSSHClient connect to ssh server
-func NewSSHClient(user, pass, host string)(*ssh.Client, error) {
+// ServerClient includs ssh client and sftp client
+type ServerClient struct {
+  SSHClient *ssh.Client
+  SftpClient *sftp.Client
+}
+
+// Close close ssh and sftp conn
+func (c *ServerClient) Close() error {
+  if err := c.SftpClient.Close(); err != nil {
+    return errors.New("ServerClient close sftp client error")
+  }
+
+  if err := c.SSHClient.Close(); err != nil {
+    return errors.New("ServerClient close ssh client error")
+  }
+  return nil
+}
+
+// NewServerClient server client object
+func NewServerClient(user, pass, host string) (*ServerClient, error) {
+  sshClient, err := newSSHClient(user, pass, host)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"sshClient error: ", err.Error()}, ""))
+  }
+  sftpClient, err := sftp.NewClient(sshClient)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"sftpClient error: ", err.Error()}, ""))
+  }
+  return &ServerClient{sshClient, sftpClient}, nil
+}
+
+// connect to ssh server
+func newSSHClient(user, pass, host string)(*ssh.Client, error) {
 	sshConfig := &ssh.ClientConfig{
 		User: user,
 		Auth: []ssh.AuthMethod{ssh.Password(pass)},
@@ -27,17 +58,10 @@ func NewSSHClient(user, pass, host string)(*ssh.Client, error) {
   return client, nil
 }
 
+
 // Remote2 copy file to local or remote server, default copy to server by configure
-func Remote2(dstFileWithPath, srcFileWithPath string, toRemote bool)  {
-  sshClient, err := NewSSHClient(Config.OldBTCWalletServerUser, Config.OldBTCWalletServerPass, Config.OldBTCWalletServerHost)
-  if err != nil {
-    Sugar.Fatal(err.Error())
-  }
-  client, err := sftp.NewClient(sshClient)
-  if err != nil {
-    Sugar.Fatal("sftp client error: ", err.Error())
-  }
-  srcFile, err := client.Open(srcFileWithPath)
+func (c *ServerClient) Remote2(dstFileWithPath, srcFileWithPath string, toRemote bool)  {
+  srcFile, err := c.SftpClient.Open(srcFileWithPath)
   if err != nil {
     Sugar.Fatal("Open src file error: ", err.Error())
   }
@@ -60,4 +84,7 @@ func Remote2(dstFileWithPath, srcFileWithPath string, toRemote bool)  {
     Sugar.Fatal("dsfFile error: ", err.Error())
   }
 
+  if err := c.Close(); err != nil {
+    Sugar.Fatal(err.Error())
+  }
 }

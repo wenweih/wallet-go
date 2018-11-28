@@ -45,7 +45,13 @@ var migrateWallet = &cobra.Command{
 			}else {
 				configure.Sugar.Info("dump old btc wallet result: success")
 			}
-			configure.Remote2("/tmp/btc_wallet_backup", configure.Config.OldBTCWalletFileName, false)
+
+			oldServerClient, err := configure.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
+			if err != nil {
+				configure.Sugar.Fatal(err.Error())
+			}
+			oldServerClient.Remote2("/tmp/btc_wallet_backup", configure.Config.OldBTCWalletFileName, false)
+
 		case "eth":
 		default:
 			configure.Sugar.Fatal("Only support btc, eth")
