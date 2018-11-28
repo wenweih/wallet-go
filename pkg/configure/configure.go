@@ -17,23 +17,16 @@ var (
 
 // Configure 配置数据
 type Configure struct {
-	EthRPCWS        string
-	EthRPCHTTP      string
-	BTCRPCHTTP      string
-	BTCUser         string
-	BTCPass         string
-	BTCHTTPPostMode bool
-	BTCDisableTLS   bool
-	BTCServerUser   string
-	BTCServerPwd    string
-	BTCWalletPath   string
-	MQ              string
-	DB              string
-	WalletRPCURL    string
-	ElasticURL      string
-	ElasticSniff    bool
-	ETHTXINDEX      string
-	Redis           string
+	BTCNODEHOST             string
+	BTCNODEUSR              string
+	BTCNODEPASS      				string
+	BTCHTTPPostMode 				bool
+	BTCDisableTLS   				bool
+
+	OldBTCWalletServerHost	string
+	OldBTCWalletServerUser	string
+	OldBTCWalletServerPass  string
+	OldBTCWalletFileName		string
 }
 
 // InitConfig 配置信息
@@ -54,40 +47,27 @@ func InitConfig() *Configure {
 
 	for key, value := range viper.AllSettings() {
 		switch key {
-		case "eth_rpc_ws":
-			conf.EthRPCWS = value.(string)
-		case "eth_rpc_http":
-			conf.EthRPCHTTP = value.(string)
-		case "mq":
-			conf.MQ = value.(string)
-		case "wallet_rpc_url":
-			conf.WalletRPCURL = value.(string)
-		case "elastic_url":
-			conf.ElasticURL = value.(string)
-		case "elastic_sniff":
-			conf.ElasticSniff = value.(bool)
-		case "db_mysql":
-			conf.DB = value.(string)
-		case "eth_tx_index":
-			conf.ETHTXINDEX = value.(string)
-		case "btc_host":
-			conf.BTCRPCHTTP = value.(string)
-		case "btc_usr":
-			conf.BTCUser = value.(string)
-		case "btc_pass":
-			conf.BTCPass = value.(string)
+		// BTC node info
+		case "btc_node_host":
+			conf.BTCNODEHOST = value.(string)
+		case "btc_node_usr":
+			conf.BTCNODEUSR = value.(string)
+		case "btc_node_pass":
+			conf.BTCNODEPASS = value.(string)
 		case "btc_http_mode":
 			conf.BTCHTTPPostMode = value.(bool)
 		case "btc_disable_tls":
 			conf.BTCDisableTLS = value.(bool)
-		case "btc_server_username":
-			conf.BTCServerUser = value.(string)
-		case "btc_server_pwd":
-			conf.BTCServerPwd = value.(string)
-		case "btc_wallet_path":
-			conf.BTCWalletPath = value.(string)
-		case "redis":
-			conf.Redis = value.(string)
+
+		// old btc wallet server info
+		case "old_btc_wallet_server_host":
+			conf.OldBTCWalletServerHost = value.(string)
+		case "old_btc_wallet_server_user":
+			conf.OldBTCWalletServerUser = value.(string)
+		case "old_btc_wallet_server_pass":
+			conf.OldBTCWalletServerPass = value.(string)
+		case "old_btc_wallet_file_name":
+			conf.OldBTCWalletFileName = value.(string)
 		}
 	}
 	return &conf

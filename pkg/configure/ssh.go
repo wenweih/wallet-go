@@ -4,37 +4,32 @@ import (
   "github.com/pkg/sftp"
   "golang.org/x/crypto/ssh"
   "strings"
-  "net/url"
   "errors"
   "net"
   "io"
-	// "io/ioutil"
-  // "bytes"
-  // "path"
   "os"
 )
 
 // NewSSHClient connect to ssh server
-func NewSSHClient()(*ssh.Client, error) {
+func NewSSHClient(user, pass, host string)(*ssh.Client, error) {
 	sshConfig := &ssh.ClientConfig{
-		User: Config.BTCServerUser,
-		Auth: []ssh.AuthMethod{ssh.Password(Config.BTCServerPwd)},
+		User: user,
+		Auth: []ssh.AuthMethod{ssh.Password(pass)},
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			return nil
 		},
 	}
 	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-	url, _ := url.Parse(strings.Join([]string{"http://", Config.BTCRPCHTTP}, ""))
-	client, err := ssh.Dial("tcp", strings.Join([]string{url.Hostname(), "22"}, ":"), sshConfig)
+	client, err := ssh.Dial("tcp", host, sshConfig)
 	if err != nil {
 		return nil, errors.New(strings.Join([]string{"ssh dial error: ", err.Error()}, ""))
 	}
   return client, nil
 }
 
-// Remote2local copy file to local
-func Remote2local(dstFileWithPath, srcFileWithPath string)  {
-  sshClient, err := NewSSHClient()
+// Remote2 copy file to local or remote server, default copy to server by configure
+func Remote2(dstFileWithPath, srcFileWithPath string, toRemote bool)  {
+  sshClient, err := NewSSHClient(Config.OldBTCWalletServerUser, Config.OldBTCWalletServerPass, Config.OldBTCWalletServerHost)
   if err != nil {
     Sugar.Fatal(err.Error())
   }
@@ -47,9 +42,14 @@ func Remote2local(dstFileWithPath, srcFileWithPath string)  {
     Sugar.Fatal("Open src file error: ", err.Error())
   }
 
-  dstFile, err := os.Create(dstFileWithPath)
-  if err != nil {
-    Sugar.Fatal("Create dst file error: ", err.Error())
+  dstFile := new(os.File)
+  if toRemote{
+
+  }else {
+    dstFile, err = os.Create(dstFileWithPath)
+    if err != nil {
+      Sugar.Fatal("Create dst file error: ", err.Error())
+    }
   }
 
   if _, err := io.Copy(dstFile, srcFile); err != nil {

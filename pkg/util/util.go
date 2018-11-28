@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
 	homedir "github.com/mitchellh/go-homedir"
 )
 

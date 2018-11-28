@@ -1,8 +1,16 @@
-btc_host: "127.0.0.1:8790"
-btc_usr: "hashtest"
-btc_pass: "qwgsfdhrtytbvcbsfdslo"
+# BTC node info
+btc_node_host: "127.0.0.1:8790"
+btc_node_usr: "hashtest"
+btc_node_pass: "qwgsfdhrtytbvcbsfdslo"
 btc_http_mode: true
 btc_disable_tls: true
-btc_server_username: "test_user"
-btc_server_pwd: "tes_pass"
-btc_wallet_path: "/tmp/wallet_backup"
+
+# btc wallet server info
+old_btc_wallet_server_host: "ip:port"
+old_btc_wallet_server_user: "test_user"
+old_btc_wallet_server_pass: "tes_pass"
+old_btc_wallet_file_name: "/tmp/wallet_backup"
+new_btc_wallet_server_host: "ip:port"
+new_btc_wallet_server_username: "test_user"
+new_btc_wallet_server_pwd: "tes_pass"
+new_btc_wallet_file_name: "/tmp/wallet_backup"

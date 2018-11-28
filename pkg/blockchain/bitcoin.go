@@ -25,9 +25,9 @@ type BitcoinClientAlias struct {
 // NewbitcoinClient bitcoin rpc client
 func NewbitcoinClient() *rpcclient.Client {
 	connCfg := &rpcclient.ConnConfig{
-		Host:         configure.Config.BTCRPCHTTP,
-		User:         configure.Config.BTCUser,
-		Pass:         configure.Config.BTCPass,
+		Host:         configure.Config.BTCNODEHOST,
+		User:         configure.Config.BTCNODEUSR,
+		Pass:         configure.Config.BTCNODEPASS,
 		HTTPPostMode: configure.Config.BTCHTTPPostMode,
 		DisableTLS:   configure.Config.BTCDisableTLS,
 	}
