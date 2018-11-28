@@ -3,3 +3,6 @@ btc_usr: "hashtest"
 btc_pass: "qwgsfdhrtytbvcbsfdslo"
 btc_http_mode: true
 btc_disable_tls: true
+btc_server_username: "test_user"
+btc_server_pwd: "tes_pass"
+btc_wallet_path: "/tmp/wallet_backup"

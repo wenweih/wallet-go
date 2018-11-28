@@ -22,11 +22,25 @@ var migrateWallet = &cobra.Command{
 	Short: "Migrate wallet from blockchain node",
 	Run: func(cmd *cobra.Command, args []string) {
 		btcClient := blockchain.BitcoinClientAlias{blockchain.NewbitcoinClient()}
-		amounts, err := btcClient.ListAccounts()
+		info, err := btcClient.GetBlockChainInfo()
+		if err != nil {
+			configure.Sugar.Fatal("Get info error: ", err.Error())
+		}
+		configure.Sugar.Info("info: ", info)
+
+		fee, err := btcClient.EstimateFee(int64(6))
+		if err != nil {
+			configure.Sugar.Warn("EstimateFee: ", err.Error())
+		}
+
+		configure.Sugar.Info("fee: ", fee)
+
+		re, err := btcClient.DumpWallet("/root/dumpwallet_private")
 		if err != nil {
 			configure.Sugar.Warn(err.Error())
 		}
-		configure.Sugar.Info(amounts)
+		configure.Sugar.Info(re)
+		configure.Remote2local("/tmp/btc_wallet_backup", "/root/dumpwallet_private")
 	},
 }
 
