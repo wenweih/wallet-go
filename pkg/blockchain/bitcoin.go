@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"fmt"
+	"path/filepath"
 	"bytes"
 	"encoding/hex"
 	"errors"
@@ -15,6 +17,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/shopspring/decimal"
+	"github.com/manifoldco/promptui"
 )
 
 // BitcoinClientAlias bitcoin-core client alias
@@ -44,6 +47,29 @@ type BtcUTXO struct {
 	Amount    float64 `json:"amount"`
 	Height    int64   `json:"height"`
 	VoutIndex uint32  `json:"voutindex"`
+}
+
+
+// DumpOldWallet migrate old wallet from node
+func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.ServerClient) () {
+	if _, err := btcClient.DumpWallet(configure.Config.OldBTCWalletFileName); err != nil {
+		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want"){
+			prompt := promptui.Prompt{
+				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.OldBTCWalletFileName), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
+				IsConfirm: true,
+			}
+			if _, err = prompt.Run(); err != nil {
+				fmt.Println("pls check the old backup wallet file in", configure.Config.OldBTCWalletFileName, serverClient.SSHClient.RemoteAddr().String())
+				return
+			}
+			if err = serverClient.SftpClient.Remove(configure.Config.OldBTCWalletFileName); err != nil {
+				configure.Sugar.Fatal("Remove old backup wallet from old wallet server error: ", err.Error())
+			}
+			btcClient.DumpOldWallet(serverClient)
+		}
+	}else {
+		configure.Sugar.Info("dump old btc wallet result: success")
+	}
 }
 
 // GetBlock get block with tx

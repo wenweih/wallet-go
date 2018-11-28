@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"github.com/spf13/cobra"
 	"wallet-transition/pkg/configure"
 	"wallet-transition/pkg/blockchain"
@@ -40,17 +41,20 @@ var migrateWallet = &cobra.Command{
 			// }
 			//
 			// configure.Sugar.Info("fee: ", fee)
-			if _, err := btcClient.DumpWallet(configure.Config.OldBTCWalletFileName); err != nil {
-				configure.Sugar.Warn("dump old btc wallet result: ", err.Error())
-			}else {
-				configure.Sugar.Info("dump old btc wallet result: success")
-			}
-
-			oldServerClient, err := configure.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
+			oldWalletServerClient, err := configure.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
 			if err != nil {
 				configure.Sugar.Fatal(err.Error())
 			}
-			oldServerClient.Remote2("/tmp/btc_wallet_backup", configure.Config.OldBTCWalletFileName, false)
+
+			// create folder for old wallet backup
+			if err = oldWalletServerClient.SftpClient.MkdirAll(filepath.Dir(configure.Config.OldBTCWalletFileName)); err != nil {
+				configure.Sugar.Fatal(err.Error())
+			}
+
+			// dump old wallet to old wallet server
+			btcClient.DumpOldWallet(oldWalletServerClient)
+
+			oldWalletServerClient.Remote2("/tmp/btc_wallet_backup", configure.Config.OldBTCWalletFileName, false)
 
 		case "eth":
 		default:
