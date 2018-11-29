@@ -9,6 +9,7 @@ import (
 
 var (
 	asset  string
+	local  bool
 )
 
 var rootCmd = &cobra.Command{
@@ -22,8 +23,8 @@ func execute() {
 	}
 }
 
-var migrateWallet = &cobra.Command{
-	Use:   "migrate",
+var dumpWallet = &cobra.Command{
+	Use:   "dump",
 	Short: "Migrate wallet from blockchain node",
 	Run: func(cmd *cobra.Command, args []string) {
 		switch asset {
@@ -54,7 +55,7 @@ var migrateWallet = &cobra.Command{
 			// dump old wallet to old wallet server
 			btcClient.DumpOldWallet(oldWalletServerClient)
 
-			oldWalletServerClient.Remote2("/tmp/btc_wallet_backup", configure.Config.OldBTCWalletFileName, false)
+			oldWalletServerClient.CopyRemoteFile2(configure.Config.OldBTCWalletFileName, configure.Config.NewBTCWalletFileName, local)
 
 		case "eth":
 		default:
@@ -69,8 +70,8 @@ func main() {
 }
 
 func init() {
-	rootCmd.AddCommand(migrateWallet)
-
-	migrateWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
-	migrateWallet.MarkFlagRequired("asset")
+	rootCmd.AddCommand(dumpWallet)
+	dumpWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
+	dumpWallet.MarkFlagRequired("asset")
+	dumpWallet.Flags().BoolVarP(&local, "local", "l", false, "copy dump wallet file to local machine. default copy to remote server, which is set in configure")
 }

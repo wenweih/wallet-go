@@ -59,7 +59,7 @@ func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.Serve
 				IsConfirm: true,
 			}
 			if _, err = prompt.Run(); err != nil {
-				fmt.Println("pls check the old backup wallet file in", configure.Config.OldBTCWalletFileName, serverClient.SSHClient.RemoteAddr().String())
+				fmt.Println("Check the old backup wallet file in", configure.Config.OldBTCWalletFileName, "in", serverClient.SSHClient.RemoteAddr().String())
 				return
 			}
 			if err = serverClient.SftpClient.Remove(configure.Config.OldBTCWalletFileName); err != nil {
