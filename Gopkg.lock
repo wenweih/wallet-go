@@ -109,6 +109,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4a0c6bb4805508a6287675fac876be2ac1182539ca8a32468d8128882e9d5009"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
+
+[[projects]]
+  branch = "master"
   digest = "1:473e7c5cbc58c538bce66e0ca2a033d31a3e7d9c6d5d96c6df1657b588bddac3"
   name = "github.com/google/shlex"
   packages = ["."]
@@ -327,6 +335,27 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:685fdfea42d825ebd39ee0994354b46c374cf2c2b2d97a41a8dee1807c6a9b62"
+  name = "github.com/syndtr/goleveldb"
+  packages = [
+    "leveldb",
+    "leveldb/cache",
+    "leveldb/comparer",
+    "leveldb/errors",
+    "leveldb/filter",
+    "leveldb/iterator",
+    "leveldb/journal",
+    "leveldb/memdb",
+    "leveldb/opt",
+    "leveldb/storage",
+    "leveldb/table",
+    "leveldb/util",
+  ]
+  pruneopts = "UT"
+  revision = "b001fa50d6b27f3f0bb175a87d0cb55426d0a0ae"
+
+[[projects]]
+  branch = "master"
   digest = "1:ba52e5a5fb800ce55108b7a5f181bb809aab71c16736051312b0aa969f82ad39"
   name = "github.com/tsenart/deadcode"
   packages = ["."]
@@ -450,6 +479,7 @@
     "github.com/shopspring/decimal",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
+    "github.com/syndtr/goleveldb/leveldb",
     "go.uber.org/zap",
     "golang.org/x/crypto/ssh",
   ]

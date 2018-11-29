@@ -32,6 +32,8 @@ type Configure struct {
 	NewBTCWalletServerUser	string
 	NewBTCWalletServerPass  string
 	NewBTCWalletFileName		string
+
+	DBBTCWalletPath         string
 }
 
 // InitConfig 配置信息
@@ -75,7 +77,7 @@ func InitConfig() *Configure {
 			conf.OldBTCWalletFileName = value.(string)
 
 		// new btc wallet server info
-	case "new_btc_wallet_server_host":
+		case "new_btc_wallet_server_host":
 			conf.NewBTCWalletServerHost = value.(string)
 		case "new_btc_wallet_server_user":
 			conf.NewBTCWalletServerUser = value.(string)
@@ -83,6 +85,10 @@ func InitConfig() *Configure {
 			conf.NewBTCWalletServerPass = value.(string)
 		case "new_btc_wallet_file_name":
 			conf.NewBTCWalletFileName = value.(string)
+
+		// DB
+		case "db_btc_wallet_path":
+			conf.DBBTCWalletPath = value.(string)
 		}
 	}
 	return &conf

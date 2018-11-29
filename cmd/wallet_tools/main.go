@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 	"github.com/spf13/cobra"
+	"wallet-transition/pkg/db"
 	"wallet-transition/pkg/configure"
 	"wallet-transition/pkg/blockchain"
 )
@@ -25,7 +26,7 @@ func execute() {
 
 var dumpWallet = &cobra.Command{
 	Use:   "dump",
-	Short: "Migrate wallet from blockchain node",
+	Short: "Dump wallet from blockchain node",
 	Run: func(cmd *cobra.Command, args []string) {
 		switch asset {
 		case "btc":
@@ -65,13 +66,31 @@ var dumpWallet = &cobra.Command{
 	},
 }
 
+var migrateWallet = &cobra.Command{
+	Use:   "migrate",
+	Short: "Migrate wallet to levelDB",
+	Run: func(cmd *cobra.Command, args []string) {
+		switch asset {
+		case "btc":
+			db.BTCMigrate()
+		case "eth":
+		default:
+			configure.Sugar.Fatal("Only support btc, eth")
+			return
+		}
+	},
+}
+
 func main() {
 	execute()
 }
 
 func init() {
-	rootCmd.AddCommand(dumpWallet)
+	rootCmd.AddCommand(dumpWallet, migrateWallet)
 	dumpWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
 	dumpWallet.MarkFlagRequired("asset")
 	dumpWallet.Flags().BoolVarP(&local, "local", "l", false, "copy dump wallet file to local machine. default copy to remote server, which is set in configure")
+
+	migrateWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
+	migrateWallet.MarkFlagRequired("asset")
 }
