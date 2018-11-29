@@ -13,7 +13,7 @@ var (
 	local  bool
 )
 
-var rootCmd = &cobra.Command{
+var rootCmd = &cobra.Command {
 	Use:   "wallet-transition-tool",
 	Short: "Commandline to for anbi exchange wallet module",
 }
@@ -24,9 +24,9 @@ func execute() {
 	}
 }
 
-var dumpWallet = &cobra.Command{
+var dumpWallet = &cobra.Command {
 	Use:   "dump",
-	Short: "Dump wallet from blockchain node",
+	Short: "Dump wallet from blockchain node, upload dump wallet to signed server",
 	Run: func(cmd *cobra.Command, args []string) {
 		switch asset {
 		case "btc":
