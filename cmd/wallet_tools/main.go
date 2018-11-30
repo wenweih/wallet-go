@@ -47,7 +47,6 @@ var dumpWallet = &cobra.Command {
 			if err != nil {
 				configure.Sugar.Fatal(err.Error())
 			}
-
 			// create folder for old wallet backup
 			if err = oldWalletServerClient.SftpClient.MkdirAll(filepath.Dir(configure.Config.OldBTCWalletFileName)); err != nil {
 				configure.Sugar.Fatal(err.Error())
@@ -55,9 +54,7 @@ var dumpWallet = &cobra.Command {
 
 			// dump old wallet to old wallet server
 			btcClient.DumpOldWallet(oldWalletServerClient)
-
 			oldWalletServerClient.CopyRemoteFile2(configure.Config.OldBTCWalletFileName, configure.Config.NewBTCWalletFileName, local)
-
 		case "eth":
 		default:
 			configure.Sugar.Fatal("Only support btc, eth")

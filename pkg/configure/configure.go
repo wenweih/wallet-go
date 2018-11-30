@@ -43,6 +43,8 @@ func InitConfig() *Configure {
 	viper.AddConfigPath(util.HomeDir())
 	viper.SetConfigName("wallet-transition")
 	viper.AutomaticEnv() // read in environment variables that match
+	conf.OldBTCWalletFileName = "/usr/local/wallet-transition/btc_wallet_backup"
+	conf.NewBTCWalletFileName = "/usr/local/wallet-transition/btc_wallet_backup"
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -73,8 +75,6 @@ func InitConfig() *Configure {
 			conf.OldBTCWalletServerUser = value.(string)
 		case "old_btc_wallet_server_pass":
 			conf.OldBTCWalletServerPass = value.(string)
-		case "old_btc_wallet_file_name":
-			conf.OldBTCWalletFileName = value.(string)
 
 		// new btc wallet server info
 		case "new_btc_wallet_server_host":
@@ -83,8 +83,6 @@ func InitConfig() *Configure {
 			conf.NewBTCWalletServerUser = value.(string)
 		case "new_btc_wallet_server_pass":
 			conf.NewBTCWalletServerPass = value.(string)
-		case "new_btc_wallet_file_name":
-			conf.NewBTCWalletFileName = value.(string)
 
 		// DB
 		case "db_btc_wallet_path":
