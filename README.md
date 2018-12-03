@@ -1,7 +1,6 @@
 # wallet-transition
-
 Anbi wallet module refactor
-
+[钱包模块文档](./doc/ex_wallet.md)
 ## Dump and Migrate
 ```bash
 wallet-transition|master ⇒ wallet_tools
