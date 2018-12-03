@@ -9,11 +9,9 @@ btc_disable_tls: true
 old_btc_wallet_server_host: "ip:port"
 old_btc_wallet_server_user: "test_user"
 old_btc_wallet_server_pass: "tes_pass"
-old_btc_wallet_file_name: "/tmp/wallet_backup"
 new_btc_wallet_server_host: "ip:port"
 new_btc_wallet_server_username: "test_user"
 new_btc_wallet_server_pwd: "tes_pass"
-new_btc_wallet_file_name: "/tmp/wallet_backup"
 
 # DB
 db_btc_wallet_path: "/tmp/btc_wallet/"

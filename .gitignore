@@ -27,3 +27,5 @@ _testmain.go
 vendor/*
 *-race
 bin/*
+.gopath*
+configs/*.yml
