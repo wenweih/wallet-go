@@ -1,21 +1,21 @@
 package blockchain
 
 import (
-	"fmt"
-	"path/filepath"
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"strings"
-	"wallet-transition/pkg/configure"
+	"fmt"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
-	"github.com/shopspring/decimal"
 	"github.com/manifoldco/promptui"
+	"github.com/shopspring/decimal"
+	"path/filepath"
+	"strings"
+	"wallet-transition/pkg/configure"
 )
 
 // BitcoinClientAlias bitcoin-core client alias
@@ -47,11 +47,10 @@ type BtcUTXO struct {
 	VoutIndex uint32  `json:"voutindex"`
 }
 
-
 // DumpOldWallet migrate old wallet from node
-func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.ServerClient) () {
+func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.ServerClient) {
 	if _, err := btcClient.DumpWallet(configure.Config.OldBTCWalletFileName); err != nil {
-		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want"){
+		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
 			prompt := promptui.Prompt{
 				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.OldBTCWalletFileName), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
 				IsConfirm: true,
@@ -65,7 +64,7 @@ func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.Serve
 			}
 			btcClient.DumpOldWallet(serverClient)
 		}
-	}else {
+	} else {
 		configure.Sugar.Info("dump old btc wallet result: success")
 	}
 }

@@ -17,23 +17,23 @@ var (
 
 // Configure 配置数据
 type Configure struct {
-	BTCNODEHOST             string
-	BTCNODEUSR              string
-	BTCNODEPASS      				string
-	BTCHTTPPostMode 				bool
-	BTCDisableTLS   				bool
+	BTCNODEHOST     string
+	BTCNODEUSR      string
+	BTCNODEPASS     string
+	BTCHTTPPostMode bool
+	BTCDisableTLS   bool
 
-	OldBTCWalletServerHost	string
-	OldBTCWalletServerUser	string
-	OldBTCWalletServerPass  string
-	OldBTCWalletFileName		string
+	OldBTCWalletServerHost string
+	OldBTCWalletServerUser string
+	OldBTCWalletServerPass string
+	OldBTCWalletFileName   string
 
-	NewBTCWalletServerHost	string
-	NewBTCWalletServerUser	string
-	NewBTCWalletServerPass  string
-	NewBTCWalletFileName		string
+	NewBTCWalletServerHost string
+	NewBTCWalletServerUser string
+	NewBTCWalletServerPass string
+	NewBTCWalletFileName   string
 
-	DBBTCWalletPath         string
+	DBBTCWalletPath string
 }
 
 // InitConfig 配置信息

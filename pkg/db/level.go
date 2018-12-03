@@ -1,17 +1,17 @@
 package db
 
 import (
-	"os"
 	"bufio"
-	"syscall"
-	"strings"
-	"wallet-transition/pkg/util"
-	"wallet-transition/pkg/configure"
 	"github.com/syndtr/goleveldb/leveldb"
+	"os"
+	"strings"
+	"syscall"
+	"wallet-transition/pkg/configure"
+	"wallet-transition/pkg/util"
 )
 
 // BTCMigrate migrate btc wallet to lleveldb
-func BTCMigrate()  {
+func BTCMigrate() {
 	file, err := os.Open(configure.Config.NewBTCWalletFileName)
 	if err != nil {
 		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
@@ -39,11 +39,11 @@ func BTCMigrate()  {
 			address := strings.Split(splitArr[4], "=")[1]
 
 			_, err := db.Get([]byte(address), nil)
-			if err != nil && strings.Contains(err.Error(), "leveldb: not found"){
+			if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
 				db.Put([]byte(address), []byte(privateKey), nil)
 				configure.Sugar.Info("successful migrated ", address)
 			}
-			if err != nil && !strings.Contains(err.Error(), "leveldb: not found"){
+			if err != nil && !strings.Contains(err.Error(), "leveldb: not found") {
 				configure.Sugar.Fatal("Failt to migrate: ", address)
 			}
 		}
