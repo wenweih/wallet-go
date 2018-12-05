@@ -51,7 +51,7 @@ type BtcUTXO struct {
 func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.ServerClient) {
 	if _, err := btcClient.DumpWallet(configure.Config.OldBTCWalletFileName); err != nil {
 		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
-			prompt := promptui.Prompt{
+			prompt := promptui.Prompt {
 				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.OldBTCWalletFileName), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
 				IsConfirm: true,
 			}
@@ -63,6 +63,8 @@ func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.Serve
 				configure.Sugar.Fatal("Remove old backup wallet from old wallet server error: ", err.Error())
 			}
 			btcClient.DumpOldWallet(serverClient)
+		} else {
+			configure.Sugar.Fatalf("DumpWallet error: ", err.Error())
 		}
 	} else {
 		configure.Sugar.Info("dump old btc wallet result: success")

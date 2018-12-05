@@ -33,18 +33,22 @@ func BTCMigrate() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, "hdkeypath") {
+		if strings.Contains(line, "# addr=") && !strings.Contains(line, "script") {
 			splitArr := strings.Split(line, " ")
 			privateKey := splitArr[0]
-			address := strings.Split(splitArr[4], "=")[1]
+			addressStr := strings.Split(splitArr[4], "=")[1]
 
-			_, err := db.Get([]byte(address), nil)
-			if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
-				db.Put([]byte(address), []byte(privateKey), nil)
-				configure.Sugar.Info("successful migrated ", address)
-			}
-			if err != nil && !strings.Contains(err.Error(), "leveldb: not found") {
-				configure.Sugar.Fatal("Failt to migrate: ", address)
+			addresses := strings.Split(addressStr, ",")
+			for _, address := range addresses {
+				_, err := db.Get([]byte(address), nil)
+				if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
+					db.Put([]byte(address), []byte(privateKey), nil)
+					configure.Sugar.Info("successful migrated ", address)
+				}else if err != nil {
+					configure.Sugar.Fatal("Failt to migrate: ", address)
+				}else {
+					configure.Sugar.Info("Exists in db, skip ", address)
+				}
 			}
 		}
 	}
