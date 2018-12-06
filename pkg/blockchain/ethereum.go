@@ -1,14 +1,19 @@
 package blockchain
 
 import (
+  "io"
+  "os"
   "strings"
   "io/ioutil"
   "encoding/hex"
+  "path/filepath"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/crypto"
   "github.com/ethereum/go-ethereum/accounts/keystore"
 )
+
+var ethWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "eth.backup"}, "")
 
 // DumpETHAccount dump ethereum account from keystore
 func DumpETHAccount(local bool)  {
@@ -22,6 +27,23 @@ func DumpETHAccount(local bool)  {
   if err != nil {
     configure.Sugar.Fatal("Read keystore directory error: ", configure.Config.KeystorePath, " ", err.Error())
   }
+
+  // create folder for old wallet backup
+  if err = oldWalletServerClient.SftpClient.MkdirAll(filepath.Dir(ethWalletBackupPath)); err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
+
+  srcBackupFile, err := oldWalletServerClient.SftpClient.OpenFile(ethWalletBackupPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY)
+  if err != nil {
+    configure.Sugar.Fatal("open remote eth.backup error", err.Error())
+  }
+  defer srcBackupFile.Close()
+
+  pubBytes, err := ioutil.ReadFile(strings.Join([]string{util.HomeDir(), "dump_wallet_pub.pem"}, "/"))
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
+  rsaPub := util.BytesToPublicKey(pubBytes)
 
   for _, ks := range ksFiles {
     if strings.HasPrefix(ks.Name(), "UTC"){
@@ -37,13 +59,18 @@ func DumpETHAccount(local bool)  {
       if err != nil && strings.Contains(err.Error(), "could not decrypt key with given passphrase"){
         configure.Sugar.Warn("Keystore DecryptKey error: ", err.Error())
       } else {
-        pubBytes, err := ioutil.ReadFile(strings.Join([]string{util.HomeDir(), "dump_wallet_pub.pem"}, "/"))
-        if err != nil {
-          configure.Sugar.Fatal(err.Error())
-        }
-        rsaPub := util.BytesToPublicKey(pubBytes)
+        address := key.Address.String()
         encryptAccountPriv := util.EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
-        configure.Sugar.Info(hex.EncodeToString(encryptAccountPriv))
+        fileData := []byte(strings.Join([]string{address, hex.EncodeToString(encryptAccountPriv)}, " "))
+        fileData = append(fileData, '\n')
+        n, err := srcBackupFile.Write(fileData)
+        if err != nil {
+          configure.Sugar.Fatal("write eth backup file error: ", err.Error())
+        }
+        if err == nil && n < len(fileData) {
+          err = io.ErrShortWrite
+        }
+        configure.Sugar.Info("Ethereum account: ", address)
       }
       defer ksFile.Close()
     }
