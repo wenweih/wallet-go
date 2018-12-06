@@ -29,3 +29,4 @@ vendor/*
 bin/*
 .gopath*
 configs/*.yml
+configs/*.pem

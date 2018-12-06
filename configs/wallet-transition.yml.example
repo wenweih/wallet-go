@@ -13,5 +13,6 @@ new_btc_wallet_server_host: "ip:port"
 new_btc_wallet_server_username: "test_user"
 new_btc_wallet_server_pwd: "tes_pass"
 
-# DB
-db_btc_wallet_path: "/tmp/btc_wallet/"
+# Ethereum wallet info
+keystore_path: "/path_to_ks"
+ks_pass: "pass_for_ks"

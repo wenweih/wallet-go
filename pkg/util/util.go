@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"fmt"
 )
 
 // HomeDir 获取服务器当前用户目录路径
@@ -40,4 +41,11 @@ func RemoveDuplicatesForSlice(slice ...interface{}) []string {
 		result = append(result, key)
 	}
 	return result
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+		os.Exit(1)
+	}
 }
