@@ -4,31 +4,41 @@ import (
 	"bufio"
 	"github.com/syndtr/goleveldb/leveldb"
 	"os"
+	"errors"
 	"strings"
 	"syscall"
 	"wallet-transition/pkg/configure"
 	"wallet-transition/pkg/util"
 )
 
-// BTCMigrate migrate btc wallet to lleveldb
-func BTCMigrate() {
-	file, err := os.Open(configure.Config.NewBTCWalletFileName)
-	if err != nil {
-		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
-	}
-	defer file.Close()
+// LDB level db
+type LDB struct {
+	*leveldb.DB
+}
 
-	defer syscall.Umask(syscall.Umask(0))
-	dir := strings.Join([]string{util.HomeDir(), ".db_wallet/btc"}, "/")
-	if err = os.MkdirAll(dir, 0755); err != nil {
-		configure.Sugar.Fatal("mkdir btc db wallet error: ", err.Error())
+// NewLDB new leveldb
+func NewLDB(asset string) (*LDB, error) {
+	dir := strings.Join([]string{util.HomeDir(), configure.Config.DBWalletPath, asset}, "/")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, errors.New(strings.Join([]string{"NewLDB error: ", err.Error()}, ""))
 	}
 
 	db, err := leveldb.OpenFile(dir, nil)
 	if err != nil {
-		configure.Sugar.Fatal("open btc wallet error: ", err.Error())
+		return nil, errors.New(strings.Join([]string{"NewLDB error: ", err.Error()}, ""))
 	}
-	defer db.Close()
+	return &LDB{db}, nil
+}
+
+// MigrateBTC migrate btc wallet to lleveldb
+func (db *LDB) MigrateBTC() {
+	file, err := os.Open(strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, ""))
+	if err != nil {
+		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
+	}
+
+	defer syscall.Umask(syscall.Umask(0))
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
