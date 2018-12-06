@@ -18,6 +18,25 @@
   revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
 
 [[projects]]
+  digest = "1:1156cfea0ff969858f6027df95c15ca5e802556b466aebeedaf53dde3b301db3"
+  name = "github.com/allegro/bigcache"
+  packages = [
+    ".",
+    "queue",
+  ]
+  pruneopts = "UT"
+  revision = "f31987a23e44c5121ef8c8b2f2ea2e8ffa37b068"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7d191fd0c54ff370eaf6116a14dafe2a328df487baea280699f597aae858d00d"
+  name = "github.com/aristanetworks/goarista"
+  packages = ["monotime"]
+  pruneopts = "UT"
+  revision = "e17947f884f63c85799a86637524c213d798c7ec"
+
+[[projects]]
   branch = "master"
   digest = "1:cd98fd45648a2c0eeb1bd30f0a09a5475f0cb80e3010a718ae6c98abd89a6fec"
   name = "github.com/btcsuite/btcd"
@@ -89,12 +108,56 @@
   version = "v0.3.4"
 
 [[projects]]
+  digest = "1:e47d51dab652d26c3fba6f8cba403f922d02757a82abdc77e90df7948daf296e"
+  name = "github.com/deckarep/golang-set"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "cbaa98ba5575e67703b32b4b19f73c91f3c4159e"
+  version = "v1.7.1"
+
+[[projects]]
+  digest = "1:b90d3382e1f80e001fb2dc6b4a9283bd3402c50d9283b5f23dab70cf2d109b72"
+  name = "github.com/ethereum/go-ethereum"
+  packages = [
+    ".",
+    "accounts",
+    "accounts/keystore",
+    "common",
+    "common/hexutil",
+    "common/math",
+    "common/mclock",
+    "common/prque",
+    "core/types",
+    "crypto",
+    "crypto/secp256k1",
+    "crypto/sha3",
+    "ethdb",
+    "event",
+    "log",
+    "metrics",
+    "params",
+    "rlp",
+    "trie",
+  ]
+  pruneopts = "UT"
+  revision = "dae82f098570e15d44584f0d7f350713f4774727"
+  version = "v1.8.19"
+
+[[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  digest = "1:586ea76dbd0374d6fb649a91d70d652b7fe0ccffb8910a77468e7702e7901f3d"
+  name = "github.com/go-stack/stack"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2fee6af1a9795aafbe0253a0cfbdf668e1fb8a9a"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "travis-1.9"
@@ -122,6 +185,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "c34317bd91bf98fab745d77b03933cf8769299fe"
+
+[[projects]]
+  digest = "1:236d7e1bdb50d8f68559af37dbcf9d142d56b431c9b2176d41e2a009b664cda8"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9b3b1e0f5f99ae461456d768e7d301a7acdaa2d8"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -251,6 +322,14 @@
   version = "v1.10.0"
 
 [[projects]]
+  digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
+  name = "github.com/pborman/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
+
+[[projects]]
   digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
@@ -273,6 +352,14 @@
   pruneopts = "UT"
   revision = "08de04f133f27844173471167014e1a753655ac8"
   version = "v1.8.3"
+
+[[projects]]
+  digest = "1:31d83d1b1c288073c91abadee3caec87de2a1fb5dbe589039264a802e67a26b8"
+  name = "github.com/rjeczalik/notify"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "69d839f37b13a8cb7a78366f7633a4071cb43be7"
+  version = "v0.9.2"
 
 [[projects]]
   digest = "1:81e02c4edb639c80559c0650f9401d3e2dcc3256d1fa215382bb7c83c1db9126"
@@ -395,7 +482,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:53595782def9b6346b6506951efeede9835f61eba2379fb83b360d3f41945aa8"
+  digest = "1:38e59418dd3bcd16091db49d61bb6bb759e2d521bcad82412fb79460dd5c0174"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
@@ -403,8 +490,10 @@
     "ed25519/internal/edwards25519",
     "internal/chacha20",
     "internal/subtle",
+    "pbkdf2",
     "poly1305",
     "ripemd160",
+    "scrypt",
     "ssh",
   ]
   pruneopts = "UT"
@@ -472,6 +561,8 @@
     "github.com/btcsuite/btcd/txscript",
     "github.com/btcsuite/btcd/wire",
     "github.com/btcsuite/btcutil",
+    "github.com/ethereum/go-ethereum/accounts/keystore",
+    "github.com/ethereum/go-ethereum/crypto",
     "github.com/manifoldco/promptui",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/sftp",

@@ -14,5 +14,11 @@ new_btc_wallet_server_username: "test_user"
 new_btc_wallet_server_pwd: "tes_pass"
 
 # Ethereum wallet info
-keystore_path: "/path_to_ks"
-ks_pass: "pass_for_ks"
+old_eth_wallet_server_host: "ip:port"
+old_eth_wallet_server_user: "test_user"
+old_eth_wallet_server_pass: "tes_pass"
+new_eth_wallet_server_host: "ip:port"
+new_eth_wallet_server_user: "user"
+new_eth_wallet_server_pass: "pass"
+keystore_path: "ks/path"
+ks_pass: "ks_pass"

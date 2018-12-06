@@ -49,6 +49,9 @@ replace-btcd: ; $(info $(M) replace btcsuite/btcd with wenweih/btcd_m_backup…)
 	@rm -rf $(BASE)/vendor/github.com/btcsuite/btcd/
 	@git clone https://github.com/wenweih/btcd_m_backup.git $(BASE)/vendor/github.com/btcsuite/btcd/
 
+.PHONY: replace-btcd
+replace-btcd: replace-btcd
+
 # Misc
 
 .PHONY: clean

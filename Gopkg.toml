@@ -68,3 +68,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/syndtr/goleveldb"
+
+[[constraint]]
+  name = "github.com/ethereum/go-ethereum"
+  version = "1.8.19"

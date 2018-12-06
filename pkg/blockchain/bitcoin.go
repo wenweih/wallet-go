@@ -18,9 +18,24 @@ import (
 	"wallet-transition/pkg/configure"
 )
 
-// BitcoinClientAlias bitcoin-core client alias
-type BitcoinClientAlias struct {
-	*rpcclient.Client
+// info, err := btcClient.GetBlockChainInfo()
+// if err != nil {
+// 	configure.Sugar.Fatal("Get info error: ", err.Error())
+// }
+// configure.Sugar.Info("info: ", info)
+//
+// fee, err := btcClient.EstimateFee(int64(6))
+// if err != nil {
+// 	configure.Sugar.Warn("EstimateFee: ", err.Error())
+// }
+//
+// configure.Sugar.Info("fee: ", fee)
+
+var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
+
+// BTCRPC bitcoin-core client alias
+type BTCRPC struct {
+	Client *rpcclient.Client
 }
 
 // NewbitcoinClient bitcoin rpc client
@@ -47,19 +62,34 @@ type BtcUTXO struct {
 	VoutIndex uint32  `json:"voutindex"`
 }
 
+// DumpBTC dump wallet from node
+func (btcClient *BTCRPC) DumpBTC(local bool) {
+	oldWalletServerClient, err := configure.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
+	if err != nil {
+		configure.Sugar.Fatal(err.Error())
+	}
+	if err = oldWalletServerClient.SftpClient.MkdirAll(filepath.Dir(configure.Config.BackupWalletPath)); err != nil {
+		configure.Sugar.Fatal(err.Error())
+	}
+
+	// dump old wallet to old wallet server
+	btcClient.DumpOldWallet(oldWalletServerClient)
+	oldWalletServerClient.CopyRemoteFile2(btcWalletBackupPath, local)
+}
+
 // DumpOldWallet migrate old wallet from node
-func (btcClient *BitcoinClientAlias) DumpOldWallet(serverClient *configure.ServerClient) {
-	if _, err := btcClient.DumpWallet(configure.Config.OldBTCWalletFileName); err != nil {
+func (btcClient *BTCRPC) DumpOldWallet(serverClient *configure.ServerClient) {
+	if _, err := btcClient.Client.DumpWallet(btcWalletBackupPath); err != nil {
 		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
 			prompt := promptui.Prompt {
-				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.OldBTCWalletFileName), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
+				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.BackupWalletPath), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
 				IsConfirm: true,
 			}
 			if _, err = prompt.Run(); err != nil {
-				fmt.Println("Check the old backup wallet file in", configure.Config.OldBTCWalletFileName, "in", serverClient.SSHClient.RemoteAddr().String())
+				fmt.Println("Check the old backup wallet file in", configure.Config.BackupWalletPath, "in", serverClient.SSHClient.RemoteAddr().String())
 				return
 			}
-			if err = serverClient.SftpClient.Remove(configure.Config.OldBTCWalletFileName); err != nil {
+			if err = serverClient.SftpClient.Remove(btcWalletBackupPath); err != nil {
 				configure.Sugar.Fatal("Remove old backup wallet from old wallet server error: ", err.Error())
 			}
 			btcClient.DumpOldWallet(serverClient)

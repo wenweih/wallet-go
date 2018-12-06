@@ -61,14 +61,14 @@ func newSSHClient(user, pass, host string) (*ssh.Client, error) {
 }
 
 // CopyRemoteFile2 copy file to local or remote server, default copy to server by configure
-func (c *ServerClient) CopyRemoteFile2(srcFileWithPath, dstFileWithPath string, local bool) {
+func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 	// http://networkbit.ch/golang-sftp-client/
-	srcFile, err := c.SftpClient.Open(srcFileWithPath)
+	srcFile, err := c.SftpClient.Open(backupPath)
 	if err != nil {
 		Sugar.Fatal("Open src file error: ", err.Error())
 	}
 	if local {
-		path := strings.Join([]string{util.HomeDir(), filepath.Base(dstFileWithPath)}, "/")
+		path := strings.Join([]string{util.HomeDir(), filepath.Base(backupPath)}, "/")
 		dstFile, err := os.Create(path)
 		if err != nil {
 			Sugar.Fatal("Create dst file error: ", err.Error())
@@ -88,10 +88,10 @@ func (c *ServerClient) CopyRemoteFile2(srcFileWithPath, dstFileWithPath string, 
 		}
 
 		// create folder for old wallet backup
-		if err = newWalletServerClient.SftpClient.MkdirAll(filepath.Dir(dstFileWithPath)); err != nil {
+		if err = newWalletServerClient.SftpClient.MkdirAll(filepath.Dir(backupPath)); err != nil {
 			Sugar.Fatal(err.Error())
 		}
-		dstFile, err := newWalletServerClient.SftpClient.Create(Config.NewBTCWalletFileName)
+		dstFile, err := newWalletServerClient.SftpClient.Create(backupPath)
 		defer dstFile.Close()
 
 		if _, err := io.Copy(dstFile, srcFile); err != nil {
@@ -101,7 +101,7 @@ func (c *ServerClient) CopyRemoteFile2(srcFileWithPath, dstFileWithPath string, 
 		if err := newWalletServerClient.Close(); err != nil {
 			Sugar.Fatal(err.Error())
 		}
-		Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", dstFileWithPath)
+		Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", backupPath)
 	}
 
 	defer srcFile.Close()

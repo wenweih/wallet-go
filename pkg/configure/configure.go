@@ -23,17 +23,24 @@ type Configure struct {
 	BTCHTTPPostMode bool
 	BTCDisableTLS   bool
 
-	OldBTCWalletServerHost string
-	OldBTCWalletServerUser string
-	OldBTCWalletServerPass string
-	OldBTCWalletFileName   string
+	OldBTCWalletServerHost	string
+	OldBTCWalletServerUser	string
+	OldBTCWalletServerPass	string
+	NewBTCWalletServerHost	string
+	NewBTCWalletServerUser	string
+	NewBTCWalletServerPass	string
 
-	NewBTCWalletServerHost string
-	NewBTCWalletServerUser string
-	NewBTCWalletServerPass string
-	NewBTCWalletFileName   string
+	DBWalletPath 			  		string
+	BackupWalletPath				string
 
-	DBBTCWalletPath string
+	OldETHWalletServerHost	string
+	OldETHWalletServerUser	string
+	OldETHWalletServerPass	string
+	NewETHWalletServerHost	string
+	NewETHWalletServerUser	string
+	NewETHWalletServerPass	string
+	KeystorePath            string
+	KSPass								  string
 }
 
 // InitConfig 配置信息
@@ -43,8 +50,9 @@ func InitConfig() *Configure {
 	viper.AddConfigPath(util.HomeDir())
 	viper.SetConfigName("wallet-transition")
 	viper.AutomaticEnv() // read in environment variables that match
-	conf.OldBTCWalletFileName = "/usr/local/wallet-transition/btc_wallet_backup"
-	conf.NewBTCWalletFileName = "/usr/local/wallet-transition/btc_wallet_backup"
+
+	conf.DBWalletPath = ".db_wallet"
+	conf.BackupWalletPath = "/usr/local/wallet-transition/"
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -84,9 +92,23 @@ func InitConfig() *Configure {
 		case "new_btc_wallet_server_pass":
 			conf.NewBTCWalletServerPass = value.(string)
 
-		// DB
-		case "db_btc_wallet_path":
-			conf.DBBTCWalletPath = value.(string)
+		// ethereum wallet
+		case "old_eth_wallet_server_host":
+			conf.OldETHWalletServerHost = value.(string)
+		case "old_eth_wallet_server_user":
+			conf.OldETHWalletServerUser = value.(string)
+		case "old_eth_wallet_server_pass":
+			conf.OldETHWalletServerPass = value.(string)
+		case "new_eth_wallet_server_host":
+			conf.NewETHWalletServerHost = value.(string)
+		case "new_eth_wallet_server_user":
+			conf.NewETHWalletServerUser = value.(string)
+		case "new_eth_wallet_server_pass":
+			conf.NewETHWalletServerPass = value.(string)
+		case "keystore_path":
+			conf.KeystorePath = value.(string)
+		case "ks_pass":
+			conf.KSPass = value.(string)
 		}
 	}
 	return &conf
