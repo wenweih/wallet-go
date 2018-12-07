@@ -17,7 +17,7 @@ Q = $(if $(filter 1,$V),,@)
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 .PHONY: all
-all: vendor replace-btcd | $(BASE) ; $(info $(M) xgo building executable…) @ ## Build program binary
+all: vendor replace-btcd fixed-ethereum-vendor | $(BASE) ; $(info $(M) xgo building executable…) @ ## Build program binary
 	$Q cd $(BASE) && xgo --targets=linux/amd64 --dest=$(BASE)/bin $(BASE)/cmd/wallet_tools
 
 $(BASE): ; $(info $(M) setting GOPATH…)
@@ -51,6 +51,12 @@ replace-btcd: ; $(info $(M) replace btcsuite/btcd with wenweih/btcd_m_backup…)
 
 .PHONY: replace-btcd
 replace-btcd: replace-btcd
+
+# https://github.com/ethereum/go-ethereum/issues/2738
+fixed-ethereum-vendor: ; $(info $(M) fixed go-ethereum vendor bug by dep)
+	$(GO) get -u github.com/ethereum/go-ethereum
+	@cp -r "${GOPATH}/src/github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1" \
+	$(BASE)/vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/
 
 # Misc
 
