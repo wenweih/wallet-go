@@ -1,15 +1,20 @@
 package configure
 
 import (
-	"errors"
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
+	"errors"
+	"io/ioutil"
+	"crypto/rsa"
+	"encoding/hex"
+	"path/filepath"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 	"wallet-transition/pkg/util"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
 
 // ServerClient includs ssh client and sftp client
@@ -108,4 +113,56 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 	if err := c.Close(); err != nil {
 		Sugar.Fatal(err.Error())
 	}
+}
+
+// SaveEncryptedEthAccount save ethereum account to file
+func (c *ServerClient) SaveEncryptedEthAccount(rsaPub *rsa.PublicKey)  error {
+	var ethWalletBackupPath = strings.Join([]string{Config.BackupWalletPath, "eth.backup"}, "")
+	// create folder for old wallet backup
+	if err := c.SftpClient.MkdirAll(filepath.Dir(ethWalletBackupPath)); err != nil {
+		return errors.New(strings.Join([]string{"Create", ethWalletBackupPath , "directory error", err.Error()}, " "))
+	}
+
+	srcBackupFile, err := c.SftpClient.OpenFile(ethWalletBackupPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY)
+	if err != nil {
+		return errors.New(strings.Join([]string{"open remote eth.backup error", err.Error()}, " "))
+	}
+	defer srcBackupFile.Close()
+
+	ksFiles, err := c.SftpClient.ReadDir(Config.KeystorePath)
+	if err != nil {
+		return errors.New(strings.Join([]string{"Read keystore directory error", Config.KeystorePath, err.Error()}, " "))
+	}
+
+  for _, ks := range ksFiles {
+    if strings.HasPrefix(ks.Name(), "UTC"){
+      ksFile, err := c.SftpClient.Open(strings.Join([]string{Config.KeystorePath, ks.Name()}, "/"))
+      if err != nil {
+				return errors.New(strings.Join([]string{"Failt to open", ks.Name(), err.Error()}, " "))
+      }
+      ksBytes, err := ioutil.ReadAll(ksFile)
+      if err != nil {
+				return errors.New(strings.Join([]string{"Fail to read ks", ks.Name(), err.Error()}, " "))
+      }
+      key, err := keystore.DecryptKey(ksBytes, Config.KSPass)
+      if err != nil && strings.Contains(err.Error(), "could not decrypt key with given passphrase"){
+        Sugar.Warn("Keystore DecryptKey error: ", err.Error())
+      } else {
+        address := key.Address.String()
+        encryptAccountPriv := util.EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
+        fileData := []byte(strings.Join([]string{address, hex.EncodeToString(encryptAccountPriv)}, " "))
+        fileData = append(fileData, '\n')
+        n, err := srcBackupFile.Write(fileData)
+        if err != nil {
+					return errors.New(strings.Join([]string{"write eth backup file error", err.Error()}, " "))
+        }
+        if err == nil && n < len(fileData) {
+          err = io.ErrShortWrite
+        }
+        Sugar.Info("Ethereum account: ", address)
+      }
+      defer ksFile.Close()
+    }
+  }
+	return nil
 }
