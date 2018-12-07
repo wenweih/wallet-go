@@ -11,7 +11,6 @@ import (
 var (
 	asset	string
 	local	bool
-
 )
 
 var rootCmd = &cobra.Command {
@@ -51,7 +50,7 @@ var dumpWallet = &cobra.Command {
 	},
 }
 
-var migrateWallet = &cobra.Command{
+var migrateWallet = &cobra.Command {
 	Use:   "migrate",
 	Short: "Migrate wallet to levelDB",
 	Run: func(cmd *cobra.Command, args []string) {

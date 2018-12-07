@@ -1,12 +1,12 @@
 package util
 
 import (
-	homedir "github.com/mitchellh/go-homedir"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"fmt"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 // HomeDir 获取服务器当前用户目录路径
