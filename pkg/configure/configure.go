@@ -26,19 +26,17 @@ type Configure struct {
 	OldBTCWalletServerHost	string
 	OldBTCWalletServerUser	string
 	OldBTCWalletServerPass	string
-	NewBTCWalletServerHost	string
-	NewBTCWalletServerUser	string
-	NewBTCWalletServerPass	string
 
 	DBWalletPath 			  		string
 	BackupWalletPath				string
 
+	NewWalletServerHost			string
+	NewWalletServerUser			string
+	NewWalletServerPass			string
+
 	OldETHWalletServerHost	string
 	OldETHWalletServerUser	string
 	OldETHWalletServerPass	string
-	NewETHWalletServerHost	string
-	NewETHWalletServerUser	string
-	NewETHWalletServerPass	string
 	KeystorePath            string
 	KSPass								  string
 }
@@ -85,12 +83,12 @@ func InitConfig() *Configure {
 			conf.OldBTCWalletServerPass = value.(string)
 
 		// new btc wallet server info
-		case "new_btc_wallet_server_host":
-			conf.NewBTCWalletServerHost = value.(string)
-		case "new_btc_wallet_server_user":
-			conf.NewBTCWalletServerUser = value.(string)
-		case "new_btc_wallet_server_pass":
-			conf.NewBTCWalletServerPass = value.(string)
+		case "new_wallet_server_host":
+			conf.NewWalletServerHost = value.(string)
+		case "new_wallet_server_user":
+			conf.NewWalletServerUser = value.(string)
+		case "new_wallet_server_pass":
+			conf.NewWalletServerPass = value.(string)
 
 		// ethereum wallet
 		case "old_eth_wallet_server_host":
@@ -99,12 +97,6 @@ func InitConfig() *Configure {
 			conf.OldETHWalletServerUser = value.(string)
 		case "old_eth_wallet_server_pass":
 			conf.OldETHWalletServerPass = value.(string)
-		case "new_eth_wallet_server_host":
-			conf.NewETHWalletServerHost = value.(string)
-		case "new_eth_wallet_server_user":
-			conf.NewETHWalletServerUser = value.(string)
-		case "new_eth_wallet_server_pass":
-			conf.NewETHWalletServerPass = value.(string)
 		case "keystore_path":
 			conf.KeystorePath = value.(string)
 		case "ks_pass":

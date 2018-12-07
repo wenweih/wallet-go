@@ -24,7 +24,11 @@ func DumpETHAccount(local bool)  {
   }
   rsaPub := util.BytesToPublicKey(pubBytes)
 
-  if err := oldWalletServerClient.SaveEncryptedEthAccount(rsaPub); err != nil {
+  var ethWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "eth.backup"}, "")
+
+  if err := oldWalletServerClient.SaveEncryptedEthAccount(ethWalletBackupPath, rsaPub); err != nil {
     configure.Sugar.Fatal(err.Error())
   }
+
+  oldWalletServerClient.CopyRemoteFile2(ethWalletBackupPath, local)
 }

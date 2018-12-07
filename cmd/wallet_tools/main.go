@@ -43,7 +43,7 @@ var dumpWallet = &cobra.Command {
 			btcClient := blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
 			btcClient.DumpBTC(local)
 		case "eth":
-			blockchain.DumpETHAccount(false)
+			blockchain.DumpETHAccount(local)
 		default:
 			configure.Sugar.Fatal("Only support btc, eth")
 			return
@@ -64,6 +64,12 @@ var migrateWallet = &cobra.Command{
 			ldb.MigrateBTC()
 			ldb.Close()
 		case "eth":
+			ldb, err := db.NewLDB("eth")
+			if err != nil {
+				configure.Sugar.Fatal(err.Error())
+			}
+			ldb.MigrateETH()
+			ldb.Close()
 		default:
 			configure.Sugar.Fatal("Only support btc, eth")
 			return

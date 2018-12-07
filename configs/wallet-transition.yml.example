@@ -5,20 +5,19 @@ btc_node_pass: "qwgsfdhrtytbvcbsfdslo"
 btc_http_mode: true
 btc_disable_tls: true
 
+# new wallet server
+new_wallet_server_host: "ip:port"
+new_wallet_server_user: "user"
+new_wallet_server_pass: "pass"
+
 # btc wallet server info
 old_btc_wallet_server_host: "ip:port"
 old_btc_wallet_server_user: "test_user"
 old_btc_wallet_server_pass: "tes_pass"
-new_btc_wallet_server_host: "ip:port"
-new_btc_wallet_server_username: "test_user"
-new_btc_wallet_server_pwd: "tes_pass"
 
 # Ethereum wallet info
 old_eth_wallet_server_host: "ip:port"
 old_eth_wallet_server_user: "test_user"
 old_eth_wallet_server_pass: "tes_pass"
-new_eth_wallet_server_host: "ip:port"
-new_eth_wallet_server_user: "user"
-new_eth_wallet_server_pass: "pass"
 keystore_path: "ks/path"
 ks_pass: "ks_pass"

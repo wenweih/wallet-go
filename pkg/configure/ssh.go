@@ -87,16 +87,16 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 		defer dstFile.Close()
 		Sugar.Info("Copy to local: ", path)
 	} else {
-		newWalletServerClient, err := NewServerClient(Config.NewBTCWalletServerUser, Config.NewBTCWalletServerPass, Config.NewBTCWalletServerHost)
+		newWalletServerClient, err := NewServerClient(Config.NewWalletServerUser, Config.NewWalletServerPass, Config.NewWalletServerHost)
 		if err != nil {
 			Sugar.Fatal(err.Error())
 		}
 
-		// create folder for old wallet backup
+		// create folder for old wallet backup in new server
 		if err = newWalletServerClient.SftpClient.MkdirAll(filepath.Dir(backupPath)); err != nil {
 			Sugar.Fatal(err.Error())
 		}
-		dstFile, err := newWalletServerClient.SftpClient.Create(backupPath)
+		dstFile, err := newWalletServerClient.SftpClient.Create(strings.Join([]string{backupPath, "new"}, "_"))
 		defer dstFile.Close()
 
 		if _, err := io.Copy(dstFile, srcFile); err != nil {
@@ -106,7 +106,7 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 		if err := newWalletServerClient.Close(); err != nil {
 			Sugar.Fatal(err.Error())
 		}
-		Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", backupPath)
+		Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", strings.Join([]string{backupPath, "new"}, "_"))
 	}
 
 	defer srcFile.Close()
@@ -116,8 +116,7 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 }
 
 // SaveEncryptedEthAccount save ethereum account to file
-func (c *ServerClient) SaveEncryptedEthAccount(rsaPub *rsa.PublicKey)  error {
-	var ethWalletBackupPath = strings.Join([]string{Config.BackupWalletPath, "eth.backup"}, "")
+func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPub *rsa.PublicKey)  error {
 	// create folder for old wallet backup
 	if err := c.SftpClient.MkdirAll(filepath.Dir(ethWalletBackupPath)); err != nil {
 		return errors.New(strings.Join([]string{"Create", ethWalletBackupPath , "directory error", err.Error()}, " "))

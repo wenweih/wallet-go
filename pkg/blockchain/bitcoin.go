@@ -40,7 +40,7 @@ type BTCRPC struct {
 
 // NewbitcoinClient bitcoin rpc client
 func NewbitcoinClient() *rpcclient.Client {
-	connCfg := &rpcclient.ConnConfig{
+	connCfg := &rpcclient.ConnConfig {
 		Host:         configure.Config.BTCNODEHOST,
 		User:         configure.Config.BTCNODEUSR,
 		Pass:         configure.Config.BTCNODEPASS,
