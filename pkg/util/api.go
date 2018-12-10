@@ -74,5 +74,5 @@ func GinRespException(c *gin.Context, code int, err error) {
 
 // AddressParams /address endpoint default params
 type AddressParams struct {
-  Asset string `form:"asset" json:"asset" bdinding:"required"`
+  Asset string `json:"asset"`
 }
