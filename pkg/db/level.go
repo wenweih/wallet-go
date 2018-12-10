@@ -8,7 +8,6 @@ import (
 	"strings"
 	"syscall"
 	"wallet-transition/pkg/configure"
-	"wallet-transition/pkg/util"
 )
 
 // LDB level db
@@ -18,7 +17,7 @@ type LDB struct {
 
 // NewLDB new leveldb
 func NewLDB(asset string) (*LDB, error) {
-	dir := strings.Join([]string{util.HomeDir(), configure.Config.DBWalletPath, asset}, "/")
+	dir := strings.Join([]string{configure.HomeDir(), configure.Config.DBWalletPath, asset}, "/")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, errors.New(strings.Join([]string{"NewLDB error: ", err.Error()}, ""))
 	}

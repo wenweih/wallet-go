@@ -28,7 +28,7 @@ var rsaGenerate = &cobra.Command {
 	Use:   "grsa",
 	Short: "Generate rsa key, save to current user home path",
 	Run: func(cmd *cobra.Command, args []string) {
-		util.RsaGen("dump_wallet")
+		util.RsaGen("wallet")
 		configure.Sugar.Info("Generate rsa pub/priv pem successfully")
 	},
 }

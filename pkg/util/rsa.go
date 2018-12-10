@@ -10,6 +10,7 @@ import (
   "crypto/x509"
   "log"
   "errors"
+  "wallet-transition/pkg/configure"
 )
 
 // key, err := keystore.DecryptKey(ksBytes, configure.Config.KSPass)
@@ -73,7 +74,7 @@ func savePEMKey(fileName string, p pemKey, key *rsa.PrivateKey) {
   fileNameWithType := strings.Join([]string{fileName, string(p)}, "_")
   file := strings.Join([]string{fileNameWithType, "pem"}, ".")
 
-  keyOut, err := os.OpenFile(strings.Join([]string{HomeDir(),file}, "/"),
+  keyOut, err := os.OpenFile(strings.Join([]string{configure.HomeDir(),file}, "/"),
     os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
   checkError(err)
   defer keyOut.Close()
@@ -127,9 +128,11 @@ func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 }
 
 // DecryptWithPrivateKey decrypts data with private key
-func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) []byte {
+func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) ([]byte, error) {
 	hash := sha512.New()
 	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
-  checkError(err)
-	return plaintext
+  if err != nil {
+    return nil ,err
+  }
+  return plaintext, nil
 }
