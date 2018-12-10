@@ -2,10 +2,9 @@ package configure
 
 import (
 	"time"
-	"wallet-transition/pkg/util"
-
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -14,6 +13,15 @@ var (
 	// Config configure
 	Config *Configure
 )
+
+// HomeDir 获取服务器当前用户目录路径
+func HomeDir() string {
+	home, err := homedir.Dir()
+	if err != nil {
+		Sugar.Fatal(err.Error())
+	}
+	return home
+}
 
 // Configure 配置数据
 type Configure struct {
@@ -45,7 +53,7 @@ type Configure struct {
 func InitConfig() *Configure {
 	var conf Configure
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(util.HomeDir())
+	viper.AddConfigPath(HomeDir())
 	viper.SetConfigName("wallet-transition")
 	viper.AutomaticEnv() // read in environment variables that match
 
@@ -57,7 +65,7 @@ func InitConfig() *Configure {
 	if err == nil {
 		Sugar.Info("Using Configure file: ", viper.ConfigFileUsed(), " Time: ", time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	} else {
-		Sugar.Fatal("Error: wallet-service not found in: ", util.HomeDir())
+		Sugar.Fatal("Error: wallet-service not found in: ", HomeDir())
 	}
 
 	for key, value := range viper.AllSettings() {

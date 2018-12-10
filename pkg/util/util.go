@@ -1,22 +1,11 @@
 package util
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"fmt"
-	homedir "github.com/mitchellh/go-homedir"
 )
-
-// HomeDir 获取服务器当前用户目录路径
-func HomeDir() string {
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	return home
-}
 
 // HandleSigterm Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting.
 func HandleSigterm(handleExit func()) {

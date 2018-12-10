@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 	"wallet-transition/pkg/configure"
+	"wallet-transition/pkg/util"
 )
 
 // info, err := btcClient.GetBlockChainInfo()
@@ -64,7 +65,7 @@ type BtcUTXO struct {
 
 // DumpBTC dump wallet from node
 func (btcClient *BTCRPC) DumpBTC(local bool) {
-	oldWalletServerClient, err := configure.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
+	oldWalletServerClient, err := util.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
 	if err != nil {
 		configure.Sugar.Fatal(err.Error())
 	}
@@ -78,7 +79,7 @@ func (btcClient *BTCRPC) DumpBTC(local bool) {
 }
 
 // DumpOldWallet migrate old wallet from node
-func (btcClient *BTCRPC) DumpOldWallet(serverClient *configure.ServerClient) {
+func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 	if _, err := btcClient.Client.DumpWallet(btcWalletBackupPath); err != nil {
 		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
 			prompt := promptui.Prompt {

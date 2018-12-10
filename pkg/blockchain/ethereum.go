@@ -11,14 +11,14 @@ var ethWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPat
 
 // DumpETHAccount dump ethereum account from keystore
 func DumpETHAccount(local bool)  {
-  oldWalletServerClient, err := configure.NewServerClient(configure.Config.OldETHWalletServerUser,
+  oldWalletServerClient, err := util.NewServerClient(configure.Config.OldETHWalletServerUser,
     configure.Config.OldETHWalletServerPass,
     configure.Config.OldETHWalletServerHost)
   if err != nil {
     configure.Sugar.Fatal(err.Error())
   }
 
-  pubBytes, err := ioutil.ReadFile(strings.Join([]string{util.HomeDir(), "dump_wallet_pub.pem"}, "/"))
+  pubBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_pub.pem"}, "/"))
   if err != nil {
     configure.Sugar.Fatal(err.Error())
   }

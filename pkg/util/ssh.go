@@ -1,9 +1,9 @@
-package configure
+package util
 
 import (
 	"io"
-	"net"
 	"os"
+	"net"
 	"strings"
 	"errors"
 	"io/ioutil"
@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
-	"wallet-transition/pkg/util"
+	"wallet-transition/pkg/configure"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
@@ -70,48 +70,48 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 	// http://networkbit.ch/golang-sftp-client/
 	srcFile, err := c.SftpClient.Open(backupPath)
 	if err != nil {
-		Sugar.Fatal("Open src file error: ", err.Error())
+		configure.Sugar.Fatal("Open src file error: ", err.Error())
 	}
 	if local {
-		path := strings.Join([]string{util.HomeDir(), filepath.Base(backupPath)}, "/")
+		path := strings.Join([]string{configure.HomeDir(), filepath.Base(backupPath)}, "/")
 		dstFile, err := os.Create(path)
 		if err != nil {
-			Sugar.Fatal("Create dst file error: ", err.Error())
+			configure.Sugar.Fatal("Create dst file error: ", err.Error())
 		}
 		if _, err := io.Copy(dstFile, srcFile); err != nil {
-			Sugar.Fatal("io copy error: ", err.Error())
+			configure.Sugar.Fatal("io copy error: ", err.Error())
 		}
 		if err := dstFile.Sync(); err != nil {
-			Sugar.Fatal("dsfFile error: ", err.Error())
+			configure.Sugar.Fatal("dsfFile error: ", err.Error())
 		}
 		defer dstFile.Close()
-		Sugar.Info("Copy to local: ", path)
+		configure.Sugar.Info("Copy to local: ", path)
 	} else {
-		newWalletServerClient, err := NewServerClient(Config.NewWalletServerUser, Config.NewWalletServerPass, Config.NewWalletServerHost)
+		newWalletServerClient, err := NewServerClient(configure.Config.NewWalletServerUser, configure.Config.NewWalletServerPass, configure.Config.NewWalletServerHost)
 		if err != nil {
-			Sugar.Fatal(err.Error())
+			configure.Sugar.Fatal(err.Error())
 		}
 
 		// create folder for old wallet backup in new server
 		if err = newWalletServerClient.SftpClient.MkdirAll(filepath.Dir(backupPath)); err != nil {
-			Sugar.Fatal(err.Error())
+			configure.Sugar.Fatal(err.Error())
 		}
 		dstFile, err := newWalletServerClient.SftpClient.Create(strings.Join([]string{backupPath, "new"}, "_"))
 		defer dstFile.Close()
 
 		if _, err := io.Copy(dstFile, srcFile); err != nil {
-			Sugar.Fatal("Copy dst file error: ", err.Error())
+			configure.Sugar.Fatal("Copy dst file error: ", err.Error())
 		}
 
 		if err := newWalletServerClient.Close(); err != nil {
-			Sugar.Fatal(err.Error())
+			configure.Sugar.Fatal(err.Error())
 		}
-		Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", strings.Join([]string{backupPath, "new"}, "_"))
+		configure.Sugar.Info("Copy to new server: ", newWalletServerClient.SSHClient.RemoteAddr().String(), ":", strings.Join([]string{backupPath, "new"}, "_"))
 	}
 
 	defer srcFile.Close()
 	if err := c.Close(); err != nil {
-		Sugar.Fatal(err.Error())
+		configure.Sugar.Fatal(err.Error())
 	}
 }
 
@@ -128,14 +128,14 @@ func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPu
 	}
 	defer srcBackupFile.Close()
 
-	ksFiles, err := c.SftpClient.ReadDir(Config.KeystorePath)
+	ksFiles, err := c.SftpClient.ReadDir(configure.Config.KeystorePath)
 	if err != nil {
-		return errors.New(strings.Join([]string{"Read keystore directory error", Config.KeystorePath, err.Error()}, " "))
+		return errors.New(strings.Join([]string{"Read keystore directory error", configure.Config.KeystorePath, err.Error()}, " "))
 	}
 
   for _, ks := range ksFiles {
     if strings.HasPrefix(ks.Name(), "UTC"){
-      ksFile, err := c.SftpClient.Open(strings.Join([]string{Config.KeystorePath, ks.Name()}, "/"))
+      ksFile, err := c.SftpClient.Open(strings.Join([]string{configure.Config.KeystorePath, ks.Name()}, "/"))
       if err != nil {
 				return errors.New(strings.Join([]string{"Failt to open", ks.Name(), err.Error()}, " "))
       }
@@ -143,12 +143,12 @@ func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPu
       if err != nil {
 				return errors.New(strings.Join([]string{"Fail to read ks", ks.Name(), err.Error()}, " "))
       }
-      key, err := keystore.DecryptKey(ksBytes, Config.KSPass)
+      key, err := keystore.DecryptKey(ksBytes, configure.Config.KSPass)
       if err != nil && strings.Contains(err.Error(), "could not decrypt key with given passphrase"){
-        Sugar.Warn("Keystore DecryptKey error: ", err.Error())
+        configure.Sugar.Warn("Keystore DecryptKey error: ", err.Error())
       } else {
         address := key.Address.String()
-        encryptAccountPriv := util.EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
+        encryptAccountPriv := EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
         fileData := []byte(strings.Join([]string{address, hex.EncodeToString(encryptAccountPriv)}, " "))
         fileData = append(fileData, '\n')
         n, err := srcBackupFile.Write(fileData)
@@ -158,7 +158,7 @@ func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPu
         if err == nil && n < len(fileData) {
           err = io.ErrShortWrite
         }
-        Sugar.Info("Ethereum account: ", address)
+        configure.Sugar.Info("Ethereum account: ", address)
       }
       defer ksFile.Close()
     }
