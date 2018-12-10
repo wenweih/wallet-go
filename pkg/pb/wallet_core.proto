@@ -1,0 +1,14 @@
+syntax = "proto3";
+package proto;
+
+service WalletCore {
+  rpc Address (addressReq) returns (AddressResp);
+}
+
+message addressReq {
+  string asset = 1;
+}
+
+message AddressResp {
+  string address = 1;
+}

@@ -41,7 +41,7 @@ $(BIN)/dep: REPOSITORY = github.com/golang/dep/cmd/dep
 
 # Dependency management
 vendor: Gopkg.toml Gopkg.lock | $(BASE) $(GODEP) ; $(info $(M) retrieving dependencies…)
-	$Q cd $(BASE) && $(GODEP) ensure -v
+	$Q cd $(BASE) && $(GODEP) ensure -v -update
 	@touch $@
 
 # replace btcsuite/btcd with wenweih/btcd_m_backup
