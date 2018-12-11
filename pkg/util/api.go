@@ -2,10 +2,12 @@ package util
 
 import (
   "errors"
+  "strings"
   "net/http"
   "io/ioutil"
   "crypto/rsa"
   "encoding/hex"
+  "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/configure"
 )
@@ -60,7 +62,17 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusForbidden, errors.New("Decrypt Token error"))
       return
     }
-    c.Set("params", decryptoParamBytes)
+
+    var params AuthParams
+    if err := json.Unmarshal(decryptoParamBytes, &params); err != nil {
+      GinRespException(c, http.StatusInternalServerError, errors.New("Unmarshal params error"))
+      return
+    }
+    if !Contain(params.Asset , configure.Config.APIASSETS) {
+      GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{params.Asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, "")))
+      return
+    }
+    c.Set("asset", params.Asset)
   }
 }
 
@@ -72,7 +84,7 @@ func GinRespException(c *gin.Context, code int, err error) {
   })
 }
 
-// AddressParams /address endpoint default params
-type AddressParams struct {
+// AuthParams /address endpoint default params
+type AuthParams struct {
   Asset string `json:"asset"`
 }

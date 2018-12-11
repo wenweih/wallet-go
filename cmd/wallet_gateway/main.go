@@ -23,8 +23,8 @@ func main()  {
   }
   rsaPub := util.BytesToPublicKey(pubBytes)
 
-  params := util.AddressParams {
-    Asset : "btc",
+  params := util.AuthParams {
+    Asset : "btcc",
   }
   paramsBytes, err := json.Marshal(params)
   if err != nil {
@@ -42,18 +42,11 @@ func main()  {
 }
 
 func addressHandle(c *gin.Context) {
-  paramsByte, exist := c.Get("params")
+  asset, exist := c.Get("asset")
   if !exist {
     util.GinRespException(c, http.StatusInternalServerError, errors.New("paramsByte not exist"))
     return
   }
-
-  var params util.AddressParams
-  if err := json.Unmarshal(paramsByte.([]byte), &params); err != nil {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("Unmarshal params error"))
-    return
-  }
-  configure.Sugar.Info("xxx: ", params)
 
   conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
   if err != nil {
@@ -63,7 +56,7 @@ func addressHandle(c *gin.Context) {
   grpcClient := pb.NewWalletCoreClient(conn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
-  res, err := grpcClient.Address(ctx, &pb.AddressReq{Asset: "btc"})
+  res, err := grpcClient.Address(ctx, &pb.AddressReq{Asset: asset.(string)})
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
