@@ -16,7 +16,7 @@ import (
   "wallet-transition/pkg/configure"
 )
 
-func main()  {
+func main() {
   pubBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_pub.pem"}, "/"))
   if err != nil {
     configure.Sugar.Fatal(err.Error())
@@ -24,7 +24,7 @@ func main()  {
   rsaPub := util.BytesToPublicKey(pubBytes)
 
   params := util.AuthParams {
-    Asset : "btcc",
+    Asset : "eth",
   }
   paramsBytes, err := json.Marshal(params)
   if err != nil {
