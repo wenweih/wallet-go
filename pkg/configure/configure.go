@@ -47,6 +47,8 @@ type Configure struct {
 	OldETHWalletServerPass	string
 	KeystorePath            string
 	KSPass								  string
+
+	APIASSETS               []string
 }
 
 // InitConfig 配置信息
@@ -109,6 +111,9 @@ func InitConfig() *Configure {
 			conf.KeystorePath = value.(string)
 		case "ks_pass":
 			conf.KSPass = value.(string)
+
+		case "api_assets":
+			conf.APIASSETS = viper.GetStringSlice(key)
 		}
 	}
 	return &conf

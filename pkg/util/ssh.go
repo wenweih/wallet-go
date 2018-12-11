@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"errors"
+	"syscall"
 	"io/ioutil"
 	"crypto/rsa"
 	"encoding/hex"
@@ -73,11 +74,16 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 		configure.Sugar.Fatal("Open src file error: ", err.Error())
 	}
 	if local {
-		path := strings.Join([]string{configure.HomeDir(), filepath.Base(backupPath)}, "/")
+		defer syscall.Umask(syscall.Umask(0))
+		if err := os.MkdirAll(filepath.Dir(backupPath), 0700); err != nil {
+			configure.Sugar.Fatal("MkdirAll error: ", err.Error())
+		}
+		path := strings.Join([]string{backupPath, "new"}, "_")
 		dstFile, err := os.Create(path)
 		if err != nil {
 			configure.Sugar.Fatal("Create dst file error: ", err.Error())
 		}
+
 		if _, err := io.Copy(dstFile, srcFile); err != nil {
 			configure.Sugar.Fatal("io copy error: ", err.Error())
 		}
