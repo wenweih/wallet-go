@@ -34,7 +34,7 @@
   name = "github.com/aristanetworks/goarista"
   packages = ["monotime"]
   pruneopts = "UT"
-  revision = "e17947f884f63c85799a86637524c213d798c7ec"
+  revision = "aa2a42e13be68c4a95fe9e58003adaf63fe6476f"
 
 [[projects]]
   branch = "master"
@@ -267,6 +267,25 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:57072e5ce133ed6023e6ff49d9f19dcfb09f0fc8da693b1a8ac2eaa038ac858f"
+  name = "github.com/jinzhu/gorm"
+  packages = [
+    ".",
+    "dialects/sqlite",
+  ]
+  pruneopts = "UT"
+  revision = "472c70caa40267cb89fd8facb07fe6454b578626"
+  version = "v1.9.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:fd97437fbb6b7dce04132cf06775bd258cce305c44add58eb55ca86c6c325160"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "04140366298a54a039076d798123ffa108fff46c"
+
+[[projects]]
   digest = "1:3e551bbb3a7c0ab2a2bf4660e7fcad16db089fdcfbb44b0199e62838038623ea"
   name = "github.com/json-iterator/go"
   packages = ["."]
@@ -336,6 +355,14 @@
   pruneopts = "UT"
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
   version = "v0.0.4"
+
+[[projects]]
+  digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
+  name = "github.com/mattn/go-sqlite3"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
+  version = "v1.10.0"
 
 [[projects]]
   digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
@@ -626,7 +653,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "4c874b978acba4ecd4a257d3bb8829dd5de17be8"
+  revision = "6a3e9aa2ab7749d72d1006ee484271b4a11f96c2"
 
 [[projects]]
   branch = "master"
@@ -717,6 +744,8 @@
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/gin-gonic/gin",
     "github.com/golang/protobuf/proto",
+    "github.com/jinzhu/gorm",
+    "github.com/jinzhu/gorm/dialects/sqlite",
     "github.com/manifoldco/promptui",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/sftp",
@@ -725,7 +754,6 @@
     "github.com/spf13/viper",
     "github.com/syndtr/goleveldb/leveldb",
     "go.uber.org/zap",
-    "golang.org/x/crypto/ripemd160",
     "golang.org/x/crypto/ssh",
     "google.golang.org/grpc",
     "google.golang.org/grpc/reflection",

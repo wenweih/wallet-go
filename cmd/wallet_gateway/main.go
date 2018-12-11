@@ -36,6 +36,7 @@ func main() {
 
   r := util.GinEngine()
   r.POST("/address", addressHandle)
+  r.POST("/withdraw", withdrawHandle)
   if err := r.Run(":3000"); err != nil {
     configure.Sugar.Fatal(err.Error())
   }
@@ -66,4 +67,8 @@ func addressHandle(c *gin.Context) {
     "status": http.StatusOK,
     "address": res.Address,
   })
+}
+
+func withdrawHandle(c *gin.Context)  {
+  
 }
