@@ -9,6 +9,7 @@ import (
   // sqlite driven
   _ "github.com/jinzhu/gorm/dialects/sqlite"
   "wallet-transition/pkg/configure"
+  "github.com/btcsuite/btcd/btcjson"
 )
 
 // GormDB relation database
@@ -29,6 +30,7 @@ type BTCBlock struct {
   gorm.Model
   Hash    string `gorm:"not null;unique_index"`
   Height  int64   `gorm:"not null"`
+  UTXOs   []UTXO
 }
 
 // UTXO utxo model
@@ -38,6 +40,7 @@ type UTXO struct {
   Amount        float64   `gorm:"not null"`
   Height        int64     `gorm:"not null"`
   VoutIndex     uint32    `gorm:"not null"`
+  Used          bool      `gorm:"not null;default:false"`
   SubAddress    SubAddress
   SubAddressID  int
   BTCBlock      BTCBlock
@@ -59,16 +62,52 @@ func NewSqlite() (*GormDB, error) {
 }
 
 // GetBTCBestBlockOrCreate get btc best block in sqlite
-func (db *GormDB) GetBTCBestBlockOrCreate(hash string, height int64) (*BTCBlock, error) {
+func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult) (*BTCBlock, error) {
   var bestBlock BTCBlock
   err := db.Order("height desc").First(&bestBlock).Error
   if err != nil && err.Error() == "record not found" {
     configure.Sugar.Info("best block info not found in btc_blocks table, init ....")
-    bestBlock.Hash = hash
-    bestBlock.Height = height
-    db.Create(&bestBlock)
+    bestBlock.Hash = block.Hash
+    bestBlock.Height = block.Height
+    db.Create(&SubAddress{Address: "n11UuUNSMv4JpYZ7fBuKojhFTkVisHYQGA", Asset: "btc"}) // for tesing
+    if err = db.BlockInfo2DB(bestBlock, block); err != nil {
+      return nil, err
+    }
   } else if err != nil {
     return nil, errors.New(strings.Join([]string{"Get bestBlock error: ", err.Error()}, ""))
   }
   return &bestBlock, nil
+}
+
+// BlockInfo2DB iterator each block tx
+func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerboseResult) error {
+  ts := db.Begin()
+  if err := ts.Create(&dbBlock).Error; err != nil {
+    if err = ts.Rollback().Error; err != nil {
+      return errors.New(strings.Join([]string{"database rollback error: create bestblock record ", err.Error()}, ""))
+    }
+  }
+  for _, tx := range rawBlock.Tx {
+    for _, vout := range tx.Vout {
+      for _, address := range vout.ScriptPubKey.Addresses {
+        var addrDB SubAddress
+        if err := db.Where("address = ? AND asset = ?", address, "btc").First(&addrDB).Error; err != nil && err.Error() == "record not found" {
+          continue
+        }else if err != nil {
+          configure.Sugar.DPanic(strings.Join([]string{"query sub address err: ", address, " ", err.Error()}, ""))
+        }
+        utxo := UTXO{Txid: tx.Txid, Amount: vout.Value, Height: rawBlock.Height, VoutIndex: vout.N, SubAddress: addrDB, BTCBlock: dbBlock}
+        if err := ts.Create(&utxo).Error; err != nil {
+          if err := ts.Rollback().Error; err != nil {
+            return errors.New(strings.Join([]string{"database rollback error: create utxo record ", err.Error()}, ""))
+          }
+        }
+        configure.Sugar.Info("create utxo: ", "address=", addrDB.Address, " utxoID=", utxo.ID)
+      }
+    }
+  }
+  if err := ts.Commit().Error; err != nil {
+    return errors.New(strings.Join([]string{"database commit error: ", err.Error()}, ""))
+  }
+  return nil
 }
