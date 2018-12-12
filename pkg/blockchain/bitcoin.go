@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/txscript"
@@ -100,6 +101,20 @@ func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 	} else {
 		configure.Sugar.Info("dump old btc wallet result: success")
 	}
+}
+
+// GetBlock get block with tx
+func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult, error) {
+	blockHash, err := btcClient.Client.GetBlockHash(height)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := btcClient.Client.GetBlockVerboseTxM(blockHash)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
 }
 
 // BtcBalance type struct

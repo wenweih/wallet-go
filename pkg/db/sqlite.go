@@ -28,9 +28,10 @@ type SubAddress struct {
 // BTCBlock notify block info
 type BTCBlock struct {
   gorm.Model
-  Hash    string `gorm:"not null;unique_index"`
+  Hash    string `gorm:"not null;index"`
   Height  int64   `gorm:"not null"`
   UTXOs   []UTXO
+  ReOrg   bool    `gorm:"default:false"`
 }
 
 // UTXO utxo model
@@ -41,10 +42,11 @@ type UTXO struct {
   Height        int64     `gorm:"not null"`
   VoutIndex     uint32    `gorm:"not null"`
   Used          bool      `gorm:"not null;default:false"`
+  ReOrg         bool      `gorm:"not null;default:false"`
   SubAddress    SubAddress
-  SubAddressID  int
+  SubAddressID  uint
   BTCBlock      BTCBlock
-  BTCBlockID    int
+  BTCBlockID    uint
 }
 
 // NewSqlite new sqlite3 connection
@@ -69,7 +71,11 @@ func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult) 
     configure.Sugar.Info("best block info not found in btc_blocks table, init ....")
     bestBlock.Hash = block.Hash
     bestBlock.Height = block.Height
-    db.Create(&SubAddress{Address: "n11UuUNSMv4JpYZ7fBuKojhFTkVisHYQGA", Asset: "btc"}) // for tesing
+    // db.Create(&SubAddress{Address: "n11UuUNSMv4JpYZ7fBuKojhFTkVisHYQGA", Asset: "btc"}) // for testing
+    // db.Create(&SubAddress{Address: "mzoeJSS1uNG8WpeeGVmEE7Mormyy2UzvRN", Asset: "btc"}) // for testing
+    // db.Create(&SubAddress{Address: "mwHsUZM6aEC24Bya8pT4R4jdpotgBydJtu", Asset: "btc"}) // for testing
+    // db.Create(&SubAddress{Address: "mthFqGtp1CZfKQvxnfTXPP6C8hUYcsp6Kp", Asset: "btc"}) // for testing
+    // db.Create(&SubAddress{Address: "mkSNQT8qbdFAv4XQDn9dSAwdBuA7in44Di", Asset: "btc"}) // for testing
     if err = db.BlockInfo2DB(bestBlock, block); err != nil {
       return nil, err
     }
@@ -107,7 +113,11 @@ func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerbo
     }
   }
   if err := ts.Commit().Error; err != nil {
+    if err = ts.Rollback().Error; err != nil {
+      return errors.New(strings.Join([]string{"database rollback error: create utxo record ", err.Error()}, ""))
+    }
     return errors.New(strings.Join([]string{"database commit error: ", err.Error()}, ""))
   }
+  configure.Sugar.Info("Finish BlockInfo2DB: ", rawBlock.Height, " ", rawBlock.Hash)
   return nil
 }
