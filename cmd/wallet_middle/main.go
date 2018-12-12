@@ -2,18 +2,17 @@ package main
 
 import (
   "net/http"
-  "github.com/jinzhu/gorm"
-   _ "github.com/jinzhu/gorm/dialects/sqlite"
   "github.com/gin-gonic/gin"
+  "wallet-transition/pkg/db"
   "wallet-transition/pkg/configure"
 )
 
 func main()  {
-  db, err := gorm.Open("sqlite3", "test.db")
+  sqldb, err := db.NewSqlite()
   if err != nil {
-    panic("failed to connect database")
+    configure.Sugar.Fatal(err.Error())
   }
-  defer db.Close()
+  defer sqldb.Close()
 
   gin.SetMode(gin.ReleaseMode)
   r := gin.Default()

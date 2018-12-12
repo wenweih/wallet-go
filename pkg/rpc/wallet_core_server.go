@@ -13,9 +13,7 @@ import (
 )
 
 // WalletCoreServerRPC WalletCore rpc server
-type WalletCoreServerRPC struct {
-
-}
+type WalletCoreServerRPC struct {}
 
 // Address walletcore server: address method
 func (s *WalletCoreServerRPC) Address(ctx context.Context, in *proto.AddressReq) (*proto.AddressResp, error) {

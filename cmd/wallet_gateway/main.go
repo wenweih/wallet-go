@@ -11,12 +11,31 @@ import (
 	"encoding/json"
   "google.golang.org/grpc"
   "github.com/gin-gonic/gin"
+  "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   pb "wallet-transition/pkg/pb"
   "wallet-transition/pkg/configure"
 )
 
+var (
+  sqldb   *db.GormDB
+  rpcConn *grpc.ClientConn
+)
+
 func main() {
+  var err error
+  sqldb, err = db.NewSqlite()
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
+  defer sqldb.Close()
+
+  rpcConn, err = grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
+  if err != nil {
+    configure.Sugar.Fatal("fail to connect grpc server")
+  }
+  defer rpcConn.Close()
+
   pubBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_pub.pem"}, "/"))
   if err != nil {
     configure.Sugar.Fatal(err.Error())
@@ -34,6 +53,8 @@ func main() {
   encryptAccountPriv := util.EncryptWithPublicKey(paramsBytes, rsaPub)
   configure.Sugar.Info(hex.EncodeToString(encryptAccountPriv))
 
+  defer sqldb.Close()
+
   r := util.GinEngine()
   r.POST("/address", addressHandle)
   r.POST("/withdraw", withdrawHandle)
@@ -49,16 +70,16 @@ func addressHandle(c *gin.Context) {
     return
   }
 
-  conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
-  if err != nil {
-    configure.Sugar.Fatal("fail to connect grpc server")
-  }
-  defer conn.Close()
-  grpcClient := pb.NewWalletCoreClient(conn)
+  grpcClient := pb.NewWalletCoreClient(rpcConn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
   res, err := grpcClient.Address(ctx, &pb.AddressReq{Asset: asset.(string)})
   if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
+  if err := sqldb.Create(&db.SubAddress{Address: res.Address, Asset: asset.(string)}).Error; err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
   }
@@ -70,5 +91,5 @@ func addressHandle(c *gin.Context) {
 }
 
 func withdrawHandle(c *gin.Context)  {
-  
+
 }
