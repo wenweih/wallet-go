@@ -43,7 +43,7 @@ func main() {
   rsaPub := util.BytesToPublicKey(pubBytes)
 
   params := util.AuthParams {
-    Asset : "eth",
+    Asset : "btc",
   }
   paramsBytes, err := json.Marshal(params)
   if err != nil {
@@ -91,5 +91,26 @@ func addressHandle(c *gin.Context) {
 }
 
 func withdrawHandle(c *gin.Context)  {
+  asset, exist := c.Get("asset")
+  if !exist {
+    util.GinRespException(c, http.StatusInternalServerError, errors.New("paramsByte not exist"))
+    return
+  }
 
+  withdrawParams := util.WithdrawParams{}
+  err := c.ShouldBindJSON(&withdrawParams)
+  if err != nil && err.Error() == "EOF" {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("params can't empty"))
+    return
+  }else if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  switch asset {
+  case "btc":
+    configure.Sugar.Info("btc")
+  case "eth":
+    configure.Sugar.Info("eth")
+  }
 }
