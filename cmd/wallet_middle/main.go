@@ -109,11 +109,9 @@ func btcBestBlockNotifyHandle(c *gin.Context) {
           ts.Model(&utxo).Update("re_org", true)
         }
         ts.Commit()
-
         if err = sqldb.BlockInfo2DB(db.BTCBlock{Hash: block.Hash, Height: block.Height}, block); err != nil {
           configure.Sugar.Fatal(err.Error())
         }
-
         configure.Sugar.Info("reorg:", dbBlock.Height, " ", dbBlock.Hash)
       } else {
         configure.Sugar.Info("tracking the same block, nothing happen ", dbBlock.Height, " ", dbBlock.Hash)

@@ -46,6 +46,11 @@ func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
 
 func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
   return func (c *gin.Context)  {
+    ct := c.GetHeader("Content-Type")
+    if ct != "application/json" {
+      GinRespException(c, http.StatusUnauthorized, errors.New("Content-Type must be application/json"))
+      return
+    }
     token := c.Request.Header.Get("Authorization")
     if token == "" {
       GinRespException(c, http.StatusUnauthorized, errors.New("Authorization can't found in request header"))
@@ -87,4 +92,11 @@ func GinRespException(c *gin.Context, code int, err error) {
 // AuthParams /address endpoint default params
 type AuthParams struct {
   Asset string `json:"asset"`
+}
+
+// WithdrawParams withdraw endpoint params
+type WithdrawParams struct {
+  From    string  `json:"from" binding:"required"`
+  To      string  `json:"to" binding:"required"`
+  Amount  float64 `json:"amount" binding:"required"`
 }
