@@ -38,6 +38,8 @@ func main() {
   }
   configure.Sugar.Info("DB bestBlock is: ", bestBlock.Height, " ", bestBlock.Hash, " Chain bestBlock is: ", binfo.Headers, " ", binfo.BestBlockHash)
 
+  // TODO: if there was bestBlock in db previously, we need to rallback 6 block
+
   dbBestHeight := bestBlock.Height
   for height := (dbBestHeight + 1); height <= int64(binfo.Headers); height++ {
     rawBlock, err := btcClient.GetBlock(height)
