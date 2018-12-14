@@ -73,10 +73,16 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusInternalServerError, errors.New("Unmarshal params error"))
       return
     }
+    if params.Asset == "" {
+      GinRespException(c, http.StatusBadRequest, errors.New("asset params can't be empty"))
+      return
+    }
+
     if !Contain(params.Asset , configure.Config.APIASSETS) {
       GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{params.Asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, "")))
       return
     }
+    c.Set("detail", params.Detail)
     c.Set("asset", params.Asset)
   }
 }
@@ -91,7 +97,8 @@ func GinRespException(c *gin.Context, code int, err error) {
 
 // AuthParams /address endpoint default params
 type AuthParams struct {
-  Asset string `json:"asset"`
+  Asset   string                  `json:"asset"`
+  Detail  map[string]interface{}  `json:"detail,omitempty"`
 }
 
 // WithdrawParams withdraw endpoint params

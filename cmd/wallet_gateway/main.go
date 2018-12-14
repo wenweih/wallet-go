@@ -2,13 +2,10 @@ package main
 
 import (
   "time"
-  "context"
   "errors"
-  "strings"
-  "io/ioutil"
+  "context"
   "net/http"
-  "encoding/hex"
-	"encoding/json"
+  "reflect"
   "google.golang.org/grpc"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/db"
@@ -35,24 +32,6 @@ func main() {
     configure.Sugar.Fatal("fail to connect grpc server")
   }
   defer rpcConn.Close()
-
-  pubBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_pub.pem"}, "/"))
-  if err != nil {
-    configure.Sugar.Fatal(err.Error())
-  }
-  rsaPub := util.BytesToPublicKey(pubBytes)
-
-  params := util.AuthParams {
-    Asset : "btc",
-  }
-  paramsBytes, err := json.Marshal(params)
-  if err != nil {
-    configure.Sugar.Warn("json Marshal error: ", err.Error())
-  }
-
-  encryptAccountPriv := util.EncryptWithPublicKey(paramsBytes, rsaPub)
-  configure.Sugar.Info(hex.EncodeToString(encryptAccountPriv))
-
   defer sqldb.Close()
 
   r := util.GinEngine()
@@ -64,12 +43,7 @@ func main() {
 }
 
 func addressHandle(c *gin.Context) {
-  asset, exist := c.Get("asset")
-  if !exist {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("paramsByte not exist"))
-    return
-  }
-
+  asset, _ := c.Get("asset")
   grpcClient := pb.NewWalletCoreClient(rpcConn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
@@ -91,22 +65,34 @@ func addressHandle(c *gin.Context) {
 }
 
 func withdrawHandle(c *gin.Context)  {
-  asset, exist := c.Get("asset")
-  if !exist {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("paramsByte not exist"))
-    return
-  }
-
+  asset, _ := c.Get("asset")
+  detailParams, _ := c.Get("detail")
+  params := reflect.ValueOf(detailParams)
   withdrawParams := util.WithdrawParams{}
-  err := c.ShouldBindJSON(&withdrawParams)
-  if err != nil && err.Error() == "EOF" {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("params can't empty"))
-    return
-  }else if err != nil {
-    util.GinRespException(c, http.StatusBadRequest, err)
+  if params.Kind() == reflect.Map {
+    for _, key := range params.MapKeys() {
+      switch key.Interface() {
+      case "from":
+        withdrawParams.From = params.MapIndex(key).Interface().(string)
+      case "to":
+        withdrawParams.To = params.MapIndex(key).Interface().(string)
+      case "amount":
+        withdrawParams.Amount = params.MapIndex(key).Interface().(float64)
+      }
+    }
+  }else {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
     return
   }
 
+  if withdrawParams.Amount <= 0 {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
+    return
+  }
+  if withdrawParams.From == "" || withdrawParams.To == "" {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("from or to params can't be empty"))
+    return
+  }
   switch asset {
   case "btc":
     configure.Sugar.Info("btc")
