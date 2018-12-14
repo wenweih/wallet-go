@@ -64,7 +64,7 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
 
    decryptoParamBytes, err := DecryptWithPrivateKey(tokenByte, rsaPriv)
     if err != nil {
-      GinRespException(c, http.StatusForbidden, errors.New("Decrypt Token error"))
+      GinRespException(c, http.StatusForbidden, errors.New(strings.Join([]string{"Decrypt Token error", err.Error()}, ":")))
       return
     }
 
