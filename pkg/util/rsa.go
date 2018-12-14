@@ -46,7 +46,7 @@ const (
 
 // RsaGen generate rsa util
 func RsaGen(fileName string)  {
-  key, err := rsa.GenerateKey(rand.Reader, 2048)
+  key, err := rsa.GenerateKey(rand.Reader, 4096)
   checkError(err)
   savePEMKey(fileName, "priv", key)
   savePEMKey(fileName, "pub", key)
