@@ -240,3 +240,24 @@ func DecodeBtcTxHex(txHex string) (*btcutil.Tx, error) {
 
 	return btcutil.NewTx(&msgTx), nil
 }
+
+// SimpleCoin implements coinset Coin interface
+type SimpleCoin struct {
+	TxHash     *chainhash.Hash
+	TxIndex    uint32
+	TxValue    btcutil.Amount
+	TxNumConfs int64
+}
+
+// Hash implements coinset Coin interface
+func (c *SimpleCoin) Hash() *chainhash.Hash { return c.TxHash }
+// Index implements coinset Coin interface
+func (c *SimpleCoin) Index() uint32         { return c.TxIndex }
+// Value implements coinset Coin interface
+func (c *SimpleCoin) Value() btcutil.Amount { return c.TxValue }
+// PkScript implements coinset Coin interface
+func (c *SimpleCoin) PkScript() []byte      { return nil }
+// NumConfs implements coinset Coin interface
+func (c *SimpleCoin) NumConfs() int64       { return c.TxNumConfs }
+// ValueAge implements coinset Coin interface
+func (c *SimpleCoin) ValueAge() int64       { return int64(c.TxValue) * c.TxNumConfs }
