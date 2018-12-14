@@ -3,6 +3,7 @@ package proto;
 
 service WalletCore {
   rpc Address (addressReq) returns (AddressResp);
+  rpc SignTx (SignTxReq) returns (SignTxResp);
 }
 
 message addressReq {
@@ -11,4 +12,15 @@ message addressReq {
 
 message AddressResp {
   string address = 1;
+}
+
+message SignTxReq{
+  string from = 1;
+  string to = 2;
+  double amount = 3;
+}
+
+message SignTxResp {
+  bool result  = 1;
+  string rawTx = 2;
 }
