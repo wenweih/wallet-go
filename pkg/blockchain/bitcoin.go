@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"os"
+	"bufio"
 	"bytes"
 	"encoding/hex"
 	"errors"
@@ -100,6 +102,35 @@ func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 		}
 	} else {
 		configure.Sugar.Info("dump old btc wallet result: success")
+	}
+}
+
+// ImportPrivateKey import private key from dump file
+func (btcClient *BTCRPC) ImportPrivateKey()  {
+	file, err := os.Open(strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup_new"}, ""))
+	if err != nil {
+		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "label=") && !strings.Contains(line, "script"){
+			splitArr := strings.Split(line, " ")
+			privateKey := splitArr[0]
+			wif, err := btcutil.DecodeWIF(privateKey)
+			if err != nil {
+				configure.Sugar.Fatal("decode wif string error:", err.Error())
+			}
+			if result := btcClient.Client.ImportPrivKeyRescan(wif, "importANBI", false); result != nil {
+				configure.Sugar.Fatal("fail to import private key")
+			}
+			configure.Sugar.Info("import success: ", strings.Split(splitArr[4], "=")[1])
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		configure.Sugar.Fatal("scanner error: ", err.Error())
 	}
 }
 

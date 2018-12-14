@@ -76,12 +76,21 @@ var migrateWallet = &cobra.Command {
 	},
 }
 
+var importPrivateKey = &cobra.Command {
+	Use:   "import",
+	Short: "import private key",
+	Run: func(cmd *cobra.Command, args []string){
+		btcClient := &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
+		btcClient.ImportPrivateKey()
+	},
+}
+
 func main() {
 	execute()
 }
 
 func init() {
-	rootCmd.AddCommand(dumpWallet, migrateWallet, rsaGenerate)
+	rootCmd.AddCommand(dumpWallet, migrateWallet, rsaGenerate, importPrivateKey)
 	dumpWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
 	dumpWallet.MarkFlagRequired("asset")
 	dumpWallet.Flags().BoolVarP(&local, "local", "l", false, "copy dump wallet file to local machine. default copy to remote server, which is set in configure")
