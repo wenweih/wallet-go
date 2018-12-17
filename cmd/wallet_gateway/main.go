@@ -14,8 +14,6 @@ import (
   "github.com/btcsuite/btcutil"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
-  "github.com/btcsuite/btcd/chaincfg"
-  "github.com/btcsuite/btcd/txscript"
   pb "wallet-transition/pkg/pb"
 )
 
@@ -118,35 +116,10 @@ func withdrawHandle(c *gin.Context)  {
 
   switch asset {
   case "btc":
-    toAddress, err := btcutil.DecodeAddress(withdrawParams.To, &chaincfg.RegressionNetParams)
+    fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(withdrawParams)
     if err != nil {
-      e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusBadRequest, e)
-      return
-    }
-
-    fromAddress, err := btcutil.DecodeAddress(withdrawParams.From, &chaincfg.RegressionNetParams)
-    if err != nil {
-      e := errors.New(strings.Join([]string{"From address address illegal", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusBadRequest, e)
-      return
-    }
-
-    toPkScript, err := txscript.PayToAddrScript(toAddress)
-    if err != nil {
-      e := errors.New(strings.Join([]string{"to address PayToAddrScript error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
-      return
-    }
-
-    fromPkScript, err := txscript.PayToAddrScript(fromAddress)
-    if err != nil {
-      e := errors.New(strings.Join([]string{"from address PayToAddrScript error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusBadRequest, err)
       return
     }
 

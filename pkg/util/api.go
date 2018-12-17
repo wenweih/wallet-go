@@ -9,6 +9,9 @@ import (
   "encoding/hex"
   "encoding/json"
   "github.com/gin-gonic/gin"
+  "github.com/btcsuite/btcutil"
+  "github.com/btcsuite/btcd/txscript"
+  "github.com/btcsuite/btcd/chaincfg"
   "wallet-transition/pkg/configure"
 )
 
@@ -106,4 +109,32 @@ type WithdrawParams struct {
   From    string  `json:"from" binding:"required"`
   To      string  `json:"to" binding:"required"`
   Amount  float64 `json:"amount" binding:"required"`
+}
+
+// BTCWithdrawAddressValidate validate withdraw endpoint address params
+func BTCWithdrawAddressValidate(withdrawParams WithdrawParams) ([]byte, []byte, error) {
+  toAddress, err := btcutil.DecodeAddress(withdrawParams.To, &chaincfg.RegressionNetParams)
+  if err != nil {
+    e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
+    return nil, nil, e
+  }
+
+  fromAddress, err := btcutil.DecodeAddress(withdrawParams.From, &chaincfg.RegressionNetParams)
+  if err != nil {
+    e := errors.New(strings.Join([]string{"From address address illegal", err.Error()}, ":"))
+    return nil, nil, e
+  }
+
+  toPkScript, err := txscript.PayToAddrScript(toAddress)
+  if err != nil {
+    e := errors.New(strings.Join([]string{"to address PayToAddrScript error", err.Error()}, ":"))
+    return nil, nil, e
+  }
+
+  fromPkScript, err := txscript.PayToAddrScript(fromAddress)
+  if err != nil {
+    e := errors.New(strings.Join([]string{"from address PayToAddrScript error", err.Error()}, ":"))
+    return nil, nil, e
+  }
+  return fromPkScript, toPkScript, nil
 }
