@@ -1,6 +1,7 @@
 package main
 
 import (
+  "math/big"
   "time"
   "errors"
   "strings"
@@ -15,12 +16,14 @@ import (
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
+  "github.com/shopspring/decimal"
 )
 
 var (
   sqldb   *db.GormDB
   rpcConn *grpc.ClientConn
   btcClient *blockchain.BTCRPC
+  ethClient *blockchain.ETHRPC
 )
 
 func main() {
@@ -39,6 +42,10 @@ func main() {
   defer sqldb.Close()
 
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
+  ethClient, err = blockchain.NewEthClient()
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
 
   r := util.GinEngine()
   r.POST("/address", addressHandle)
@@ -107,7 +114,7 @@ func withdrawHandle(c *gin.Context)  {
   )
   // query from address
   if err := sqldb.Where("address = ? AND asset = ?", withdrawParams.From, asset).First(&subAddress).Error; err !=nil && err.Error() == "record not found" {
-    util.GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{withdrawParams.From, " not found in database"}, "")))
+    util.GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{asset.(string), " ", withdrawParams.From, " not found in database"}, "")))
     return
   }else if err != nil {
     util.GinRespException(c, http.StatusNotFound, err)
@@ -184,6 +191,28 @@ func withdrawHandle(c *gin.Context)  {
       "signed_tx": res.HexSignedTx,
     })
   case "eth":
-    configure.Sugar.Info("eth")
+    var (
+      txFee = new(big.Int)
+    )
+    gasLimit := uint64(21000) // in units
+    balance, nonce, gasPrice, err := ethClient.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), subAddress.Address)
+    if err != nil {
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    balanceDecimal, _ := decimal.NewFromString(balance.String())
+
+    transferAmount := decimal.NewFromFloat(withdrawParams.Amount)
+    txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
+    feeDecimal, _ := decimal.NewFromString(txFee.String())
+    totalCost := transferAmount.Add(feeDecimal)
+    if !totalCost.LessThanOrEqual(balanceDecimal) {
+      err := errors.New(strings.Join([]string{"Account: ", withdrawParams.From, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
+      configure.Sugar.DPanic("convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error())
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    configure.Sugar.Info("eth balance: ", balance.String(), " nonce: ", nonce, " gasPrice: ", gasPrice.String())
   }
 }

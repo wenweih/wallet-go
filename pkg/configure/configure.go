@@ -31,6 +31,8 @@ type Configure struct {
 	BTCHTTPPostMode bool
 	BTCDisableTLS   bool
 
+	EthRPCWS        string
+
 	OldBTCWalletServerHost	string
 	OldBTCWalletServerUser	string
 	OldBTCWalletServerPass	string
@@ -83,6 +85,9 @@ func InitConfig() *Configure {
 			conf.BTCHTTPPostMode = value.(bool)
 		case "btc_disable_tls":
 			conf.BTCDisableTLS = value.(bool)
+
+		case "eth_rpc_ws":
+			conf.EthRPCWS = value.(string)
 
 		// old btc wallet server info
 		case "old_btc_wallet_server_host":
