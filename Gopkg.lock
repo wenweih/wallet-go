@@ -2,12 +2,20 @@
 
 
 [[projects]]
-  digest = "1:a3b104925e0eab19b521422b61db687f915eb96c4488c7074fdea989ef9a3e9a"
+  digest = "1:1c10bf6793afd790b0949d5384403d8d4850bf8f5f72ab6fc232277daaa5057b"
+  name = "github.com/aead/siphash"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "83563a290f60225eb120d724600b9690c3fb536f"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:666e546c77c8a4eb7a77fcbd5c9bc4a367e8ec2e4fb74dcd74d2e218751567ad"
   name = "github.com/alecthomas/gometalinter"
   packages = ["."]
   pruneopts = "UT"
-  revision = "17a7ffa42374937bfecabfb8d2efbd4db0c26741"
-  version = "v2.0.11"
+  revision = "102ac984005d45456a7e3ae6dc94ebcd95c2bb19"
+  version = "v2.0.12"
 
 [[projects]]
   branch = "master"
@@ -38,13 +46,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cd98fd45648a2c0eeb1bd30f0a09a5475f0cb80e3010a718ae6c98abd89a6fec"
+  digest = "1:468b5e7d98acb4609fd6dec19227f34ae4cbd97fd0e492c4c05f6e46d16362a0"
   name = "github.com/btcsuite/btcd"
   packages = [
+    "blockchain",
+    "blockchain/indexers",
     "btcec",
     "btcjson",
     "chaincfg",
     "chaincfg/chainhash",
+    "database",
+    "mempool",
+    "mining",
     "rpcclient",
     "txscript",
     "wire",
@@ -62,13 +75,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4dc7528f33c54989fadd17045843901777e46d22c31363071e61bda4feee0ea4"
+  digest = "1:f9b41590b386510db0ea5ae8b54b6ef7d82c5c01ceec0ea8c3e6bf6b478c32e3"
   name = "github.com/btcsuite/btcutil"
   packages = [
     ".",
     "base58",
     "bech32",
     "coinset",
+    "gcs",
+    "gcs/builder",
     "hdkeychain",
   ]
   pruneopts = "UT"
@@ -304,6 +319,14 @@
   ]
   pruneopts = "UT"
   revision = "720a0952cc2ac777afc295d9861263e2a4cf96a1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:39016aee9299043adc48cdab6eff2da3814ca210d561b0a0cdea103b1705ce26"
+  name = "github.com/kkdai/bstream"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b3251f7901ec4dd4ec66b3210e8f4bd5c0f1c5a3"
 
 [[projects]]
   digest = "1:9cedee824c21326bd26950bd9e1ffe9dc4e7ca03dc8634d0e6f954ee6a383172"
@@ -654,7 +677,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "fe2443f7b95069e01d0b02159564c1b4d0dfcb5e"
+  revision = "3c39ce7b61056afe4473b651789da5f89d4aeb20"
 
 [[projects]]
   branch = "master"
@@ -737,6 +760,7 @@
     "github.com/btcsuite/btcd/btcjson",
     "github.com/btcsuite/btcd/chaincfg",
     "github.com/btcsuite/btcd/chaincfg/chainhash",
+    "github.com/btcsuite/btcd/mempool",
     "github.com/btcsuite/btcd/rpcclient",
     "github.com/btcsuite/btcd/txscript",
     "github.com/btcsuite/btcd/wire",

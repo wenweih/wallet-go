@@ -3,23 +3,19 @@ package main
 import (
   "time"
   "errors"
-  "bytes"
   "strings"
   "context"
   "net/http"
   "reflect"
-  "encoding/hex"
   "google.golang.org/grpc"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   "github.com/btcsuite/btcutil"
-  "github.com/btcsuite/btcd/wire"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   "github.com/btcsuite/btcd/chaincfg"
   "github.com/btcsuite/btcd/txscript"
-  "github.com/btcsuite/btcutil/coinset"
   pb "wallet-transition/pkg/pb"
 )
 
@@ -163,6 +159,13 @@ func withdrawHandle(c *gin.Context)  {
     }
     bheader := binfo.Headers
 
+    feeKB, err := btcClient.Client.EstimateFee(int64(6))
+    if err != nil {
+      configure.Sugar.DPanic("EstimateFee: ", err.Error())
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+
     // query utxos, which confirmate count is more than 6
     if err = sqldb.Model(&subAddress).Where("height <= ?", bheader - 4).Related(&utxos).Error; err !=nil {
       util.GinRespException(c, http.StatusNotFound, err)
@@ -188,21 +191,7 @@ func withdrawHandle(c *gin.Context)  {
     configure.Sugar.Info("selectedUTXOs: ", selectedUTXOs, " length: ", len(selectedUTXOs))
     configure.Sugar.Info("selectedCoins: ", selectedCoins, " length: ", len(selectedCoins.Coins()))
 
-    msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
-
-    var vinAmount int64
-    for _, coin := range selectedCoins.Coins() {
-      vinAmount += int64(coin.Value())
-    }
-
-    txOutTo := wire.NewTxOut(int64(txAmount), toPkScript)
-    txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), fromPkScript) // todo: sub tx fee
-    msgTx.AddTxOut(txOutTo)
-    msgTx.AddTxOut(txOutReBack)
-
-    buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
-    msgTx.Serialize(buf)
-    txHex := hex.EncodeToString(buf.Bytes())
+    txHex := blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
     configure.Sugar.Info("txHex: ", txHex)
   case "eth":
     configure.Sugar.Info("eth")

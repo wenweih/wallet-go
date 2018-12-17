@@ -21,21 +21,9 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/manifoldco/promptui"
 	"github.com/shopspring/decimal"
+	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcutil/coinset"
 )
-
-// info, err := btcClient.GetBlockChainInfo()
-// if err != nil {
-// 	configure.Sugar.Fatal("Get info error: ", err.Error())
-// }
-// configure.Sugar.Info("info: ", info)
-//
-// fee, err := btcClient.EstimateFee(int64(6))
-// if err != nil {
-// 	configure.Sugar.Warn("EstimateFee: ", err.Error())
-// }
-//
-// configure.Sugar.Info("fee: ", fee)
 
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
 
@@ -299,4 +287,32 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 		}
 	}
 	return selectedUTXOs, selectedCoins, nil
+}
+
+// RawBTCTx btc raw tx
+func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) string {
+	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
+	var vinAmount int64
+	for _, coin := range selectedCoins.Coins() {
+		vinAmount += int64(coin.Value())
+	}
+
+	txOutTo := wire.NewTxOut(int64(txAmount), toPkScript)
+	txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), fromPkScript)
+	msgTx.AddTxOut(txOutTo)
+	msgTx.AddTxOut(txOutReBack)
+
+	rate := mempool.SatoshiPerByte(feeKB.FeeRate)
+	fee := rate.Fee(uint32(msgTx.SerializeSize()))
+
+	// sub tx fee
+	for _, out := range msgTx.TxOut {
+		if out.Value != int64(txAmount) && (vinAmount - int64(txAmount) - int64(fee)) > 0{
+			out.Value = vinAmount - int64(txAmount) - int64(fee)
+		}
+	}
+
+	buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
+	msgTx.Serialize(buf)
+	return hex.EncodeToString(buf.Bytes())
 }
