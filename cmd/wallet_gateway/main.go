@@ -161,11 +161,28 @@ func withdrawHandle(c *gin.Context)  {
       return
     }
 
+    var vinAmount int64
+    for _, coin := range selectedCoins.Coins() {
+      vinAmount += int64(coin.Value())
+    }
+
     configure.Sugar.Info("selectedUTXOs: ", selectedUTXOs, " length: ", len(selectedUTXOs))
     configure.Sugar.Info("selectedCoins: ", selectedCoins, " length: ", len(selectedCoins.Coins()))
 
     txHex := blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
-    configure.Sugar.Info("txHex: ", txHex)
+
+    grpcClient := pb.NewWalletCoreClient(rpcConn)
+    ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+    defer cancel()
+    res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: txHex, VinAmount: vinAmount})
+    if err != nil {
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "signed_tx": res.HexSignedTx,
+    })
   case "eth":
     configure.Sugar.Info("eth")
   }

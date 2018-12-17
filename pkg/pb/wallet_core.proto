@@ -15,12 +15,13 @@ message AddressResp {
 }
 
 message SignTxReq{
-  string from = 1;
-  string to = 2;
-  double amount = 3;
+  string  asset = 1;
+  string  from = 2;
+  int64   vinAmount = 3;
+  string hexUnsignedTx = 4;
 }
 
 message SignTxResp {
   bool result  = 1;
-  string rawTx = 2;
+  string hexSignedTx = 2;
 }
