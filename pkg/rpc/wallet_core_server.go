@@ -1,6 +1,7 @@
 package rpc
 
 import (
+  "math/big"
   "strings"
   "errors"
   "bytes"
@@ -13,6 +14,7 @@ import (
   "github.com/btcsuite/btcd/txscript"
   "github.com/btcsuite/btcutil/hdkeychain"
   "github.com/ethereum/go-ethereum/crypto"
+  "github.com/ethereum/go-ethereum/core/types"
   "github.com/btcsuite/btcd/chaincfg"
 )
 
@@ -42,18 +44,21 @@ func (s *WalletCoreServerRPC) Address(ctx context.Context, in *proto.AddressReq)
 
 // SignTx sign raw tx
 func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (*proto.SignTxResp, error) {
+  ldb, err := db.NewLDB(in.Asset)
+  if err != nil {
+    return nil, err
+  }
+  from := in.From
+  if in.Asset == "eth" {
+    from = strings.ToLower(from)
+  }
+  priv, err := ldb.Get([]byte(from), nil)
+  if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
+    return nil, errors.New(strings.Join([]string{"Address:", in.From, " not found: ", err.Error()}, ""))
+  }
   switch in.Asset {
   case "btc":
     // https://www.experts-exchange.com/questions/29108851/How-to-correctly-create-and-sign-a-Bitcoin-raw-transaction-using-Btcutil-library.html
-    ldb, err := db.NewLDB("btc")
-    if err != nil {
-      return nil, err
-    }
-    priv, err := ldb.Get([]byte(in.From), nil)
-    if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
-      return nil, errors.New(strings.Join([]string{"Fail to add address:", in.From, " ", err.Error()}, ""))
-    }
-
     tx, err := blockchain.DecodeBtcTxHex(in.HexUnsignedTx)
     if err != nil {
       return nil, errors.New(strings.Join([]string{"fail to DecodeBtcTxHex", err.Error()}, ":"))
@@ -89,6 +94,22 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
     txHex := hex.EncodeToString(buf.Bytes())
     return &proto.SignTxResp{Result: true, HexSignedTx: txHex}, nil
   case "eth":
+    tx, err := blockchain.DecodeETHTx(in.HexUnsignedTx)
+    if err != nil {
+      return nil, errors.New(strings.Join([]string{"fail to DecodeETHTx", err.Error()}, ":"))
+    }
+
+    ecPriv, err := crypto.ToECDSA(priv)
+    if err != nil {
+      return nil, errors.New(strings.Join([]string{"Get private key error: ", err.Error()}, " "))
+    }
+    chainID := big.NewInt(1337)
+    signtx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), ecPriv)
+    if err != nil {
+      return nil, errors.New(strings.Join([]string{"sign tx error", err.Error()}, " "))
+    }
+    txHex, err := blockchain.EncodeETHTx(signtx)
+    return &proto.SignTxResp{Result: true, HexSignedTx: *txHex}, nil
   }
   return nil, nil
 }

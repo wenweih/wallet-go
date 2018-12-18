@@ -17,6 +17,7 @@ import (
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
   "github.com/shopspring/decimal"
+  "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -38,7 +39,7 @@ func main() {
   if err != nil {
     configure.Sugar.Fatal("fail to connect grpc server")
   }
-  defer rpcConn.Close()
+  // defer rpcConn.Close()
   defer sqldb.Close()
 
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
@@ -121,6 +122,11 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
+  var (
+    vinAmount   int64
+    unSignTxHex string
+  )
+
   switch asset {
   case "btc":
     fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(withdrawParams)
@@ -168,7 +174,6 @@ func withdrawHandle(c *gin.Context)  {
       return
     }
 
-    var vinAmount int64
     for _, coin := range selectedCoins.Coins() {
       vinAmount += int64(coin.Value())
     }
@@ -176,21 +181,15 @@ func withdrawHandle(c *gin.Context)  {
     configure.Sugar.Info("selectedUTXOs: ", selectedUTXOs, " length: ", len(selectedUTXOs))
     configure.Sugar.Info("selectedCoins: ", selectedCoins, " length: ", len(selectedCoins.Coins()))
 
-    txHex := blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
-
-    grpcClient := pb.NewWalletCoreClient(rpcConn)
-    ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-    defer cancel()
-    res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: txHex, VinAmount: vinAmount})
-    if err != nil {
-      util.GinRespException(c, http.StatusInternalServerError, err)
+    unSignTxHex = blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
+  case "eth":
+    if !common.IsHexAddress(withdrawParams.To) {
+      err := errors.New(strings.Join([]string{"To: ", withdrawParams.To, " isn't valid ethereum address"}, ""))
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusBadRequest, err)
       return
     }
-    c.JSON(http.StatusOK, gin.H {
-      "status": http.StatusOK,
-      "signed_tx": res.HexSignedTx,
-    })
-  case "eth":
+
     var (
       txFee = new(big.Int)
     )
@@ -201,18 +200,42 @@ func withdrawHandle(c *gin.Context)  {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
     }
-    balanceDecimal, _ := decimal.NewFromString(balance.String())
+    etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
 
+    balanceDecimal, _ := decimal.NewFromString(balance.String())
     transferAmount := decimal.NewFromFloat(withdrawParams.Amount)
+    transferAmount = transferAmount.Mul(etherToWei)
     txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
     feeDecimal, _ := decimal.NewFromString(txFee.String())
     totalCost := transferAmount.Add(feeDecimal)
     if !totalCost.LessThanOrEqual(balanceDecimal) {
-      err := errors.New(strings.Join([]string{"Account: ", withdrawParams.From, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
-      configure.Sugar.DPanic("convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error())
+      err = errors.New(strings.Join([]string{"Account: ", withdrawParams.From, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
+      configure.Sugar.DPanic(err.Error())
       util.GinRespException(c, http.StatusBadRequest, err)
       return
     }
-    configure.Sugar.Info("eth balance: ", balance.String(), " nonce: ", nonce, " gasPrice: ", gasPrice.String())
+
+    amount, _ := new(big.Int).SetString(transferAmount.String(), 10)
+    rawTxHex, _, err := blockchain.CreateRawETHTx(*nonce, amount, gasPrice, withdrawParams.From, withdrawParams.To)
+    if err != nil {
+      err := errors.New(strings.Join([]string{"To: ", withdrawParams.To, " isn't valid ethereum address"}, ""))
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    unSignTxHex = *rawTxHex
   }
+
+  grpcClient := pb.NewWalletCoreClient(rpcConn)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+  defer cancel()
+  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: unSignTxHex, VinAmount: vinAmount})
+  if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+  c.JSON(http.StatusOK, gin.H {
+    "status": http.StatusOK,
+    "signed_tx": res.HexSignedTx,
+  })
 }

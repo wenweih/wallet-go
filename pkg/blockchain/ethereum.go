@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+  "bytes"
   "errors"
   "strings"
   "io/ioutil"
@@ -8,8 +9,11 @@ import (
   "math/big"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
+  "github.com/ethereum/go-ethereum/rlp"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/ethclient"
+  "github.com/ethereum/go-ethereum/core/types"
+  "github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // ETHRPC bitcoin-core client alias
@@ -75,5 +79,47 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
 	}
 
 	return balance, &pendingNonceAt, gasPrice, nil
+}
 
+// CreateRawETHTx create eth raw tx
+func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressFrom, hexAddressTo string) (*string, *string, error) {
+	gasLimit := uint64(21000) // in units
+
+	if !common.IsHexAddress(hexAddressTo) {
+		return nil, nil, errors.New(strings.Join([]string{hexAddressTo, "invalidate"}, " "))
+	}
+
+	tx := types.NewTransaction(nonce, common.HexToAddress(hexAddressTo), transferAmount, gasLimit, gasPrice, nil)
+	rawTxHex, err := EncodeETHTx(tx)
+	if err != nil {
+		return nil, nil, errors.New(strings.Join([]string{"encode raw tx error", err.Error()}, " "))
+	}
+	txHashHex := tx.Hash().Hex()
+	return rawTxHex, &txHashHex, nil
+}
+
+// DecodeETHTx ethereum transaction hex
+func DecodeETHTx(txHex string) (*types.Transaction, error) {
+	txc, err := hexutil.Decode(txHex)
+	if err != nil {
+		return nil, err
+	}
+
+	var txde types.Transaction
+
+	t, err := &txde, rlp.Decode(bytes.NewReader(txc), &txde)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func EncodeETHTx(tx *types.Transaction) (*string, error) {
+	txb, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		return nil, err
+	}
+	txHex := hexutil.Encode(txb)
+	return &txHex, nil
 }
