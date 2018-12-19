@@ -12,15 +12,12 @@ import (
 	"wallet-transition/pkg/db"
 	"wallet-transition/pkg/util"
 	"wallet-transition/pkg/configure"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/manifoldco/promptui"
-	"github.com/shopspring/decimal"
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcutil/coinset"
 )
@@ -58,7 +55,8 @@ type BtcUTXO struct {
 
 // DumpBTC dump wallet from node
 func (btcClient *BTCRPC) DumpBTC(local bool) {
-	oldWalletServerClient, err := util.NewServerClient(configure.Config.OldBTCWalletServerUser, configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
+	oldWalletServerClient, err := util.NewServerClient(configure.Config.OldBTCWalletServerUser,
+		configure.Config.OldBTCWalletServerPass, configure.Config.OldBTCWalletServerHost)
 	if err != nil {
 		configure.Sugar.Fatal(err.Error())
 	}
@@ -76,7 +74,8 @@ func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 	if _, err := btcClient.Client.DumpWallet(btcWalletBackupPath); err != nil {
 		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
 			prompt := promptui.Prompt {
-				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.BackupWalletPath), "backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
+				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.BackupWalletPath),
+					"backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
 				IsConfirm: true,
 			}
 			if _, err = prompt.Run(); err != nil {
@@ -136,80 +135,6 @@ func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult,
 		return nil, err
 	}
 	return block, nil
-}
-
-// BtcBalance type struct
-type BtcBalance struct {
-	Address string  `json:"address"`
-	Amount  float64 `json:"amount"`
-}
-
-// BtcBalanceJournal 余额变更流水
-type BtcBalanceJournal struct {
-	Address string  `json:"address"`
-	Amount  float64 `json:"amount"`
-	Operate string  `json:"operate"`
-	Txid    string  `json:"txid"`
-}
-
-// BtcAddressWithAmount 地址-余额类型
-type BtcAddressWithAmount struct {
-	Address string          `json:"address"`
-	Amount  decimal.Decimal `json:"amount"`
-}
-
-// BtcAddressWithAmountAndTxid 地址-余额类型
-type BtcAddressWithAmountAndTxid struct {
-	Address string  `json:"address"`
-	Amount  float64 `json:"amount"`
-	Txid    string  `json:"txid"`
-}
-
-// CreateRawBTCTx create raw tx: vins related with one address, vouts related to one address
-func CreateRawBTCTx(from, to string, value, fee float64, utxos []*BtcUTXO) (*string, error) {
-	fromAddress, err := btcutil.DecodeAddress(from, &chaincfg.RegressionNetParams)
-	if err != nil {
-		return nil, errors.New("DecodeAddress from address error")
-	}
-	fromPkScript, err := txscript.PayToAddrScript(fromAddress)
-	if err != nil {
-		return nil, errors.New("from address PayToAddrScript error")
-	}
-
-	toAddress, err := btcutil.DecodeAddress(to, &chaincfg.RegressionNetParams)
-	if err != nil {
-		return nil, errors.New("DecodeAddress to address error")
-	}
-	toPkScript, err := txscript.PayToAddrScript(toAddress)
-	if err != nil {
-		return nil, errors.New("to address PayToAddrScript error")
-	}
-
-	var vinAmount float64
-	tx := wire.NewMsgTx(wire.TxVersion)
-	for _, utxo := range utxos {
-		txHash, err := chainhash.NewHashFromStr(utxo.Txid)
-		if err != nil {
-			return nil, errors.New(strings.Join([]string{"Txid to hash error", err.Error()}, ":"))
-		}
-		outPoint := wire.NewOutPoint(txHash, utxo.VoutIndex)
-		txIn := wire.NewTxIn(outPoint, nil, nil)
-		tx.AddTxIn(txIn)
-		vinAmount += utxo.Amount
-	}
-
-	if vinAmount < value+fee {
-		return nil, errors.New("value + fee is more than vins' amount")
-	}
-	txOutTo := wire.NewTxOut(int64(value*100000000), toPkScript)
-	txOutReBack := wire.NewTxOut(int64((vinAmount-value-fee)*100000000), fromPkScript)
-	tx.AddTxOut(txOutTo)
-	tx.AddTxOut(txOutReBack)
-	// txToHex
-	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
-	tx.Serialize(buf)
-	txHex := hex.EncodeToString(buf.Bytes())
-	return &txHex, nil
 }
 
 // DecodeBtcTxHex decode bitcoin transaction's hex to rawTx
@@ -304,6 +229,10 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 
 	rate := mempool.SatoshiPerByte(feeKB.FeeRate)
 	fee := rate.Fee(uint32(msgTx.SerializeSize()))
+
+	if fee.String() == "0 BTC" {
+		fee = btcutil.Amount(10000)
+	}
 
 	// sub tx fee
 	for _, out := range msgTx.TxOut {

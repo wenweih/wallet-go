@@ -45,7 +45,7 @@ func main() {
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   ethClient, err = blockchain.NewEthClient()
   if err != nil {
-    configure.Sugar.Fatal(err.Error())
+    configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
   r := util.GinEngine()
@@ -114,7 +114,7 @@ func withdrawHandle(c *gin.Context)  {
     utxos      []db.UTXO
   )
   // query from address
-  if err := sqldb.Where("address = ? AND asset = ?", withdrawParams.From, asset).First(&subAddress).Error; err !=nil && err.Error() == "record not found" {
+  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
     util.GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{asset.(string), " ", withdrawParams.From, " not found in database"}, "")))
     return
   }else if err != nil {
@@ -170,7 +170,11 @@ func withdrawHandle(c *gin.Context)  {
     selectedUTXOs,  selectedCoins, err := blockchain.CoinSelect(int64(bheader), txAmount, utxos)
     if err != nil {
       configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
+      code := http.StatusInternalServerError
+      if err.Error() == "CoinSelect error: no coin selection possible" {
+        code = http.StatusBadRequest
+      }
+      util.GinRespException(c, code, err)
       return
     }
 
@@ -234,8 +238,30 @@ func withdrawHandle(c *gin.Context)  {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
   }
+
+  txid := ""
+  switch asset.(string) {
+  case "btc":
+    tx, err :=blockchain.DecodeBtcTxHex(res.HexSignedTx)
+    if err != nil {
+      e := errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
+      configure.Sugar.DPanic(e.Error())
+      util.GinRespException(c, http.StatusInternalServerError, e)
+      return
+    }
+
+    txHash, err := btcClient.Client.SendRawTransaction(tx.MsgTx(), false)
+    if err != nil {
+      e := errors.New(strings.Join([]string{"SendRawTransaction signed tx error", err.Error()}, ":"))
+      configure.Sugar.DPanic(e.Error())
+      util.GinRespException(c, http.StatusInternalServerError, e)
+      return
+    }
+    txid = txHash.String()
+  }
+
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
-    "signed_tx": res.HexSignedTx,
+    "txid": txid,
   })
 }
