@@ -252,12 +252,27 @@ func withdrawHandle(c *gin.Context)  {
 
     txHash, err := btcClient.Client.SendRawTransaction(tx.MsgTx(), false)
     if err != nil {
-      e := errors.New(strings.Join([]string{"SendRawTransaction signed tx error", err.Error()}, ":"))
+      e := errors.New(strings.Join([]string{"Bitcoin SendRawTransaction signed tx error", err.Error()}, ":"))
       configure.Sugar.DPanic(e.Error())
       util.GinRespException(c, http.StatusInternalServerError, e)
       return
     }
     txid = txHash.String()
+  case "eth":
+    tx, err := blockchain.DecodeETHTx(res.HexSignedTx)
+    if err != nil {
+      e := errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
+      configure.Sugar.DPanic(e.Error())
+      util.GinRespException(c, http.StatusInternalServerError, e)
+      return
+    }
+    if err := ethClient.Client.SendTransaction(context.Background(), tx); err != nil {
+      e := errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
+      configure.Sugar.DPanic(e.Error())
+      util.GinRespException(c, http.StatusInternalServerError, e)
+      return
+    }
+    txid = tx.Hash().String()
   }
 
   c.JSON(http.StatusOK, gin.H {
