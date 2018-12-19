@@ -111,6 +111,11 @@ type WithdrawParams struct {
   Amount  float64 `json:"amount" binding:"required"`
 }
 
+// BlockParams block endpoint params
+type BlockParams struct {
+  Height  int64  `json:"height" binding:"required"`
+}
+
 // BTCWithdrawAddressValidate validate withdraw endpoint address params
 func BTCWithdrawAddressValidate(withdrawParams WithdrawParams) ([]byte, []byte, error) {
   toAddress, err := btcutil.DecodeAddress(withdrawParams.To, &chaincfg.RegressionNetParams)
