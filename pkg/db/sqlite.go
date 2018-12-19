@@ -121,3 +121,45 @@ func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerbo
   configure.Sugar.Info("Finish BlockInfo2DB: ", rawBlock.Height, " ", rawBlock.Hash)
   return nil
 }
+
+// RollbackTrack rollback 6 blocks when add a new btc_block
+func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock *btcjson.GetBlockVerboseResult) (bool, int64) {
+  trackHeight := rawBlock.Height
+  var (
+    dbBlock BTCBlock
+    utxos []UTXO
+  )
+  if err := db.First(&dbBlock, "height = ? AND re_org = ?", rawBlock.Height, false).Related(&utxos).Error; err !=nil && err.Error() == "record not found" {
+    dbBlock.Hash = rawBlock.Hash
+    dbBlock.Height = rawBlock.Height
+    if err = db.BlockInfo2DB(dbBlock, rawBlock); err != nil {
+      configure.Sugar.Fatal(err.Error())
+    }
+  }else if err != nil {
+    configure.Sugar.Fatal("Find track block error:", err.Error())
+  }else {
+    if dbBlock.Hash != rawBlock.Hash {
+      ts := db.Begin()
+      // update utxos related with the dbBlock
+      ts.Model(&dbBlock).Update("re_org", true)
+      for _, utxo := range utxos {
+        ts.Model(&utxo).Update("re_org", true)
+      }
+      ts.Commit()
+      if err = db.BlockInfo2DB(BTCBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}, rawBlock); err != nil {
+        configure.Sugar.Fatal(err.Error())
+      }
+      configure.Sugar.Info("reorg:", dbBlock.Height, " ", dbBlock.Hash)
+    } else {
+      configure.Sugar.Info("tracking the same block, nothing happen ", dbBlock.Height, " ", dbBlock.Hash)
+    }
+  }
+
+  if trackHeight < bestHeight - 5 {
+    backTracking = false
+  }else {
+    backTracking = true
+    trackHeight --
+  }
+  return backTracking, trackHeight
+}

@@ -39,6 +39,15 @@ func main() {
   configure.Sugar.Info("DB bestBlock is: ", bestBlock.Height, " ", bestBlock.Hash, " Chain bestBlock is: ", binfo.Headers, " ", binfo.BestBlockHash)
 
   // TODO: if there was bestBlock in db previously, we need to rallback 6 block
+  backTracking := true
+  trackHeight := bestBlock.Height - 1
+  for backTracking {
+    trackBlock, err := btcClient.GetBlock(trackHeight)
+    if err !=nil {
+      configure.Sugar.Fatal("backTracking error:", err.Error())
+    }
+    backTracking, trackHeight = sqldb.RollbackTrackBTC(bestBlock.Height, backTracking, trackBlock)
+  }
 
   dbBestHeight := bestBlock.Height
   for height := (dbBestHeight + 1); height <= int64(binfo.Headers); height++ {
@@ -83,47 +92,11 @@ func btcBestBlockNotifyHandle(c *gin.Context) {
   backTracking := true
   trackHeight := rawBlock.Height - 1
   for backTracking {
-    block, err := btcClient.GetBlock(trackHeight)
+    trackBlock, err := btcClient.GetBlock(trackHeight)
     if err !=nil {
       configure.Sugar.Fatal("backTracking error:", err.Error())
     }
-
-    var (
-      dbBlock db.BTCBlock
-      utxos []db.UTXO
-    )
-    if err = sqldb.Where("height = ? AND re_org = ?", block.Height, false).First(&dbBlock).Related(&utxos).Error; err !=nil && err.Error() == "record not found" {
-      dbBlock.Hash = block.Hash
-      dbBlock.Height = block.Height
-      if err = sqldb.BlockInfo2DB(dbBlock, block); err != nil {
-        configure.Sugar.Fatal(err.Error())
-      }
-      backTracking = true
-      trackHeight --
-    }else if err != nil {
-      configure.Sugar.Fatal("Find track block error:", err.Error())
-    }else {
-      if dbBlock.Hash != block.Hash {
-        ts := sqldb.Begin()
-        // update utxos related with the dbBlock
-        ts.Model(&dbBlock).Update("re_org", true)
-        for _, utxo := range utxos {
-          ts.Model(&utxo).Update("re_org", true)
-        }
-        ts.Commit()
-        if err = sqldb.BlockInfo2DB(db.BTCBlock{Hash: block.Hash, Height: block.Height}, block); err != nil {
-          configure.Sugar.Fatal(err.Error())
-        }
-        configure.Sugar.Info("reorg:", dbBlock.Height, " ", dbBlock.Hash)
-      } else {
-        configure.Sugar.Info("tracking the same block, nothing happen ", dbBlock.Height, " ", dbBlock.Hash)
-      }
-      if trackHeight < rawBlock.Height - 5 {
-        backTracking = false
-      }else {
-        trackHeight --
-      }
-    }
+    backTracking, trackHeight = sqldb.RollbackTrackBTC(rawBlock.Height, backTracking, trackBlock)
   }
 
   c.JSON(http.StatusOK, gin.H {

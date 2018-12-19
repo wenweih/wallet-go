@@ -5,6 +5,9 @@ btc_node_pass: "qwgsfdhrtytbvcbsfdslo"
 btc_http_mode: true
 btc_disable_tls: true
 
+# Ethereum node info
+eth_rpc_ws: "ws://localhost:8546"
+
 # new wallet server
 new_wallet_server_host: "ip:port"
 new_wallet_server_user: "user"
