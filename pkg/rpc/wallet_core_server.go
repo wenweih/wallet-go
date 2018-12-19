@@ -48,6 +48,7 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
   if err != nil {
     return nil, err
   }
+  defer ldb.Close()
   from := in.From
   if in.Asset == "eth" {
     from = strings.ToLower(from)
