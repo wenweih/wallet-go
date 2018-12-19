@@ -153,7 +153,7 @@ func withdrawHandle(c *gin.Context)  {
     }
 
     // query utxos, which confirmate count is more than 6
-    if err = sqldb.Model(&subAddress).Where("height <= ?", bheader - 4).Related(&utxos).Error; err !=nil {
+    if err = sqldb.Model(&subAddress).Where("height <= ? AND used = ?", bheader - 4, false).Related(&utxos).Error; err !=nil {
       util.GinRespException(c, http.StatusNotFound, err)
       return
     }
