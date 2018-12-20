@@ -18,6 +18,9 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 
 .PHONY: all
 all: vendor replace-btcd fixed-ethereum-vendor | $(BASE) ; $(info $(M) xgo building executable…) @ ## Build program binary
+	$Q cd $(BASE) && xgo --targets=linux/amd64 --dest=$(BASE)/bin $(BASE)/cmd/wallet_core
+	$Q cd $(BASE) && xgo --targets=linux/amd64 --dest=$(BASE)/bin $(BASE)/cmd/wallet_gateway
+	$Q cd $(BASE) && xgo --targets=linux/amd64 --dest=$(BASE)/bin $(BASE)/cmd/wallet_middle
 	$Q cd $(BASE) && xgo --targets=linux/amd64 --dest=$(BASE)/bin $(BASE)/cmd/wallet_tools
 
 $(BASE): ; $(info $(M) setting GOPATH…)
