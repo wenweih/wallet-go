@@ -88,3 +88,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/btcsuite/btcutil"
+
+[[constraint]]
+  name = "github.com/qor/transition"
+  version = "1.0.0"

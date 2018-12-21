@@ -187,7 +187,7 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 		}
 		amount, err := btcutil.NewAmount(utxo.Amount)
 		if err != nil {
-			return nil, nil, errors.New(strings.Join([]string{"onvert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error()}, ""))
+			return nil, nil, errors.New(strings.Join([]string{"convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error()}, ""))
 		}
 		coins = append(coins, coinset.Coin(&SimpleCoin{TxHash: txHash, TxIndex: utxo.VoutIndex, TxValue: amount, TxNumConfs: bheader - utxo.Height + 1}))
 	}

@@ -305,6 +305,14 @@
   revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
+  branch = "master"
+  digest = "1:20bfc9287db8b7fb8f12d31468dab57187fd7e320e76d73d1865b7d1327e8424"
+  name = "github.com/jinzhu/now"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "8ec929ed50c3ac25ce77ba4486e1f277c552c591"
+
+[[projects]]
   digest = "1:3e551bbb3a7c0ab2a2bf4660e7fcad16db089fdcfbb44b0199e62838038623ea"
   name = "github.com/json-iterator/go"
   packages = ["."]
@@ -337,6 +345,22 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:ca955a9cd5b50b0f43d2cc3aeb35c951473eeca41b34eb67507f1dbcc0542394"
+  name = "github.com/kr/pretty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "73f6ac0b30a98e433b289500d779f50c1a6f0712"
+  version = "v0.1.0"
+
+[[projects]]
+  digest = "1:15b5cc79aad436d47019f814fde81a10221c740dc8ddf769221a65097fb6c2e9"
+  name = "github.com/kr/text"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f"
   version = "v0.1.0"
 
 [[projects]]
@@ -390,6 +414,14 @@
   pruneopts = "UT"
   revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
   version = "v1.10.0"
+
+[[projects]]
+  digest = "1:1fc201f179a7d45f944655de3cdbfb0a8a226fd525569454e31ca87f9e4bb677"
+  name = "github.com/microcosm-cc/bluemonday"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "82c7118e8ccf7403d4860175d97bb635e8e28239"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
@@ -467,6 +499,58 @@
   pruneopts = "UT"
   revision = "08de04f133f27844173471167014e1a753655ac8"
   version = "v1.8.3"
+
+[[projects]]
+  digest = "1:13bc8ad5cc807655078a68a520bb3831ee9c28482d374e704d71a0b41070625b"
+  name = "github.com/qor/admin"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a5c271dab2795bb9d7f855194ec0408355120e69"
+  version = "v1.0"
+
+[[projects]]
+  digest = "1:acd94d6ee20908e0536850d56635cf261802f73f7a4bc8c961b9280b188de0a5"
+  name = "github.com/qor/audited"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "14901b8dff3c548391195fd3eda7a2781580f3c6"
+  version = "v1.0"
+
+[[projects]]
+  digest = "1:bb9577a85af789d19c87a02b1ff89dfc1c6027cb56080d255d4ac7dc2e5411c7"
+  name = "github.com/qor/qor"
+  packages = [
+    ".",
+    "resource",
+    "utils",
+  ]
+  pruneopts = "UT"
+  revision = "d1402d1caffb8f9c05d73fa5bfaae2853c4191fb"
+  version = "v1.0"
+
+[[projects]]
+  digest = "1:4d7e309108709883ce2067c488982206ecc25b81835dd6911c6f63fecb4e767c"
+  name = "github.com/qor/responder"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ecae0be66c1a6a441001b0b5eeef51f8bc27d42a"
+  version = "v1.0"
+
+[[projects]]
+  digest = "1:dcb3a1c2516be16359ba7933bdfaac7daaf969b347230ab1f4cdbd9a594fe6d2"
+  name = "github.com/qor/roles"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f1e05694734518c0ce2dc21151e0ecfccf4db8f4"
+  version = "v1.0"
+
+[[projects]]
+  digest = "1:541ae0c18b5b23d7662fda3262f88d7d189fbd24eebc92ccdb42dd1519206679"
+  name = "github.com/qor/transition"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a7bb4cb3a187f3016d536bd5ff4a24624d7a0f1d"
+  version = "v1.0"
 
 [[projects]]
   digest = "1:31d83d1b1c288073c91abadee3caec87de2a1fb5dbe589039264a802e67a26b8"
@@ -566,6 +650,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:dfb7bfe4eb3c43dc7fba75419ddb7daef855d556fbd2c3375c27321ba5139421"
+  name = "github.com/theplant/cldr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b97a4c2a76cf8ba21d1cb8ed2f4c8ee103371e2d"
+
+[[projects]]
+  branch = "master"
   digest = "1:ba52e5a5fb800ce55108b7a5f181bb809aab71c16736051312b0aa969f82ad39"
   name = "github.com/tsenart/deadcode"
   packages = ["."]
@@ -632,10 +724,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b622e554ef13fa0f23c5b41e313d0be5a27dc0a8ccf72a69d5f73a6bf4f10590"
+  digest = "1:751204a5f27f263d9354fbc80449854712c800df079e9cfd76914937fbf899e1"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "html",
+    "html/atom",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -653,7 +747,7 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "dcdaa6325bcb8d3c07805583fe12153f08a41e2b"
+  revision = "074acd46bca67915925527c07849494d115e7c43"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -689,7 +783,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "13ba8ad772dfbf0f451b5dd0679e9c5605afc05d"
+  revision = "92cdcd90bf52150d9c63b7a8432ab7b10fc92385"
 
 [[projects]]
   branch = "master"
@@ -697,7 +791,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "67d6565462c5a0d99b88193d59fefa10ca7e3010"
+  revision = "5a97ab628bfb2f65f6befec18f4bc7bc7f382b77"
 
 [[projects]]
   digest = "1:8c8ed249fa6a8db070bf2082f02052c697695fa5e1558b4e28dd0fb5f15f70a2"
@@ -801,6 +895,7 @@
     "github.com/manifoldco/promptui",
     "github.com/mitchellh/go-homedir",
     "github.com/pkg/sftp",
+    "github.com/qor/transition",
     "github.com/shopspring/decimal",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",

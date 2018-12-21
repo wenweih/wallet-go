@@ -39,7 +39,7 @@ func main() {
   if err != nil {
     configure.Sugar.Fatal("fail to connect grpc server")
   }
-  // defer rpcConn.Close()
+  defer rpcConn.Close()
   defer sqldb.Close()
 
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
@@ -157,6 +157,7 @@ func withdrawHandle(c *gin.Context)  {
   var (
     vinAmount   int64
     unSignTxHex string
+    selectedUTXOs []db.UTXO
   )
 
   switch asset {
@@ -185,7 +186,7 @@ func withdrawHandle(c *gin.Context)  {
     }
 
     // query utxos, which confirmate count is more than 6
-    if err = sqldb.Model(&subAddress).Where("height <= ? AND used = ?", bheader - 4, false).Related(&utxos).Error; err !=nil {
+    if err = sqldb.Model(&subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
       util.GinRespException(c, http.StatusNotFound, err)
       return
     }
@@ -199,7 +200,7 @@ func withdrawHandle(c *gin.Context)  {
     }
 
     // coin select
-    selectedUTXOs,  selectedCoins, err := blockchain.CoinSelect(int64(bheader), txAmount, utxos)
+    selectedutxos,  selectedCoins, err := blockchain.CoinSelect(int64(bheader), txAmount, utxos)
     if err != nil {
       configure.Sugar.DPanic(err.Error())
       code := http.StatusInternalServerError
@@ -214,10 +215,8 @@ func withdrawHandle(c *gin.Context)  {
       vinAmount += int64(coin.Value())
     }
 
-    configure.Sugar.Info("selectedUTXOs: ", selectedUTXOs, " length: ", len(selectedUTXOs))
-    configure.Sugar.Info("selectedCoins: ", selectedCoins, " length: ", len(selectedCoins.Coins()))
-
     unSignTxHex = blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
+    selectedUTXOs = selectedutxos
   case "eth":
     if !common.IsHexAddress(withdrawParams.To) {
       err := errors.New(strings.Join([]string{"To: ", withdrawParams.To, " isn't valid ethereum address"}, ""))
@@ -290,6 +289,16 @@ func withdrawHandle(c *gin.Context)  {
       return
     }
     txid = txHash.String()
+    ts := sqldb.Begin()
+    for _, dbutxo := range selectedUTXOs {
+      ts.Model(&dbutxo).Updates(map[string]interface{}{"used_by": txid, "state": "selected"})
+    }
+    if err := ts.Commit().Error; err != nil {
+      e := errors.New(strings.Join([]string{"update selected utxos error", err.Error()}, ":"))
+      configure.Sugar.DPanic(e.Error())
+      util.GinRespException(c, http.StatusInternalServerError, e)
+      return
+    }
   case "eth":
     tx, err := blockchain.DecodeETHTx(res.HexSignedTx)
     if err != nil {

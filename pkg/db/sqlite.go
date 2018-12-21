@@ -5,6 +5,7 @@ import (
   "errors"
   "strings"
   "path/filepath"
+  "github.com/qor/transition"
   "github.com/jinzhu/gorm"
   // sqlite driven
   _ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -41,12 +42,13 @@ type UTXO struct {
   Amount        float64   `gorm:"not null"`
   Height        int64     `gorm:"not null"`
   VoutIndex     uint32    `gorm:"not null"`
-  Used          bool      `gorm:"not null;default:false"`
   ReOrg         bool      `gorm:"not null;default:false"`
   SubAddress    SubAddress
+  UsedBy        string
   SubAddressID  uint
   BTCBlock      BTCBlock
   BTCBlockID    uint
+  transition.Transition
 }
 
 // NewSqlite new sqlite3 connection
@@ -59,7 +61,7 @@ func NewSqlite() (*GormDB, error) {
   if err != nil {
     return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
   }
-  db.AutoMigrate(&SubAddress{}, &BTCBlock{}, &UTXO{})
+  db.AutoMigrate(&SubAddress{}, &BTCBlock{}, &UTXO{}, &transition.StateChangeLog{})
   return &GormDB{db}, nil
 }
 
@@ -103,6 +105,7 @@ func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerbo
           configure.Sugar.DPanic(strings.Join([]string{"query sub address err: ", address, " ", err.Error()}, ""))
         }
         utxo := UTXO{Txid: tx.Txid, Amount: vout.Value, Height: rawBlock.Height, VoutIndex: vout.N, SubAddress: addrDB, BTCBlock: dbBlock}
+        utxo.SetState("original")
         if err := ts.Create(&utxo).Error; err != nil {
           if err := ts.Rollback().Error; err != nil {
             return errors.New(strings.Join([]string{"database rollback error: create utxo record ", err.Error()}, ""))
