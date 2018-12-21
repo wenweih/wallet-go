@@ -26,3 +26,5 @@ keystore_path: "ks/path"
 ks_pass: "ks_pass"
 
 api_assets: ["btc", "eth"]
+
+wallet_core_rpc_url: "localhost:8080"

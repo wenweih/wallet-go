@@ -35,12 +35,11 @@ func main() {
   }
   defer sqldb.Close()
 
-  rpcConn, err = grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
+  rpcConn, err = grpc.Dial(configure.Config.WalletCoreRPCURL, grpc.WithInsecure())
   if err != nil {
     configure.Sugar.Fatal("fail to connect grpc server")
   }
   defer rpcConn.Close()
-  defer sqldb.Close()
 
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   ethClient, err = blockchain.NewEthClient()

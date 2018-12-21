@@ -48,9 +48,10 @@ type Configure struct {
 	OldETHWalletServerUser	string
 	OldETHWalletServerPass	string
 	KeystorePath            string
-	KSPass								  string
+	KSPass                  string
 
 	APIASSETS               []string
+	WalletCoreRPCURL        string
 }
 
 // InitConfig 配置信息
@@ -119,6 +120,9 @@ func InitConfig() *Configure {
 
 		case "api_assets":
 			conf.APIASSETS = viper.GetStringSlice(key)
+
+		case "wallet_core_rpc_url":
+			conf.WalletCoreRPCURL = value.(string)
 		}
 	}
 	return &conf
