@@ -5,11 +5,15 @@
 1. 钱包辅助工具
   - 从节点导出钱包
 2. 钱包核心服务
+  - 生成钱包
+  - 钱包签名
+3. 钱包对外接口
   - 生成钱包接口
-  - 钱包签名接口
-3. 钱包辅助服务
-  - 查询 UTXO 接口 (UTXO base blockchain, such as bitcoin)
-  - 查询 Account 接口 (Account base blockchain, such as ethereum)
+  - 提现「构建原始交易、广播签名后的交易」
+  - 获取区块信息
+  - 获取交易信息
+4. 钱包辅助服务
+  - 同步监听 UTXO (UTXO base blockchain, such as bitcoin)
 
 ### 业务流程
 ![image](./img/wallet-module-business-logic.png)
