@@ -38,7 +38,6 @@ func main() {
   }
   configure.Sugar.Info("DB bestBlock is: ", bestBlock.Height, " ", bestBlock.Hash, " Chain bestBlock is: ", binfo.Headers, " ", binfo.BestBlockHash)
 
-  // TODO: if there was bestBlock in db previously, we need to rallback 6 block
   backTracking := true
   trackHeight := bestBlock.Height - 1
   for backTracking {

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"syscall"
 	"io/ioutil"
-	"crypto/rsa"
+	// "crypto/rsa"
 	"encoding/hex"
 	"path/filepath"
 	"github.com/pkg/sftp"
@@ -122,7 +122,7 @@ func (c *ServerClient) CopyRemoteFile2(backupPath string, local bool) {
 }
 
 // SaveEncryptedEthAccount save ethereum account to file
-func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPub *rsa.PublicKey)  error {
+func (c *ServerClient) SaveEthAccount(ethWalletBackupPath string)  error {
 	// create folder for old wallet backup
 	if err := c.SftpClient.MkdirAll(filepath.Dir(ethWalletBackupPath)); err != nil {
 		return errors.New(strings.Join([]string{"Create", ethWalletBackupPath , "directory error", err.Error()}, " "))
@@ -154,8 +154,8 @@ func (c *ServerClient) SaveEncryptedEthAccount(ethWalletBackupPath string, rsaPu
         configure.Sugar.Warn("Keystore DecryptKey error: ", err.Error())
       } else {
         address := key.Address.String()
-        encryptAccountPriv := EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
-        fileData := []byte(strings.Join([]string{address, hex.EncodeToString(encryptAccountPriv)}, " "))
+        // encryptAccountPriv := EncryptWithPublicKey(crypto.FromECDSA(key.PrivateKey), rsaPub)
+        fileData := []byte(strings.Join([]string{address, hex.EncodeToString(crypto.FromECDSA(key.PrivateKey))}, " "))
         fileData = append(fileData, '\n')
         n, err := srcBackupFile.Write(fileData)
         if err != nil {
