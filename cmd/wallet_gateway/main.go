@@ -154,6 +154,7 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   var (
+    chainID     string
     vinAmount   int64
     unSignTxHex string
     selectedUTXOs []db.UTXO
@@ -224,6 +225,14 @@ func withdrawHandle(c *gin.Context)  {
       return
     }
 
+    netVersion, err := ethClient.Client.NetworkID(context.Background())
+    if err != nil {
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    chainID = netVersion.String()
+
     var (
       txFee = new(big.Int)
     )
@@ -263,7 +272,7 @@ func withdrawHandle(c *gin.Context)  {
   grpcClient := pb.NewWalletCoreClient(rpcConn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
-  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: unSignTxHex, VinAmount: vinAmount})
+  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: unSignTxHex, VinAmount: vinAmount, Network: chainID})
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return

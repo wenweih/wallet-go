@@ -104,7 +104,8 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
     if err != nil {
       return nil, errors.New(strings.Join([]string{"Get private key error: ", err.Error()}, " "))
     }
-    chainID := big.NewInt(1337)
+
+    chainID, _ := new(big.Int).SetString(in.Network, 10)
     signtx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), ecPriv)
     if err != nil {
       return nil, errors.New(strings.Join([]string{"sign tx error", err.Error()}, " "))
