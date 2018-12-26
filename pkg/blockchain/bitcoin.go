@@ -20,6 +20,8 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcutil/coinset"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil/hdkeychain"
 )
 
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
@@ -244,4 +246,46 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 	buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
 	msgTx.Serialize(buf)
 	return hex.EncodeToString(buf.Bytes())
+}
+
+func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
+  ldb, err := db.NewLDB("btc")
+  if err != nil {
+    return nil, err
+  }
+
+  seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"GenerateSeed err", err.Error()}, ":"))
+  }
+
+  key, err := hdkeychain.NewMaster(seed, &chaincfg.RegressionNetParams)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
+  }
+  add, err := key.Address(&chaincfg.RegressionNetParams)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"NewAddressPubKeyHash err", err.Error()}, ":"))
+  }
+
+  _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
+  if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
+    priv, err := key.ECPrivKey()
+    if err != nil {
+      return nil, errors.New(strings.Join([]string{"master key to ec privite key error:", err.Error()}, ""))
+    }
+
+    wif, err := btcutil.NewWIF(priv, &chaincfg.RegressionNetParams, true)
+    if err != nil {
+      return nil, errors.New(strings.Join([]string{"btcec priv to wif:", err.Error()}, ""))
+    }
+    if err := ldb.Put([]byte(add.EncodeAddress()), []byte(wif.String()), nil); err != nil {
+      return nil, errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
+    }
+  }else if err != nil {
+    return nil, errors.New(strings.Join([]string{"Fail to add address:", add.EncodeAddress(), " ", err.Error()}, ""))
+  }
+  ldb.Close()
+
+  return add, nil
 }

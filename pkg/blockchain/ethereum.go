@@ -7,9 +7,11 @@ import (
   // "io/ioutil"
   "context"
   "math/big"
+  "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/rlp"
+  "github.com/ethereum/go-ethereum/crypto"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
@@ -122,4 +124,28 @@ func EncodeETHTx(tx *types.Transaction) (*string, error) {
 	}
 	txHex := hexutil.Encode(txb)
 	return &txHex, nil
+}
+
+func GenETHAddress() (*string, error) {
+  ldb, err := db.NewLDB("eth")
+  if err != nil {
+    return nil, err
+  }
+  privateKey, err := crypto.GenerateKey()
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"fail to generate ethereum key", err.Error()}, ":"))
+  }
+  privateKeyBytes := crypto.FromECDSA(privateKey)
+  address := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
+
+  _, err = ldb.Get([]byte(strings.ToLower(address)), nil)
+  if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
+    if err := ldb.Put([]byte(strings.ToLower(address)), privateKeyBytes, nil); err != nil {
+      return nil, errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
+    }
+  }else if err != nil {
+    return nil, errors.New(strings.Join([]string{"Fail to add address:", address, " ", err.Error()}, ""))
+  }
+  ldb.Close()
+  return &address, nil
 }
