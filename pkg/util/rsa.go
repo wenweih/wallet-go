@@ -115,8 +115,12 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 		b, err = x509.DecryptPEMBlock(block, nil)
     checkError(err)
 	}
-	key, err := x509.ParsePKCS1PrivateKey(b)
+	ifc, err := x509.ParsePKCS8PrivateKey(b)
   checkError(err)
+  key, ok := ifc.(*rsa.PrivateKey)
+  if !ok {
+    checkError(errors.New("ifc to key fail"))
+  }
 	return key
 }
 
