@@ -62,6 +62,7 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusUnauthorized, errors.New("Authorization can't found in request header"))
       return
     }
+    configure.Sugar.Info("request token: ", token)
     decodeToken, err := b64.StdEncoding.DecodeString(token)
     if err != nil {
       GinRespException(c, http.StatusForbidden, errors.New("Decode Token error"))
@@ -74,28 +75,14 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       return
     }
 
-    detail, err := assetPram(decryptoParamBytes, urlArr[1])
+    detail, asset, err := assetPram(decryptoParamBytes, urlArr[1])
     if err != nil {
       GinRespException(c, http.StatusInternalServerError, err)
       return
     }
 
-    var params AuthParams
-    if err := json.Unmarshal(decryptoParamBytes, &params); err != nil {
-      GinRespException(c, http.StatusInternalServerError, errors.New("Unmarshal params error"))
-      return
-    }
-    if params.Asset == "" {
-      GinRespException(c, http.StatusBadRequest, errors.New("asset params can't be empty"))
-      return
-    }
-
-    if !Contain(params.Asset , configure.Config.APIASSETS) {
-      GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{params.Asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, "")))
-      return
-    }
     c.Set("detail", detail)
-    c.Set("asset", params.Asset)
+    c.Set("asset", asset)
   }
 }
 
@@ -107,7 +94,7 @@ func GinRespException(c *gin.Context, code int, err error) {
   })
 }
 
-func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, error) {
+func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *string, error) {
   asset := ""
   detailParams := make(map[string]interface{})
   // var detailParams map[string]interface{}
@@ -115,13 +102,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, erro
   case "address":
     var params AddressParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
     }
     asset = params.Asset
   case "withdraw":
     var params WithdrawParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
     }
     asset = params.Asset
     detailParams["from"] = params.From
@@ -129,18 +116,12 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, erro
     detailParams["amount"] = params.Amount
   }
   if asset == "" {
-    return nil, errors.New("asset params can't be empty")
+    return nil, nil, errors.New("asset params can't be empty")
   }
   if !Contain(asset , configure.Config.APIASSETS) {
-    return nil, errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
+    return nil, nil, errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
   }
-  return detailParams, nil
-}
-
-// AuthParams /address endpoint default params
-type AuthParams struct {
-  Asset   string                  `json:"asset"`
-  Detail  map[string]interface{}  `json:"detail,omitempty"`
+  return detailParams, &asset, nil
 }
 
 // AddressParams /address endpoint default params
