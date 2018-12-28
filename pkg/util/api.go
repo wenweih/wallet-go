@@ -6,8 +6,9 @@ import (
   "net/http"
   "io/ioutil"
   "crypto/rsa"
-  "encoding/hex"
+  // "encoding/hex"
   "encoding/json"
+  b64 "encoding/base64"
   "github.com/gin-gonic/gin"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/txscript"
@@ -26,7 +27,7 @@ func GinEngine() *gin.Engine {
 
   privBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_priv.pem"}, "/"))
   if err != nil {
-    configure.Sugar.Fatal(err.Error())
+    configure.Sugar.Fatal("read priv key error: ", err.Error())
   }
   rsaPriv := BytesToPrivateKey(privBytes)
   r.Use(apiAuth(rsaPriv))
@@ -59,13 +60,13 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusUnauthorized, errors.New("Authorization can't found in request header"))
       return
     }
-    tokenByte, err := hex.DecodeString(token)
+    decodeToken, err := b64.StdEncoding.DecodeString(token)
     if err != nil {
       GinRespException(c, http.StatusForbidden, errors.New("Decode Token error"))
       return
     }
 
-   decryptoParamBytes, err := DecryptWithPrivateKey(tokenByte, rsaPriv)
+   decryptoParamBytes, err := DecryptWithPrivateKey(decodeToken, rsaPriv)
     if err != nil {
       GinRespException(c, http.StatusForbidden, errors.New(strings.Join([]string{"Decrypt Token error", err.Error()}, ":")))
       return
