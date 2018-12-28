@@ -8,7 +8,6 @@ import (
 	"errors"
 	"syscall"
 	"io/ioutil"
-	// "crypto/rsa"
 	"encoding/hex"
 	"path/filepath"
 	"github.com/pkg/sftp"

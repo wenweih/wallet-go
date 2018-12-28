@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"net/http"
 	"path/filepath"
 	"encoding/hex"
 	"wallet-transition/pkg/db"
@@ -139,6 +140,60 @@ func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult,
 	return block, nil
 }
 
+// RawTx btc raw tx
+func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB) (*int64, []db.UTXO, *string, int, error) {
+	var (
+		utxos			[]db.UTXO
+		vinAmount	int64
+	)
+
+	fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(from, to)
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, err
+	}
+
+	// query bitcoin current best height
+	binfo, err := btcClient.Client.GetBlockChainInfo()
+	if err != nil {
+		return nil, nil, nil, http.StatusInternalServerError, err
+	}
+	bheader := binfo.Headers
+
+	feeKB, err := btcClient.Client.EstimateFee(int64(6))
+	if err != nil {
+		return nil, nil, nil, http.StatusInternalServerError, err
+	}
+
+	// query utxos, which confirmate count is more than 6
+	if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
+		return nil, nil, nil, http.StatusNotFound, err
+	}
+	configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
+
+	txAmount, err := btcutil.NewAmount(amountF)
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, errors.New(strings.Join([]string{"convert utxo amount(float64) to btc amount(int64 as Satoshi) error:", err.Error()}, ""))
+	}
+	fee := btcutil.Amount(5000)
+	// coin select
+	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
+	if err != nil {
+		code := http.StatusInternalServerError
+		if err.Error() == "CoinSelect error: no coin selection possible" {
+			code = http.StatusBadRequest
+		}
+		// util.GinRespException(c, code, err)
+		return nil, nil, nil, code, err
+	}
+
+	for _, coin := range selectedCoins.Coins() {
+		vinAmount += int64(coin.Value())
+	}
+
+	vAmount, unSignTxHex := RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
+	return &vAmount, selectedutxos, &unSignTxHex, http.StatusOK, nil
+}
+
 // DecodeBtcTxHex decode bitcoin transaction's hex to rawTx
 func DecodeBtcTxHex(txHex string) (*btcutil.Tx, error) {
 	if txHex == "" {
@@ -217,12 +272,14 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 }
 
 // RawBTCTx btc raw tx
-func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) string {
+func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) (int64, string ){
 	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
 	var vinAmount int64
 	for _, coin := range selectedCoins.Coins() {
 		vinAmount += int64(coin.Value())
 	}
+
+	vAmount := vinAmount
 
 	txOutTo := wire.NewTxOut(int64(txAmount), toPkScript)
 	txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), fromPkScript)
@@ -233,7 +290,7 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 	fee := rate.Fee(uint32(msgTx.SerializeSize()))
 
 	if fee.String() == "0 BTC" {
-		fee = btcutil.Amount(10000)
+		fee = btcutil.Amount(5000)
 	}
 
 	// sub tx fee
@@ -245,9 +302,10 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 
 	buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
 	msgTx.Serialize(buf)
-	return hex.EncodeToString(buf.Bytes())
+	return vAmount, hex.EncodeToString(buf.Bytes())
 }
 
+// GenBTCAddress generate btc address
 func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
   ldb, err := db.NewLDB("btc")
   if err != nil {

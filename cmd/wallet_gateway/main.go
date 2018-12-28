@@ -13,12 +13,9 @@ import (
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
-  "github.com/btcsuite/btcutil"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
-  // "github.com/shopspring/decimal"
-  // "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -131,67 +128,20 @@ func withdrawHandle(c *gin.Context)  {
     vinAmount   int64
     unSignTxHex string
     selectedUTXOs []db.UTXO
-    utxos      []db.UTXO
   )
 
   // raw tx
   switch asset {
   case "btc":
-    fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(*withdrawParams)
+    vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(withdrawParams.From, withdrawParams.To, amount, subAddress, sqldb)
     if err != nil {
       configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusBadRequest, err)
+      util.GinRespException(c, httpStatus, err)
       return
     }
-
-    // query bitcoin current best height
-    binfo, err := btcClient.Client.GetBlockChainInfo()
-    if err != nil {
-      configure.Sugar.DPanic("withdrawHandle err: ", err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-    bheader := binfo.Headers
-
-    feeKB, err := btcClient.Client.EstimateFee(int64(6))
-    if err != nil {
-      configure.Sugar.DPanic("EstimateFee: ", err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-
-    // query utxos, which confirmate count is more than 6
-    if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
-      util.GinRespException(c, http.StatusNotFound, err)
-      return
-    }
-    configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
-
-    txAmount, err := btcutil.NewAmount(amount)
-    if err != nil {
-      configure.Sugar.DPanic("convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error())
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
-
-    // coin select
-    selectedutxos,  selectedCoins, err := blockchain.CoinSelect(int64(bheader), txAmount, utxos)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      code := http.StatusInternalServerError
-      if err.Error() == "CoinSelect error: no coin selection possible" {
-        code = http.StatusBadRequest
-      }
-      util.GinRespException(c, code, err)
-      return
-    }
-
-    for _, coin := range selectedCoins.Coins() {
-      vinAmount += int64(coin.Value())
-    }
-
-    unSignTxHex = blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
     selectedUTXOs = selectedutxos
+    unSignTxHex = *rawTxHex
+    vinAmount = *vAmount
   case "eth":
     netVersion, rawTxHex, err := ethClient.RawTx(withdrawParams.From, withdrawParams.To, amount)
     if err != nil {

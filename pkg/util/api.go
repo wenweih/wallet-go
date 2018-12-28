@@ -8,7 +8,6 @@ import (
   "net/http"
   "io/ioutil"
   "crypto/rsa"
-  // "encoding/hex"
   "encoding/json"
   b64 "encoding/base64"
   "github.com/gin-gonic/gin"
@@ -189,14 +188,14 @@ type BlockParams struct {
 }
 
 // BTCWithdrawAddressValidate validate withdraw endpoint address params
-func BTCWithdrawAddressValidate(withdrawParams WithdrawParams) ([]byte, []byte, error) {
-  toAddress, err := btcutil.DecodeAddress(withdrawParams.To, &chaincfg.RegressionNetParams)
+func BTCWithdrawAddressValidate(from, to string) ([]byte, []byte, error) {
+  toAddress, err := btcutil.DecodeAddress(to, &chaincfg.RegressionNetParams)
   if err != nil {
     e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
     return nil, nil, e
   }
 
-  fromAddress, err := btcutil.DecodeAddress(withdrawParams.From, &chaincfg.RegressionNetParams)
+  fromAddress, err := btcutil.DecodeAddress(from, &chaincfg.RegressionNetParams)
   if err != nil {
     e := errors.New(strings.Join([]string{"From address address illegal", err.Error()}, ":"))
     return nil, nil, e

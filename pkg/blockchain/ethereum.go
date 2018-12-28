@@ -4,7 +4,6 @@ import (
   "bytes"
   "errors"
   "strings"
-  // "io/ioutil"
   "context"
   "math/big"
   "wallet-transition/pkg/db"
