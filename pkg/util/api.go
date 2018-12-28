@@ -2,6 +2,8 @@ package util
 
 import (
   "errors"
+  "strconv"
+  "reflect"
   "strings"
   "net/http"
   "io/ioutil"
@@ -14,6 +16,7 @@ import (
   "github.com/btcsuite/btcd/txscript"
   "github.com/btcsuite/btcd/chaincfg"
   "wallet-transition/pkg/configure"
+  "wallet-transition/pkg/db"
 )
 
 // GinEngine api engine
@@ -77,12 +80,12 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
 
     detail, asset, err := assetPram(decryptoParamBytes, urlArr[1])
     if err != nil {
-      GinRespException(c, http.StatusInternalServerError, err)
+      GinRespException(c, http.StatusBadRequest, err)
       return
     }
 
     c.Set("detail", detail)
-    c.Set("asset", asset)
+    c.Set("asset", *asset)
   }
 }
 
@@ -104,13 +107,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
     }
-    asset = params.Asset
+    asset = strings.ToLower(params.Asset)
   case "withdraw":
     var params WithdrawParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
     }
-    asset = params.Asset
+    asset = strings.ToLower(params.Asset)
     detailParams["from"] = params.From
     detailParams["to"] = params.To
     detailParams["amount"] = params.Amount
@@ -122,6 +125,49 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     return nil, nil, errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
   }
   return detailParams, &asset, nil
+}
+
+// WithdrawParamsH handle withdraw endpoint request params
+func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) (*WithdrawParams, *db.SubAddress, error) {
+  params := reflect.ValueOf(detailParams)
+  withdrawParams := WithdrawParams{}
+  if params.Kind() == reflect.Map {
+    for _, key := range params.MapKeys() {
+      switch key.Interface() {
+      case "from":
+        withdrawParams.From = params.MapIndex(key).Interface().(string)
+      case "to":
+        withdrawParams.To = params.MapIndex(key).Interface().(string)
+      case "amount":
+        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
+      }
+    }
+  }else {
+    return nil, nil, errors.New("detail params error")
+  }
+
+  // params
+  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+  if err != nil {
+    return nil, nil, errors.New("amount can't be empty and less than 0")
+  }
+  if amount <= 0 {
+    return nil, nil, errors.New("amount can't be empty and less than 0")
+  }
+  if withdrawParams.From == "" || withdrawParams.To == "" {
+    return nil, nil, errors.New("from or to params can't be empty")
+  }
+
+  var (
+    subAddress db.SubAddress
+  )
+  // query from address
+  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
+    return nil, nil, errors.New(strings.Join([]string{asset, " ", withdrawParams.From, " not found in database"}, ""))
+  }else if err != nil {
+    return nil, nil, err
+  }
+  return &withdrawParams, &subAddress, nil
 }
 
 // AddressParams /address endpoint default params

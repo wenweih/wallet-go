@@ -113,49 +113,9 @@ func addressHandle(c *gin.Context) {
 func withdrawHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  params := reflect.ValueOf(detailParams)
-  withdrawParams := util.WithdrawParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "from":
-        withdrawParams.From = params.MapIndex(key).Interface().(string)
-      case "to":
-        withdrawParams.To = params.MapIndex(key).Interface().(string)
-      case "amount":
-        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
-    return
-  }
-
-  // params
-  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+  withdrawParams, subAddress, err := util.WithdrawParamsH(detailParams, asset.(string), sqldb)
   if err != nil {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
-    return
-  }
-  if amount <= 0 {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
-    return
-  }
-  if withdrawParams.From == "" || withdrawParams.To == "" {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("from or to params can't be empty"))
-    return
-  }
-
-  var (
-    subAddress db.SubAddress
-    utxos      []db.UTXO
-  )
-  // query from address
-  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
-    util.GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{asset.(string), " ", withdrawParams.From, " not found in database"}, "")))
-    return
-  }else if err != nil {
-    util.GinRespException(c, http.StatusNotFound, err)
+    util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
 
@@ -164,11 +124,12 @@ func withdrawHandle(c *gin.Context)  {
     vinAmount   int64
     unSignTxHex string
     selectedUTXOs []db.UTXO
+    utxos      []db.UTXO
   )
 
   switch asset {
   case "btc":
-    fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(withdrawParams)
+    fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(*withdrawParams)
     if err != nil {
       configure.Sugar.DPanic(err.Error())
       util.GinRespException(c, http.StatusBadRequest, err)
@@ -192,7 +153,7 @@ func withdrawHandle(c *gin.Context)  {
     }
 
     // query utxos, which confirmate count is more than 6
-    if err = sqldb.Model(&subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
+    if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
       util.GinRespException(c, http.StatusNotFound, err)
       return
     }
