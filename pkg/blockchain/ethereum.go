@@ -9,6 +9,7 @@ import (
   "math/big"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
+  "github.com/shopspring/decimal"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/rlp"
   "github.com/ethereum/go-ethereum/crypto"
@@ -64,23 +65,28 @@ func DumpETHAccount(local bool)  {
 }
 
 // GetBalanceAndPendingNonceAtAndGasPrice construct eth tx info
-func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context, address string) (*big.Int, *uint64, *big.Int, error) {
+func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context, address string) (*big.Int, *uint64, *big.Int, *big.Int, error) {
 	balance, err := client.Client.BalanceAt(ctx, common.HexToAddress(address), nil)
 	if err != nil {
-		return nil, nil, nil, errors.New(strings.Join([]string{"Failed to get ethereum balance from address:", address, err.Error()}, " "))
+		return nil, nil, nil, nil, errors.New(strings.Join([]string{"Failed to get ethereum balance from address:", address, err.Error()}, " "))
 	}
 
 	pendingNonceAt, err := client.Client.PendingNonceAt(ctx, common.HexToAddress(address))
 	if err != nil {
-		return nil, nil, nil, errors.New(strings.Join([]string{"Failed to get account nonce from address:", address, err.Error()}, " "))
+		return nil, nil, nil, nil, errors.New(strings.Join([]string{"Failed to get account nonce from address:", address, err.Error()}, " "))
 	}
 
 	gasPrice, err := client.Client.SuggestGasPrice(ctx)
 	if err != nil {
-		return nil, nil, nil, errors.New(strings.Join([]string{"get gasPrice error", err.Error()}, " "))
+		return nil, nil, nil, nil, errors.New(strings.Join([]string{"get gasPrice error", err.Error()}, " "))
 	}
 
-	return balance, &pendingNonceAt, gasPrice, nil
+  netVersion, err := client.Client.NetworkID(ctx)
+  if err != nil {
+    return nil, nil, nil, nil, errors.New(strings.Join([]string{"get ethereum network id error", err.Error()}, " "))
+  }
+
+	return balance, &pendingNonceAt, gasPrice, netVersion, nil
 }
 
 // SendTx send signed tx
@@ -96,8 +102,45 @@ func (client *ETHRPC) SendTx(hexSignedTx string) (*string, error){
   return &txid, nil
 }
 
+// RawTx ethereum raw tx
+func (client *ETHRPC) RawTx(from, to string, amountF float64) (*string, *string, error){
+  if !common.IsHexAddress(to) {
+    err := errors.New(strings.Join([]string{"To: ", to, " isn't valid ethereum address"}, ""))
+    return nil, nil, err
+  }
+
+  balance, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), from)
+  if err != nil {
+    return nil, nil, err
+  }
+  chainID := netVersion.String()
+  var (
+    txFee = new(big.Int)
+  )
+  gasLimit := uint64(21000) // in units
+
+  etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
+  balanceDecimal, _ := decimal.NewFromString(balance.String())
+  transferAmount := decimal.NewFromFloat(amountF)
+  transferAmount = transferAmount.Mul(etherToWei)
+  txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
+  feeDecimal, _ := decimal.NewFromString(txFee.String())
+  totalCost := transferAmount.Add(feeDecimal)
+  if !totalCost.LessThanOrEqual(balanceDecimal) {
+    err = errors.New(strings.Join([]string{"Account: ", from, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
+    return nil, nil, err
+  }
+
+  amount, _ := new(big.Int).SetString(transferAmount.String(), 10)
+  rawTxHex, _, err := CreateRawETHTx(*nonce, amount, gasPrice, to)
+  if err != nil {
+    return nil, nil, err
+  }
+  return &chainID, rawTxHex, nil
+}
+
 // CreateRawETHTx create eth raw tx
-func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressFrom, hexAddressTo string) (*string, *string, error) {
+func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressTo string) (*string, *string, error) {
 	gasLimit := uint64(21000) // in units
 
 	if !common.IsHexAddress(hexAddressTo) {
@@ -130,6 +173,7 @@ func DecodeETHTx(txHex string) (*types.Transaction, error) {
 	return t, nil
 }
 
+// EncodeETHTx encode eth tx
 func EncodeETHTx(tx *types.Transaction) (*string, error) {
 	txb, err := rlp.EncodeToBytes(tx)
 	if err != nil {
@@ -139,6 +183,7 @@ func EncodeETHTx(tx *types.Transaction) (*string, error) {
 	return &txHex, nil
 }
 
+// GenETHAddress generate ethereum account
 func GenETHAddress() (*string, error) {
   ldb, err := db.NewLDB("eth")
   if err != nil {

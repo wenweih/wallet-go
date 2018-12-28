@@ -1,7 +1,7 @@
 package main
 
 import (
-  "math/big"
+  // "math/big"
   "time"
   "errors"
   "strconv"
@@ -17,8 +17,8 @@ import (
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
-  "github.com/shopspring/decimal"
-  "github.com/ethereum/go-ethereum/common"
+  // "github.com/shopspring/decimal"
+  // "github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -119,6 +119,13 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
+  // params
+  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
+    return
+  }
+
   var (
     chainID     string
     vinAmount   int64
@@ -160,14 +167,7 @@ func withdrawHandle(c *gin.Context)  {
     }
     configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
 
-    // params
-    amountF, err := strconv.ParseFloat(withdrawParams.Amount, 64)
-    if err != nil {
-      util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
-      return
-    }
-
-    txAmount, err := btcutil.NewAmount(amountF)
+    txAmount, err := btcutil.NewAmount(amount)
     if err != nil {
       configure.Sugar.DPanic("convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error())
       util.GinRespException(c, http.StatusBadRequest, err)
@@ -193,61 +193,13 @@ func withdrawHandle(c *gin.Context)  {
     unSignTxHex = blockchain.RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
     selectedUTXOs = selectedutxos
   case "eth":
-    if !common.IsHexAddress(withdrawParams.To) {
-      err := errors.New(strings.Join([]string{"To: ", withdrawParams.To, " isn't valid ethereum address"}, ""))
+    netVersion, rawTxHex, err := ethClient.RawTx(withdrawParams.From, withdrawParams.To, amount)
+    if err != nil {
       configure.Sugar.DPanic(err.Error())
       util.GinRespException(c, http.StatusBadRequest, err)
       return
     }
-
-    netVersion, err := ethClient.Client.NetworkID(context.Background())
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-    chainID = netVersion.String()
-
-    var (
-      txFee = new(big.Int)
-    )
-    gasLimit := uint64(21000) // in units
-    balance, nonce, gasPrice, err := ethClient.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), subAddress.Address)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-    etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
-
-    // params
-    amountF, err := strconv.ParseFloat(withdrawParams.Amount, 64)
-    if err != nil {
-      util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
-      return
-    }
-
-    balanceDecimal, _ := decimal.NewFromString(balance.String())
-    transferAmount := decimal.NewFromFloat(amountF)
-    transferAmount = transferAmount.Mul(etherToWei)
-    txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
-    feeDecimal, _ := decimal.NewFromString(txFee.String())
-    totalCost := transferAmount.Add(feeDecimal)
-    if !totalCost.LessThanOrEqual(balanceDecimal) {
-      err = errors.New(strings.Join([]string{"Account: ", withdrawParams.From, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
-
-    amount, _ := new(big.Int).SetString(transferAmount.String(), 10)
-    rawTxHex, _, err := blockchain.CreateRawETHTx(*nonce, amount, gasPrice, withdrawParams.From, withdrawParams.To)
-    if err != nil {
-      err := errors.New(strings.Join([]string{"To: ", withdrawParams.To, " isn't valid ethereum address"}, ""))
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
+    chainID = *netVersion
     unSignTxHex = *rawTxHex
   }
 
