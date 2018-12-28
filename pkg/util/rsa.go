@@ -4,7 +4,7 @@ import (
   "crypto/rand"
   "strings"
   "crypto/rsa"
-  "crypto/sha512"
+  // "crypto/sha512"
   "os"
   "encoding/pem"
   "crypto/x509"
@@ -13,6 +13,8 @@ import (
   "wallet-transition/pkg/configure"
 )
 
+// https://stackoverflow.com/questions/11410770/load-rsa-public-key-from-file
+// https://gist.github.com/sdorra/1c95de8cb80da31610d2ad767cd6f251
 // key, err := keystore.DecryptKey(ksBytes, configure.Config.KSPass)
 //
 // pubBytes, err := ioutil.ReadFile("/Users/lianxi/wallet_pub.pem")
@@ -54,6 +56,8 @@ func RsaGen(fileName string)  {
 
 func savePEMKey(fileName string, p pemKey, key *rsa.PrivateKey) {
   pk := new(pem.Block)
+  fileNameWithType := strings.Join([]string{fileName, string(p)}, "_")
+  var file string
   switch p {
   case "pub":
     pubASN1, err := x509.MarshalPKIXPublicKey(key.Public())
@@ -62,17 +66,16 @@ func savePEMKey(fileName string, p pemKey, key *rsa.PrivateKey) {
       Type:  "RSA PUBLIC KEY",
       Bytes: pubASN1,
     }
+    file = strings.Join([]string{fileNameWithType, "der"}, ".")
   case "priv":
     pk = &pem.Block{
   		Type:  "PRIVATE KEY",
   		Bytes: x509.MarshalPKCS1PrivateKey(key),
   	}
+    file = strings.Join([]string{fileNameWithType, "pem"}, ".")
   default:
     log.Fatal("pemKey suport: pub or priv only")
   }
-
-  fileNameWithType := strings.Join([]string{fileName, string(p)}, "_")
-  file := strings.Join([]string{fileNameWithType, "pem"}, ".")
 
   keyOut, err := os.OpenFile(strings.Join([]string{configure.HomeDir(),file}, "/"),
     os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -119,8 +122,9 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 
 // EncryptWithPublicKey encrypts data with public key
 func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
-  hash := sha512.New()
-  ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, msg, nil)
+  // hash := sha512.New()
+  ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, pub, msg)
+  // ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, msg, nil)
 	if err != nil {
     checkError(err)
 	}
@@ -129,8 +133,9 @@ func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
 
 // DecryptWithPrivateKey decrypts data with private key
 func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) ([]byte, error) {
-	hash := sha512.New()
-	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
+	// hash := sha512.New()
+  plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
+	// plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
   if err != nil {
     return nil ,err
   }

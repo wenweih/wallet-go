@@ -24,7 +24,7 @@ func GinEngine() *gin.Engine {
   r.Use(gin.Recovery())
   r.Use(noRouteMiddleware(r))
 
-  privBytes, err := ioutil.ReadFile("/Users/lianxi/wallet_priv.pem")
+  privBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_priv.pem"}, "/"))
   if err != nil {
     configure.Sugar.Fatal(err.Error())
   }
