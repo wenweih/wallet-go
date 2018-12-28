@@ -83,6 +83,19 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
 	return balance, &pendingNonceAt, gasPrice, nil
 }
 
+// SendTx send signed tx
+func (client *ETHRPC) SendTx(hexSignedTx string) (*string, error){
+  tx, err := DecodeETHTx(hexSignedTx)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
+  }
+  if err := client.Client.SendTransaction(context.Background(), tx); err != nil {
+    return nil, errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
+  }
+  txid := tx.Hash().String()
+  return &txid, nil
+}
+
 // CreateRawETHTx create eth raw tx
 func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressFrom, hexAddressTo string) (*string, *string, error) {
 	gasLimit := uint64(21000) // in units

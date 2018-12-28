@@ -127,6 +127,7 @@ func withdrawHandle(c *gin.Context)  {
     utxos      []db.UTXO
   )
 
+  // raw tx
   switch asset {
   case "btc":
     fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(*withdrawParams)
@@ -250,6 +251,7 @@ func withdrawHandle(c *gin.Context)  {
     unSignTxHex = *rawTxHex
   }
 
+  // sign raw tx
   grpcClient := pb.NewWalletCoreClient(rpcConn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
@@ -259,6 +261,7 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
+  // send signed tx
   txid := ""
   switch asset.(string) {
   case "btc":
@@ -289,20 +292,13 @@ func withdrawHandle(c *gin.Context)  {
       return
     }
   case "eth":
-    tx, err := blockchain.DecodeETHTx(res.HexSignedTx)
+    ethTxid, err := ethClient.SendTx(res.HexSignedTx)
     if err != nil {
-      e := errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, http.StatusInternalServerError, err)
       return
     }
-    if err := ethClient.Client.SendTransaction(context.Background(), tx); err != nil {
-      e := errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
-      return
-    }
-    txid = tx.Hash().String()
+    txid = *ethTxid
   }
 
   c.JSON(http.StatusOK, gin.H {
