@@ -81,7 +81,6 @@ func savePEMKey(fileName string, p pemKey, key *rsa.PrivateKey) {
     os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
   checkError(err)
   defer keyOut.Close()
-
 	err = pem.Encode(keyOut, pk)
 	checkError(err)
 }

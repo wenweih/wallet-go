@@ -4,6 +4,7 @@ import (
   "math/big"
   "time"
   "errors"
+  "strconv"
   "strings"
   "context"
   "net/http"
@@ -122,7 +123,7 @@ func withdrawHandle(c *gin.Context)  {
       case "to":
         withdrawParams.To = params.MapIndex(key).Interface().(string)
       case "amount":
-        withdrawParams.Amount = params.MapIndex(key).Interface().(float64)
+        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
       }
     }
   }else {
@@ -131,7 +132,12 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // params
-  if withdrawParams.Amount <= 0 {
+  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
+    return
+  }
+  if amount <= 0 {
     util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
     return
   }
@@ -192,7 +198,14 @@ func withdrawHandle(c *gin.Context)  {
     }
     configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
 
-    txAmount, err := btcutil.NewAmount(withdrawParams.Amount)
+    // params
+    amountF, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
+      return
+    }
+
+    txAmount, err := btcutil.NewAmount(amountF)
     if err != nil {
       configure.Sugar.DPanic("convert utxo amount(float64) to btc amount(int64 as Satoshi) error: ", err.Error())
       util.GinRespException(c, http.StatusBadRequest, err)
@@ -245,8 +258,15 @@ func withdrawHandle(c *gin.Context)  {
     }
     etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
 
+    // params
+    amountF, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, errors.New("amount can't be empty and less than 0"))
+      return
+    }
+
     balanceDecimal, _ := decimal.NewFromString(balance.String())
-    transferAmount := decimal.NewFromFloat(withdrawParams.Amount)
+    transferAmount := decimal.NewFromFloat(amountF)
     transferAmount = transferAmount.Mul(etherToWei)
     txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
     feeDecimal, _ := decimal.NewFromString(txFee.String())

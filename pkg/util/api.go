@@ -50,6 +50,8 @@ func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
 
 func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
   return func (c *gin.Context)  {
+    urlArr := strings.Split(c.Request.RequestURI, "/")
+    configure.Sugar.Info("c.Request: ", urlArr)
     ct := c.GetHeader("Content-Type")
     if ct != "application/json" {
       GinRespException(c, http.StatusUnauthorized, errors.New("Content-Type must be application/json"))
@@ -72,6 +74,12 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       return
     }
 
+    detail, err := assetPram(decryptoParamBytes, urlArr[1])
+    if err != nil {
+      GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+
     var params AuthParams
     if err := json.Unmarshal(decryptoParamBytes, &params); err != nil {
       GinRespException(c, http.StatusInternalServerError, errors.New("Unmarshal params error"))
@@ -86,7 +94,7 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusNotFound, errors.New(strings.Join([]string{params.Asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, "")))
       return
     }
-    c.Set("detail", params.Detail)
+    c.Set("detail", detail)
     c.Set("asset", params.Asset)
   }
 }
@@ -99,17 +107,53 @@ func GinRespException(c *gin.Context, code int, err error) {
   })
 }
 
+func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, error) {
+  asset := ""
+  detailParams := make(map[string]interface{})
+  // var detailParams map[string]interface{}
+  switch endpoint {
+  case "address":
+    var params AddressParams
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
+    }
+    asset = params.Asset
+  case "withdraw":
+    var params WithdrawParams
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
+    }
+    asset = params.Asset
+    detailParams["from"] = params.From
+    detailParams["to"] = params.To
+    detailParams["amount"] = params.Amount
+  }
+  if asset == "" {
+    return nil, errors.New("asset params can't be empty")
+  }
+  if !Contain(asset , configure.Config.APIASSETS) {
+    return nil, errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
+  }
+  return detailParams, nil
+}
+
 // AuthParams /address endpoint default params
 type AuthParams struct {
   Asset   string                  `json:"asset"`
   Detail  map[string]interface{}  `json:"detail,omitempty"`
 }
 
+// AddressParams /address endpoint default params
+type AddressParams struct {
+  Asset string  `json:"asset"`
+}
+
 // WithdrawParams withdraw endpoint params
 type WithdrawParams struct {
+  Asset   string  `json:"asset" binding:"required"`
   From    string  `json:"from" binding:"required"`
   To      string  `json:"to" binding:"required"`
-  Amount  float64 `json:"amount" binding:"required"`
+  Amount  string `json:"amount" binding:"required"`
 }
 
 // BlockParams block endpoint params
