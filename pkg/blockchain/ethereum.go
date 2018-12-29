@@ -16,6 +16,7 @@ import (
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/common/hexutil"
+  "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // ETHRPC bitcoin-core client alias
@@ -86,6 +87,24 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
   }
 
 	return balance, &pendingNonceAt, gasPrice, netVersion, nil
+}
+
+// GetTokenBalance get specify token balance of an EOA account
+func (client *ETHRPC) GetTokenBalance(asset, accountHex string) (*big.Int, error) {
+  configure.Sugar.Info("accountHex: ", accountHex, " asset: ", asset)
+  tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
+  accountAddress := common.HexToAddress(accountHex)
+  contractInstance, err := NewEthToken(tokenAddress, client.Client)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"Get token instance error: ", err.Error()}, ""))
+  }
+
+  bal, err := contractInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
+  if err!= nil {
+    return nil, errors.New(strings.Join([]string{"Get token balance error: ", err.Error()}, ""))
+  }
+
+  return bal, nil
 }
 
 // SendTx send signed tx

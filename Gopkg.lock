@@ -133,11 +133,13 @@
   version = "v1.7.1"
 
 [[projects]]
-  digest = "1:b631ef844db9864c0a2b6828028dae13410d1fa378d446229a0a89f2c2e52df7"
+  digest = "1:81cdea2cb729a674dc6e3f9e85ca1169b6a13157676b5ff6e15f1561371a729d"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
     "accounts",
+    "accounts/abi",
+    "accounts/abi/bind",
     "accounts/keystore",
     "common",
     "common/hexutil",
@@ -743,11 +745,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9652da56be8fe4998e79e36be6b9d30fe4fd4aacb73ecf0d9b3a33228189dc7e"
+  digest = "1:5b7594f7c43cb5fc8f31c3f4a9f6a61ee798dbd5fcb36b70cb3d4780aad4c509"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "b4a75ba826a64a70990f11a225237acd6ef35c9f"
+  revision = "9a3f9b0469bbc6b8802087ae5c0af9f61502de01"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -881,12 +883,16 @@
     "github.com/btcsuite/btcutil",
     "github.com/btcsuite/btcutil/coinset",
     "github.com/btcsuite/btcutil/hdkeychain",
+    "github.com/ethereum/go-ethereum",
+    "github.com/ethereum/go-ethereum/accounts/abi",
+    "github.com/ethereum/go-ethereum/accounts/abi/bind",
     "github.com/ethereum/go-ethereum/accounts/keystore",
     "github.com/ethereum/go-ethereum/common",
     "github.com/ethereum/go-ethereum/common/hexutil",
     "github.com/ethereum/go-ethereum/core/types",
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/ethereum/go-ethereum/ethclient",
+    "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rlp",
     "github.com/gin-gonic/gin",
     "github.com/golang/protobuf/proto",
