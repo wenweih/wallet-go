@@ -1,6 +1,7 @@
 # wallet-transition
 Anbi wallet module refactor
-[钱包模块文档](./doc/ex_wallet.md)
+
+[钱包架构模块文档](./doc/ex_wallet.md)
 
 - 旧钱包迁移
 - 外部接口「生成地址、提币」
