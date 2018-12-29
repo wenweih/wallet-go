@@ -123,41 +123,18 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
-  var (
-    chainID     string
-    vinAmount   int64
-    unSignTxHex string
-    selectedUTXOs []db.UTXO
-  )
-
-  // raw tx
-  switch asset {
-  case "btc":
-    vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(withdrawParams.From, withdrawParams.To, amount, subAddress, sqldb)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, httpStatus, err)
-      return
-    }
-    selectedUTXOs = selectedutxos
-    unSignTxHex = *rawTxHex
-    vinAmount = *vAmount
-  case "eth":
-    netVersion, rawTxHex, err := ethClient.RawTx(withdrawParams.From, withdrawParams.To, amount)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
-    chainID = *netVersion
-    unSignTxHex = *rawTxHex
+  unSignTxHex, chainID, vinAmount, selectedUTXOs, httpStatus, err := blockchain.RawTx(withdrawParams.From, withdrawParams.To, asset.(string), amount, subAddress, btcClient, ethClient, sqldb)
+  if err != nil {
+    configure.Sugar.DPanic(err.Error())
+    util.GinRespException(c, httpStatus, err)
+    return
   }
 
   // sign raw tx
   grpcClient := pb.NewWalletCoreClient(rpcConn)
   ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
-  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: unSignTxHex, VinAmount: vinAmount, Network: chainID})
+  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset.(string), From: withdrawParams.From, HexUnsignedTx: *unSignTxHex, VinAmount: *vinAmount, Network: *chainID})
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
