@@ -39,6 +39,7 @@ func main() {
   r.POST("/address", addressHandle)
   r.POST("/withdraw", withdrawHandle)
   r.POST("/block", blockHandle)
+  r.POST("/balance", balanceHandle)
   if err := r.Run(":3000"); err != nil {
     configure.Sugar.Fatal(err.Error())
   }

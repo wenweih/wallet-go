@@ -116,6 +116,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     detailParams["from"] = params.From
     detailParams["to"] = params.To
     detailParams["amount"] = params.Amount
+  case "balance":
+    var params BalanceParams
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
+    }
+    asset = strings.ToLower(params.Asset)
+    detailParams["address"] = params.Address
   }
   if asset == "" {
     return nil, nil, errors.New("asset params can't be empty")
@@ -185,6 +192,12 @@ type WithdrawParams struct {
 // BlockParams block endpoint params
 type BlockParams struct {
   Height  int64  `json:"height" binding:"required"`
+}
+
+// BalanceParams balance endpoint params
+type BalanceParams struct {
+  Asset   string  `json:"asset" binding:"required"`
+  Address string  `json:"address" binding:"required"`
 }
 
 // BTCWithdrawAddressValidate validate withdraw endpoint address params
