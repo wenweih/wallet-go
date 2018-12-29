@@ -1,11 +1,9 @@
 package main
 
 import (
-  // "math/big"
   "time"
   "errors"
   "strconv"
-  "strings"
   "context"
   "net/http"
   "reflect"
@@ -144,32 +142,13 @@ func withdrawHandle(c *gin.Context)  {
   txid := ""
   switch asset.(string) {
   case "btc":
-    tx, err :=blockchain.DecodeBtcTxHex(res.HexSignedTx)
+    btcTxid, httpStatus, err := btcClient.SendTx(res.HexSignedTx, selectedUTXOs, sqldb)
     if err != nil {
-      e := errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
+      configure.Sugar.DPanic(err.Error())
+      util.GinRespException(c, httpStatus, err)
       return
     }
-
-    txHash, err := btcClient.Client.SendRawTransaction(tx.MsgTx(), false)
-    if err != nil {
-      e := errors.New(strings.Join([]string{"Bitcoin SendRawTransaction signed tx error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
-      return
-    }
-    txid = txHash.String()
-    ts := sqldb.Begin()
-    for _, dbutxo := range selectedUTXOs {
-      ts.Model(&dbutxo).Updates(map[string]interface{}{"used_by": txid, "state": "selected"})
-    }
-    if err := ts.Commit().Error; err != nil {
-      e := errors.New(strings.Join([]string{"update selected utxos error", err.Error()}, ":"))
-      configure.Sugar.DPanic(e.Error())
-      util.GinRespException(c, http.StatusInternalServerError, e)
-      return
-    }
+    txid = *btcTxid
   case "eth":
     ethTxid, err := ethClient.SendTx(res.HexSignedTx)
     if err != nil {
