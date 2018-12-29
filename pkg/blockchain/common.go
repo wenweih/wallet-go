@@ -1,7 +1,7 @@
 package blockchain
 
 import (
-  // "errors"
+  "errors"
   "net/http"
   "wallet-transition/pkg/db"
 )
@@ -33,4 +33,26 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
     unSignTxHex = *rawTxHex
   }
   return &unSignTxHex, &chainID, &vinAmount, selectedUTXOs, http.StatusOK, nil
+}
+
+// SendTx broadcast tx
+func SendTx(asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
+  txid := ""
+  switch asset {
+  case "btc":
+    btcTxid, httpStatus, err := btcClient.SendTx(hexSignedTx, selectedUTXOs, sqldb)
+    if err != nil {
+      return nil, httpStatus, err
+    }
+    txid = *btcTxid
+  case "eth":
+    ethTxid, err := ethClient.SendTx(hexSignedTx)
+    if err != nil {
+      return nil, http.StatusInternalServerError, err
+    }
+    txid = *ethTxid
+  default:
+    return nil, http.StatusBadRequest, errors.New("Unsupported asset")
+  }
+  return &txid, http.StatusOK, nil
 }

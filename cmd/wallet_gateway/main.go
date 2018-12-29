@@ -121,6 +121,7 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
+  // raw tx
   unSignTxHex, chainID, vinAmount, selectedUTXOs, httpStatus, err := blockchain.RawTx(withdrawParams.From, withdrawParams.To, asset.(string), amount, subAddress, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
@@ -139,28 +140,15 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // send signed tx
-  txid := ""
-  switch asset.(string) {
-  case "btc":
-    btcTxid, httpStatus, err := btcClient.SendTx(res.HexSignedTx, selectedUTXOs, sqldb)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, httpStatus, err)
-      return
-    }
-    txid = *btcTxid
-  case "eth":
-    ethTxid, err := ethClient.SendTx(res.HexSignedTx)
-    if err != nil {
-      configure.Sugar.DPanic(err.Error())
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-    txid = *ethTxid
+  txid, httpStatus, err := blockchain.SendTx(asset.(string), res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
+  if err != nil {
+    configure.Sugar.DPanic(err.Error())
+    util.GinRespException(c, httpStatus, err)
+    return
   }
 
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
-    "txid": txid,
+    "txid": *txid,
   })
 }
