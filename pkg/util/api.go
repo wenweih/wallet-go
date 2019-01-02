@@ -53,7 +53,6 @@ func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
 func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
   return func (c *gin.Context)  {
     urlArr := strings.Split(c.Request.RequestURI, "/")
-    configure.Sugar.Info("c.Request: ", urlArr)
     ct := c.GetHeader("Content-Type")
     if ct != "application/json" {
       GinRespException(c, http.StatusUnauthorized, errors.New("Content-Type must be application/json"))
@@ -167,6 +166,7 @@ func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) 
   var (
     subAddress db.SubAddress
   )
+
   // query from address
   if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
     return nil, nil, errors.New(strings.Join([]string{asset, " ", withdrawParams.From, " not found in database"}, ""))

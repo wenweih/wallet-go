@@ -43,20 +43,25 @@ func (s *WalletCoreServerRPC) Address(ctx context.Context, in *proto.AddressReq)
 
 // SignTx sign raw tx
 func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (*proto.SignTxResp, error) {
-  ldb, err := db.NewLDB(in.Asset)
+  from := in.From
+  asset := in.Asset
+
+  if asset == "eth" {
+    from = strings.ToLower(from)
+  }
+
+  ldb, err := db.NewLDB(asset)
   if err != nil {
     return nil, err
   }
   defer ldb.Close()
-  from := in.From
-  if in.Asset == "eth" {
-    from = strings.ToLower(from)
-  }
+
+  // query from address
   priv, err := ldb.Get([]byte(from), nil)
   if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
-    return nil, errors.New(strings.Join([]string{"Address:", in.From, " not found: ", err.Error()}, ""))
+    return nil, errors.New(strings.Join([]string{"Address:", from, " not found: ", err.Error()}, ""))
   }
-  switch in.Asset {
+  switch asset {
   case "btc":
     // https://www.experts-exchange.com/questions/29108851/How-to-correctly-create-and-sign-a-Bitcoin-raw-transaction-using-Btcutil-library.html
     tx, err := blockchain.DecodeBtcTxHex(in.HexUnsignedTx)

@@ -10,11 +10,13 @@ import (
   "wallet-transition/pkg/util"
   "github.com/shopspring/decimal"
   "wallet-transition/pkg/configure"
+  "github.com/ethereum/go-ethereum"
   "github.com/ethereum/go-ethereum/rlp"
   "github.com/ethereum/go-ethereum/crypto"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
+  "github.com/ethereum/go-ethereum/crypto/sha3"
   "github.com/ethereum/go-ethereum/common/hexutil"
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
@@ -91,7 +93,6 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
 
 // GetTokenBalance get specify token balance of an EOA account
 func (client *ETHRPC) GetTokenBalance(asset, accountHex string) (*big.Int, error) {
-  configure.Sugar.Info("accountHex: ", accountHex, " asset: ", asset)
   tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
   accountAddress := common.HexToAddress(accountHex)
   contractInstance, err := NewEthToken(tokenAddress, client.Client)
@@ -149,7 +150,11 @@ func (client *ETHRPC) RawTx(from, to string, amountF float64) (*string, *string,
     return nil, nil, err
   }
 
-  amount, _ := new(big.Int).SetString(transferAmount.String(), 10)
+  amount, ok := new(big.Int).SetString(transferAmount.String(), 10)
+  if !ok {
+    return nil, nil, errors.New("Set amount error")
+  }
+
   rawTxHex, _, err := CreateRawETHTx(*nonce, amount, gasPrice, to)
   if err != nil {
     return nil, nil, err
@@ -172,6 +177,75 @@ func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressT
 	}
 	txHashHex := tx.Hash().Hex()
 	return rawTxHex, &txHashHex, nil
+}
+
+// RawTokenTx ethereum raw token tx
+func (client *ETHRPC) RawTokenTx(from, to, token string, amountF float64) (*string, *string, error) {
+  etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
+  amountDecimal := decimal.NewFromFloat(amountF)
+  amountDecimal = amountDecimal.Mul(etherToWei)
+  amount, ok := new(big.Int).SetString(amountDecimal.String(), 10)
+  if !ok {
+    return nil, nil, errors.New("Set amount error")
+  }
+
+  // get token balance for from account
+  tokenBal, err := client.GetTokenBalance(token, from)
+  if err != nil {
+    return nil, nil, errors.New(strings.Join([]string{"Get Token balance error: ", err.Error()}, ""))
+  }
+  tokenBalDecimal, _ := decimal.NewFromString(tokenBal.String())
+
+  if tokenBalDecimal.LessThan(amountDecimal) {
+    return nil, nil, errors.New(strings.Join([]string{"token amount not enough: ", err.Error(), " ", tokenBal.String(), ":", amount.String()}, ""))
+  }
+
+  value := big.NewInt(0)
+
+  toAddress := common.HexToAddress(to)
+  tokenAddress := common.HexToAddress(configure.Config.ETHToken[token].(string))
+
+  transferFunSignature := []byte("transfer(address,uint256)")
+  hash := sha3.NewKeccak256()
+  hash.Write(transferFunSignature)
+  methodID := hash.Sum(nil)[:4]
+  paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
+  paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+  var data []byte
+  data = append(data, methodID...)
+  data = append(data, paddedAddress...)
+  data = append(data, paddedAmount...)
+
+  gasLimit, err := client.Client.EstimateGas(context.Background(), ethereum.CallMsg{
+    To: &tokenAddress,
+    Data: data,
+  })
+  if err != nil {
+    return nil, nil, errors.New(strings.Join([]string{"Estimate gas error: ", err.Error()}, ""))
+  }
+
+  ethBal, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), from)
+  if err != nil {
+    return nil, nil, err
+  }
+  chainID := netVersion.String()
+
+  txFee := new(big.Int)
+  txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
+  feeDecimal, _ := decimal.NewFromString(txFee.String())
+  ethBalDecimal, _ := decimal.NewFromString(ethBal.String())
+
+  if ethBalDecimal.LessThan(feeDecimal) {
+    return nil, nil, errors.New(strings.Join([]string{"fee not enough", ethBalDecimal.String(), ":", feeDecimal.String()}, ""))
+  }
+
+  tx := types.NewTransaction(*nonce, tokenAddress, value, gasLimit, gasPrice, data)
+  rawTxHex, err := EncodeETHTx(tx)
+  if err != nil {
+    return nil, nil, errors.New(strings.Join([]string{"encode raw tx error", err.Error()}, " "))
+  }
+
+  return &chainID, rawTxHex, nil
 }
 
 // DecodeETHTx ethereum transaction hex

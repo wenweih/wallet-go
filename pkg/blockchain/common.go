@@ -31,6 +31,13 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
     }
     chainID = *netVersion
     unSignTxHex = *rawTxHex
+  case "abb":
+    netVersion, rawTxHex, err := ethClient.RawTokenTx(from, to, asset, amount)
+    if err != nil {
+      return nil, nil, nil, nil, http.StatusBadRequest, err
+    }
+    chainID = *netVersion
+    unSignTxHex = *rawTxHex
   }
   return &unSignTxHex, &chainID, &vinAmount, selectedUTXOs, http.StatusOK, nil
 }
@@ -38,6 +45,7 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
 // SendTx broadcast tx
 func SendTx(asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
   txid := ""
+
   switch asset {
   case "btc":
     btcTxid, httpStatus, err := btcClient.SendTx(hexSignedTx, selectedUTXOs, sqldb)
