@@ -42,6 +42,7 @@ func main() {
 
   r.GET("/balance", balanceHandle)
   r.GET("/address_validator", addressValidator)
+  r.GET("/best_block", bestBlock)
   if err := r.Run(":3000"); err != nil {
     configure.Sugar.Fatal(err.Error())
   }

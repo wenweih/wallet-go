@@ -101,7 +101,7 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
   detailParams := make(map[string]interface{})
   // var detailParams map[string]interface{}
   switch endpoint {
-  case "address":
+  case "address", "best_block":
     var params AddressParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
@@ -116,15 +116,8 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     detailParams["from"] = params.From
     detailParams["to"] = params.To
     detailParams["amount"] = params.Amount
-  case "balance":
+  case "balance", "address_validator":
     var params BalanceParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-    detailParams["address"] = params.Address
-  case "address_validator":
-    var params AssetWithAddress
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
     }

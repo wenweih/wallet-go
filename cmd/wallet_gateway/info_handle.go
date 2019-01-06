@@ -77,12 +77,19 @@ func balanceHandle(c *gin.Context)  {
     return
   }
 
+  if !common.IsHexAddress(balanceParams.Address) {
+    err := errors.New(strings.Join([]string{"To: ", balanceParams.Address, " isn't valid ethereum address"}, ""))
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
   if asset.(string) == "eth" {
     balance, err := ethClient.Client.BalanceAt(context.Background(), common.HexToAddress(balanceParams.Address), nil)
   	if err != nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
   	}
+
     c.JSON(http.StatusOK, gin.H {
       "status": http.StatusOK,
       "balance": util.ToEther(balance).String(),
@@ -132,6 +139,33 @@ func addressValidator(c *gin.Context) {
     "status": http.StatusOK,
     "valid": true,
   })
+}
+
+func bestBlock(c *gin.Context)  {
+  asset, _ := c.Get("asset")
+  switch asset.(string) {
+  case "eth":
+    block, err := ethClient.Client.BlockByNumber(context.Background(), nil)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "block_number": block.NumberU64(),
+    })
+    return
+  case "btc":
+    btcInfo, err := btcClient.Client.GetBlockChainInfo()
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "block_number": btcInfo.Headers,
+    })
+  }
 }
 
 func addressWithAssetParams(paramsI interface{}) (*string, error) {
