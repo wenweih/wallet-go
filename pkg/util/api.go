@@ -130,6 +130,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     }
     asset = strings.ToLower(params.Asset)
     detailParams["height"] = params.Height
+  case "tx":
+    var params TxParams
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
+    }
+    asset = strings.ToLower(params.Asset)
+    detailParams["txid"] = params.Txid
   }
   if asset == "" {
     return nil, nil, errors.New("asset params can't be empty")
@@ -187,6 +194,12 @@ func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) 
 // AddressParams /address endpoint default params
 type AddressParams struct {
   Asset string  `json:"asset"`
+}
+
+// TxParams /tx endpoint default params
+type TxParams struct {
+  Asset string  `json:"asset"`
+  Txid  string  `json:"txid"`
 }
 
 // WithdrawParams withdraw endpoint params

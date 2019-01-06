@@ -15,7 +15,57 @@ import (
   "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+  "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
+
+func txHandle(c *gin.Context)  {
+  asset, _ := c.Get("asset")
+  detailParams, _ := c.Get("detail")
+  params := reflect.ValueOf(detailParams)
+  txParams := util.TxParams{}
+  if params.Kind() == reflect.Map {
+    for _, key := range params.MapKeys() {
+      switch key.Interface() {
+      case "txid":
+        txParams.Txid = params.MapIndex(key).Interface().(string)
+      }
+    }
+  }else {
+    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
+    return
+  }
+
+  switch asset.(string) {
+  case "eth":
+    tx, _, err := ethClient.Client.TransactionByHash(context.Background(), common.HexToHash(txParams.Txid))
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "tx": tx,
+    })
+    return
+  case "btc":
+    txHash, err := chainhash.NewHashFromStr(txParams.Txid)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    tx, err := btcClient.Client.GetRawTransaction(txHash)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, err)
+      return
+    }
+    configure.Sugar.Info("xffff: ", tx.MsgTx())
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "tx": tx.MsgTx(),
+    })
+    return
+  }
+}
 
 func blockHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")

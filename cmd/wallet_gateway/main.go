@@ -39,6 +39,7 @@ func main() {
   r.POST("/address", addressHandle)
   r.POST("/withdraw", withdrawHandle)
 
+  r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
   r.GET("/balance", balanceHandle)
   r.GET("/address_validator", addressValidator)
