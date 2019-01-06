@@ -31,6 +31,7 @@ func GinEngine() *gin.Engine {
   if err != nil {
     configure.Sugar.Fatal("read priv key error: ", err.Error())
   }
+
   rsaPriv := BytesToPrivateKey(privBytes)
   r.Use(apiAuth(rsaPriv))
   return r

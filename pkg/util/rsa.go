@@ -66,7 +66,7 @@ func savePEMKey(fileName string, p pemKey, key *rsa.PrivateKey) {
       Type:  "RSA PUBLIC KEY",
       Bytes: pubASN1,
     }
-    file = strings.Join([]string{fileNameWithType, "der"}, ".")
+    file = strings.Join([]string{fileNameWithType, "pem"}, ".")
   case "priv":
     pk = &pem.Block{
   		Type:  "PRIVATE KEY",
@@ -114,13 +114,13 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 		b, err = x509.DecryptPEMBlock(block, nil)
     checkError(err)
 	}
-	ifc, err := x509.ParsePKCS8PrivateKey(b)
+	ifc, err := x509.ParsePKCS1PrivateKey(b)
   checkError(err)
-  key, ok := ifc.(*rsa.PrivateKey)
-  if !ok {
-    checkError(errors.New("ifc to key fail"))
-  }
-	return key
+  // key, ok := ifc.(*rsa.PrivateKey)
+  // if !ok {
+  //   checkError(errors.New("ifc to key fail"))
+  // }
+	return ifc
 }
 
 // EncryptWithPublicKey encrypts data with public key
