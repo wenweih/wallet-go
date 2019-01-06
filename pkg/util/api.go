@@ -123,6 +123,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     }
     asset = strings.ToLower(params.Asset)
     detailParams["address"] = params.Address
+  case "block":
+    var params BlockParams
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
+    }
+    asset = strings.ToLower(params.Asset)
+    detailParams["height"] = params.Height
   }
   if asset == "" {
     return nil, nil, errors.New("asset params can't be empty")
@@ -192,7 +199,8 @@ type WithdrawParams struct {
 
 // BlockParams block endpoint params
 type BlockParams struct {
-  Height  int64  `json:"height" binding:"required"`
+  Asset   string  `json:"asset" binding:"required"`
+  Height  string  `json:"height" binding:"required"`
 }
 
 // BalanceParams balance endpoint params

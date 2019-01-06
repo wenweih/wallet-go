@@ -4,12 +4,15 @@ import (
   "context"
   "errors"
   "reflect"
+  "strconv"
   "strings"
   "net/http"
+  "math/big"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
+  "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 )
@@ -23,7 +26,7 @@ func blockHandle(c *gin.Context)  {
     for _, key := range params.MapKeys() {
       switch key.Interface() {
       case "height":
-        blockParams.Height = params.MapIndex(key).Interface().(int64)
+        blockParams.Height = params.MapIndex(key).Interface().(string)
       }
     }
   }else {
@@ -32,11 +35,35 @@ func blockHandle(c *gin.Context)  {
   }
   switch asset.(string) {
   case "btc":
-    block, err := btcClient.GetBlock(blockParams.Height)
+    height, err := strconv.ParseInt(blockParams.Height, 10, 64)
+    if err != nil {
+      util.GinRespException(c, http.StatusBadRequest, errors.New("height param error"))
+      return
+    }
+    block, err := btcClient.GetBlock(height)
     if err !=nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
     }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "block": block,
+    })
+    return
+  case "eth":
+    height, ok := new(big.Int).SetString(blockParams.Height, 10)
+    if !ok {
+      util.GinRespException(c, http.StatusBadRequest, errors.New("height param error"))
+      return
+    }
+    ethBlock, err := ethClient.Client.BlockByNumber(context.Background(), height)
+    if err !=nil {
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    var block struct{Header types.Header; Tx []*types.Transaction}
+    block.Header = *ethBlock.Header()
+    block.Tx = ethBlock.Body().Transactions
     c.JSON(http.StatusOK, gin.H {
       "status": http.StatusOK,
       "block": block,
@@ -165,6 +192,9 @@ func bestBlock(c *gin.Context)  {
       "status": http.StatusOK,
       "block_number": btcInfo.Headers,
     })
+  default:
+    util.GinRespException(c, http.StatusBadRequest, errors.New("Only support ethereum and bitcoin"))
+    return
   }
 }
 
