@@ -123,6 +123,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     }
     asset = strings.ToLower(params.Asset)
     detailParams["address"] = params.Address
+  case "address_validator":
+    var params AssetWithAddress
+    if err := json.Unmarshal(paramsByte, &params); err != nil {
+      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
+    }
+    asset = strings.ToLower(params.Asset)
+    detailParams["address"] = params.Address
   }
   if asset == "" {
     return nil, nil, errors.New("asset params can't be empty")
@@ -197,6 +204,12 @@ type BlockParams struct {
 
 // BalanceParams balance endpoint params
 type BalanceParams struct {
+  Asset   string  `json:"asset" binding:"required"`
+  Address string  `json:"address" binding:"required"`
+}
+
+// AssetWithAddress struct
+type AssetWithAddress struct {
   Asset   string  `json:"asset" binding:"required"`
   Address string  `json:"address" binding:"required"`
 }
