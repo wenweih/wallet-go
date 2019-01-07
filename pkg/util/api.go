@@ -114,6 +114,9 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     }
     asset = strings.ToLower(params.Asset)
     detailParams["from"] = params.From
+    if asset == "eth" {
+      detailParams["from"] = strings.ToLower(params.From)
+    }
     detailParams["to"] = params.To
     detailParams["amount"] = params.Amount
   case "balance", "address_validator":

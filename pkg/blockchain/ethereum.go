@@ -146,7 +146,8 @@ func (client *ETHRPC) RawTx(from, to string, amountF float64) (*string, *string,
   feeDecimal, _ := decimal.NewFromString(txFee.String())
   totalCost := transferAmount.Add(feeDecimal)
   if !totalCost.LessThanOrEqual(balanceDecimal) {
-    err = errors.New(strings.Join([]string{"Account: ", from, " balance is not enough ", balanceDecimal.String(), ":", totalCost.String()}, ""))
+    totalCostBig, _ := new(big.Int).SetString(totalCost.String(), 10)
+    err = errors.New(strings.Join([]string{"Account: ", from, " balance is not enough ", util.ToEther(balance).String(), ":", util.ToEther(totalCostBig).String()}, ""))
     return nil, nil, err
   }
 

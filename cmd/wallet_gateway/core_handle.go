@@ -5,6 +5,7 @@ import (
   "errors"
   "strconv"
   "context"
+  "strings"
   "net/http"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/db"
@@ -25,7 +26,12 @@ func addressHandle(c *gin.Context) {
     return
   }
 
-  if err := sqldb.Create(&db.SubAddress{Address: res.Address, Asset: asset.(string)}).Error; err != nil {
+  address := res.Address
+  if asset.(string) == "eth" {
+    address = strings.ToLower(address)
+  }
+
+  if err := sqldb.Create(&db.SubAddress{Address: address, Asset: asset.(string)}).Error; err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
   }
