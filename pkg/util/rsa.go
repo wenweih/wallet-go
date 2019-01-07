@@ -4,11 +4,11 @@ import (
   "crypto/rand"
   "strings"
   "crypto/rsa"
-  // "crypto/sha512"
   "os"
   "encoding/pem"
   "crypto/x509"
   "log"
+  "bytes"
   "errors"
   "wallet-transition/pkg/configure"
 )
@@ -125,22 +125,52 @@ func BytesToPrivateKey(priv []byte) *rsa.PrivateKey {
 
 // EncryptWithPublicKey encrypts data with public key
 func EncryptWithPublicKey(msg []byte, pub *rsa.PublicKey) []byte {
-  // hash := sha512.New()
-  ciphertext, err := rsa.EncryptPKCS1v15(rand.Reader, pub, msg)
-  // ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, msg, nil)
-	if err != nil {
-    checkError(err)
+  // pub.N.BitLen()/8-11
+  chunks := split(msg, 117)
+  var cipherData  = make([]byte, 0, 0)
+  for _, d := range chunks {
+		var c, e = rsa.EncryptPKCS1v15(rand.Reader, pub, d)
+		if e != nil {
+			checkError(e)
+		}
+		cipherData = append(cipherData, c...)
 	}
-  return ciphertext
+  return cipherData
+
 }
 
 // DecryptWithPrivateKey decrypts data with private key
 func DecryptWithPrivateKey(ciphertext []byte, priv *rsa.PrivateKey) ([]byte, error) {
-	// hash := sha512.New()
-  plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, priv, ciphertext)
-	// plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, priv, ciphertext, nil)
-  if err != nil {
-    return nil ,err
+  // partLen := priv.PublicKey.N.BitLen() / 8
+  chunks := split(ciphertext, 128)
+  buffer := bytes.NewBufferString("")
+
+  for _, chunk := range chunks {
+    decrypted, err := rsa.DecryptPKCS1v15(rand.Reader, priv, chunk)
+      if err != nil {
+          return nil, err
+      }
+      buffer.Write(decrypted)
   }
-  return plaintext, nil
+  return buffer.Bytes(), nil
+}
+
+func split(originalData []byte, packageSize int) (r [][]byte) {
+	var src = make([]byte, len(originalData))
+	copy(src, originalData)
+
+	r = make([][]byte, 0)
+	if len(src) <= packageSize {
+		return append(r, src)
+	}
+	for len(src) > 0 {
+		var p = src[:packageSize]
+		r = append(r, p)
+		src = src[packageSize:]
+		if len(src) <= packageSize {
+			r = append(r, src)
+			break
+		}
+	}
+	return r
 }
