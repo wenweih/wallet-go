@@ -13,8 +13,10 @@ import (
   "wallet-transition/pkg/configure"
 )
 
+// https://github.com/smartwalle/alipay/blob/master/encoding/rsa.go
 // https://stackoverflow.com/questions/11410770/load-rsa-public-key-from-file
 // https://gist.github.com/sdorra/1c95de8cb80da31610d2ad767cd6f251
+// https://gist.github.com/miguelmota/3ea9286bd1d3c2a985b67cac4ba2130a
 // key, err := keystore.DecryptKey(ksBytes, configure.Config.KSPass)
 //
 // pubBytes, err := ioutil.ReadFile("/Users/lianxi/wallet_pub.pem")

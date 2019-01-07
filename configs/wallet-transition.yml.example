@@ -28,3 +28,10 @@ ks_pass: "ks_pass"
 api_assets: ["btc", "eth"]
 
 wallet_core_rpc_url: "localhost:8080"
+
+eth_token:
+  "abb": "0x9ac793a28d5207ce2ddd41542dbf5363d68324a8"
+  "aaa": "0x9ac793a28d5207ce2ddd41542dbf5363d68324a8"
+
+confirmations:
+  "btc": 6

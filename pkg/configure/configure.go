@@ -54,6 +54,8 @@ type Configure struct {
 	WalletCoreRPCURL        string
 
 	ETHToken                map[string]interface{}
+
+	Confirmations           map[string]interface{}
 }
 
 // InitConfig 配置信息
@@ -128,6 +130,9 @@ func InitConfig() *Configure {
 
 		case "eth_token":
 			conf.ETHToken = viper.Sub("eth_token").AllSettings()
+
+		case "confirmations":
+			conf.Confirmations = viper.Sub("confirmations").AllSettings()
 		}
 	}
 	return &conf

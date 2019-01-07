@@ -165,7 +165,8 @@ func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.
 	}
 
 	// query utxos, which confirmate count is more than 6
-	if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - 5, "original").Related(&utxos).Error; err !=nil {
+	confs := configure.Config.Confirmations["btc"].(int)
+	if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - int32(confs) + 1, "original").Related(&utxos).Error; err !=nil {
 		return nil, nil, nil, http.StatusNotFound, err
 	}
 	configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
