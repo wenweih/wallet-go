@@ -195,10 +195,13 @@ func (client *ETHRPC) RawTokenTx(from, to, token string, amountF float64) (*stri
   if err != nil {
     return nil, nil, errors.New(strings.Join([]string{"Get Token balance error: ", err.Error()}, ""))
   }
-  tokenBalDecimal, _ := decimal.NewFromString(tokenBal.String())
+  tokenBalDecimal, err := decimal.NewFromString(tokenBal.String())
+  if err != nil {
+    return nil, nil, errors.New(strings.Join([]string{"Token balance to decimal error: ", err.Error()}, ""))
+  }
 
   if tokenBalDecimal.LessThan(amountDecimal) {
-    return nil, nil, errors.New(strings.Join([]string{"token amount not enough: ", err.Error(), " ", tokenBal.String(), ":", amount.String()}, ""))
+    return nil, nil, errors.New(strings.Join([]string{"token amount not enough: ", util.ToEther(tokenBal).String(), ":", util.ToEther(amount).String()}, ""))
   }
 
   value := big.NewInt(0)
