@@ -4,6 +4,7 @@ package proto;
 service WalletCore {
   rpc Address (addressReq) returns (AddressResp);
   rpc SignTx (SignTxReq) returns (SignTxResp);
+  rpc SendToAddressSignBTC (SendToAddressReq) returns (SignTxResp);
 }
 
 message addressReq {
@@ -25,4 +26,15 @@ message SignTxReq{
 message SignTxResp {
   bool result  = 1;
   string hexSignedTx = 2;
+}
+
+message SendToAddressReq {
+  message PreviousOutPoint {
+    string address = 1;
+    string txid = 2;
+    uint32 index = 3;
+  }
+  repeated PreviousOutPoint utxo = 1;
+  int64   vinAmount = 2;
+  string hexUnsignedTx = 3;
 }
