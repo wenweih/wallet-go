@@ -7,7 +7,7 @@ import (
 )
 
 // RawTx raw transaction for withdraw endpoint
-func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, *string, *int64, []db.UTXO, int, error) {
+func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB) (*string, *string, *int64, []db.UTXO, int, error) {
   var (
     chainID     string
     vinAmount   int64
@@ -45,7 +45,6 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
 // SendTx broadcast tx
 func SendTx(asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
   txid := ""
-
   switch asset {
   case "btc":
     btcTxid, httpStatus, err := btcClient.SendTx(hexSignedTx, selectedUTXOs, sqldb)

@@ -12,6 +12,7 @@ var (
   sqldb   *db.GormDB
   rpcConn *grpc.ClientConn
   btcClient *blockchain.BTCRPC
+  omniClient *blockchain.BTCRPC
   ethClient *blockchain.ETHRPC
 )
 
@@ -35,9 +36,14 @@ func main() {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
+  // omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
+  // info, _ := omniClient.Client.RawRequest("getblockchaininfo", nil)
+  // configure.Sugar.Info("xxxx: ", info)
+
   r := util.GinEngine()
   r.POST("/address", addressHandle)
-  r.POST("/withdraw", withdrawHandle)
+  r.POST("/send", withdrawHandle)
+  r.POST("/sendtoaddress", sendToAddress)
 
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)

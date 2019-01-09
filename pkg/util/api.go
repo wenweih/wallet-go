@@ -22,16 +22,13 @@ import (
 func GinEngine() *gin.Engine {
   gin.SetMode(gin.ReleaseMode)
   r := gin.New()
-  gin.New()
   r.Use(gin.Logger())
   r.Use(gin.Recovery())
-  r.Use(noRouteMiddleware(r))
 
   privBytes, err := ioutil.ReadFile(strings.Join([]string{configure.HomeDir(), "wallet_priv.pem"}, "/"))
   if err != nil {
     configure.Sugar.Fatal("read priv key error: ", err.Error())
   }
-
   rsaPriv := BytesToPrivateKey(privBytes)
   r.Use(apiAuth(rsaPriv))
   return r
@@ -101,13 +98,13 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
   detailParams := make(map[string]interface{})
   // var detailParams map[string]interface{}
   switch endpoint {
-  case "address", "best_block":
+  case "address":
     var params AddressParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
     }
     asset = strings.ToLower(params.Asset)
-  case "withdraw":
+  case "send", "sendtoaddress":
     var params WithdrawParams
     if err := json.Unmarshal(paramsByte, &params); err != nil {
       return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
@@ -140,6 +137,8 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
     }
     asset = strings.ToLower(params.Asset)
     detailParams["txid"] = params.Txid
+  default:
+    return nil, nil, errors.New("no routes")
   }
   if asset == "" {
     return nil, nil, errors.New("asset params can't be empty")
@@ -152,31 +151,11 @@ func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *str
 
 // WithdrawParamsH handle withdraw endpoint request params
 func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) (*WithdrawParams, *db.SubAddress, error) {
-  params := reflect.ValueOf(detailParams)
-  withdrawParams := WithdrawParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "from":
-        withdrawParams.From = params.MapIndex(key).Interface().(string)
-      case "to":
-        withdrawParams.To = params.MapIndex(key).Interface().(string)
-      case "amount":
-        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    return nil, nil, errors.New("detail params error")
+  withdrawParams, err := transferParams(detailParams)
+  if err != nil {
+    return nil, nil, err
   }
 
-  // params
-  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
-  if err != nil {
-    return nil, nil, errors.New("amount can't be empty and less than 0")
-  }
-  if amount <= 0 {
-    return nil, nil, errors.New("amount can't be empty and less than 0")
-  }
   if withdrawParams.From == "" || withdrawParams.To == "" {
     return nil, nil, errors.New("from or to params can't be empty")
   }
@@ -191,7 +170,44 @@ func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) 
   }else if err != nil {
     return nil, nil, err
   }
-  return &withdrawParams, &subAddress, nil
+  return withdrawParams, &subAddress, nil
+}
+
+func SendToAddressParamsH(detailParams interface{}) (*WithdrawParams, error) {
+  params, err := transferParams(detailParams)
+  if err != nil {
+    return nil, err
+  }
+  return params, nil
+}
+
+func transferParams(detailParams interface{}) (*WithdrawParams, error) {
+  params := reflect.ValueOf(detailParams)
+  withdrawParams := WithdrawParams{}
+  if params.Kind() == reflect.Map {
+    for _, key := range params.MapKeys() {
+      switch key.Interface() {
+      case "from":
+        withdrawParams.From = params.MapIndex(key).Interface().(string)
+      case "to":
+        withdrawParams.To = params.MapIndex(key).Interface().(string)
+      case "amount":
+        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
+      }
+    }
+  }else {
+    return nil, errors.New("detail params error")
+  }
+
+  // params
+  amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"fail to convert amount", err.Error()}, ":"))
+  }
+  if amount <= 0 {
+    return nil, errors.New("amount can't be empty and less than 0")
+  }
+  return &withdrawParams, nil
 }
 
 // AddressParams /address endpoint default params

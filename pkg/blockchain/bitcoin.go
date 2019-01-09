@@ -48,6 +48,21 @@ func NewbitcoinClient() *rpcclient.Client {
 	return client
 }
 
+func NewOmnicoreClient() *rpcclient.Client {
+	connCfg := &rpcclient.ConnConfig {
+		Host:         configure.Config.OmniNODEHOST,
+		User:         configure.Config.OmniNODEUSR,
+		Pass:         configure.Config.OmniNODEPASS,
+		HTTPPostMode: configure.Config.OmniHTTPPostMode,
+		DisableTLS:   configure.Config.OmniDisableTLS,
+	}
+	client, err := rpcclient.New(connCfg, nil)
+	if err != nil {
+		configure.Sugar.Fatal("bitcoind client err: ", err.Error())
+	}
+	return client
+}
+
 // BtcUTXO utxo type
 type BtcUTXO struct {
 	Txid      string  `json:"txid"`
@@ -140,6 +155,48 @@ func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult,
 	return block, nil
 }
 
+// RawSendToAddressTx btc raw tx without specify the from address
+func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddress, to string, sqldb *db.GormDB) (*int64, []db.UTXO, *string, int, error) {
+	var (
+		utxos			[]db.UTXO
+		vinAmount	int64
+	)
+	fee := btcutil.Amount(5000)
+
+	// query bitcoin current best height
+	binfo, err := btcClient.Client.GetBlockChainInfo()
+	if err != nil {
+		return nil, nil, nil, http.StatusInternalServerError, err
+	}
+	bheader := binfo.Headers
+
+	confs := configure.Config.Confirmations["btc"].(int)
+	sqldb.Where("height <= ? AND state = ?", bheader - int32(confs) + 1, "original").Preload("SubAddress").Find(&utxos)
+
+	// coin select
+	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, err
+	}
+
+	for _, coin := range selectedCoins.Coins() {
+		vinAmount += int64(coin.Value())
+	}
+
+	feeKB, err := btcClient.Client.EstimateFee(int64(6))
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, err
+	}
+
+	funBackAddressPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(funbackAddress, to)
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, err
+	}
+
+	vAmount, unSignTxHex := RawBTCTx(funBackAddressPkScript, toPkScript, feeKB, txAmount, selectedCoins)
+
+	return &vAmount, selectedutxos, &unSignTxHex, http.StatusOK, nil
+}
 // RawTx btc raw tx
 func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB) (*int64, []db.UTXO, *string, int, error) {
 	var (
@@ -276,7 +333,7 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 	}
 
 	selector := &coinset.MaxValueAgeCoinSelector{
-		MaxInputs: 10,
+		MaxInputs: 50,
 		MinChangeAmount: 10000,
 	}
 
@@ -298,7 +355,7 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 }
 
 // RawBTCTx btc raw tx
-func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) (int64, string ){
+func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) (int64, string ){
 	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
 	var vinAmount int64
 	for _, coin := range selectedCoins.Coins() {
@@ -308,7 +365,7 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 	vAmount := vinAmount
 
 	txOutTo := wire.NewTxOut(int64(txAmount), toPkScript)
-	txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), fromPkScript)
+	txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), funbackPkScript)
 	msgTx.AddTxOut(txOutTo)
 	msgTx.AddTxOut(txOutReBack)
 
@@ -321,7 +378,7 @@ func RawBTCTx(fromPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult,
 
 	// sub tx fee
 	for _, out := range msgTx.TxOut {
-		if out.Value != int64(txAmount) && (vinAmount - int64(txAmount) - int64(fee)) > 0{
+		if out.Value != int64(txAmount) && (vinAmount - int64(txAmount) - int64(fee)) > 0 {
 			out.Value = vinAmount - int64(txAmount) - int64(fee)
 		}
 	}
