@@ -57,7 +57,7 @@ replace-btcd: replace-btcd
 
 # https://github.com/ethereum/go-ethereum/issues/2738
 fixed-ethereum-vendor: ; $(info $(M) fixed go-ethereum vendor bug by dep)
-	$(GO) get -u github.com/ethereum/go-ethereum
+	$(GO) get github.com/ethereum/go-ethereum
 	@cp -r "${GOPATH}/src/github.com/ethereum/go-ethereum/crypto/secp256k1/libsecp256k1" \
 	$(BASE)/vendor/github.com/ethereum/go-ethereum/crypto/secp256k1/
 

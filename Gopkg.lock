@@ -42,11 +42,11 @@
   name = "github.com/aristanetworks/goarista"
   packages = ["monotime"]
   pruneopts = "UT"
-  revision = "332ede26fbf000b0af488b1836b53b44d2a7c46c"
+  revision = "a46b54cbd1ca34b44d2605220dcd38fe8651fb7b"
 
 [[projects]]
   branch = "master"
-  digest = "1:468b5e7d98acb4609fd6dec19227f34ae4cbd97fd0e492c4c05f6e46d16362a0"
+  digest = "1:ebed5ad39579d8e86b2eda736d2e5c627c7fdc69ce33d51753bf80882d62e9f5"
   name = "github.com/btcsuite/btcd"
   packages = [
     "blockchain",
@@ -63,7 +63,7 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "7d2daa5bfef28c5e282571bc06416516936115ee"
+  revision = "5bda5314ca9549a589e63d7b2e6104492a0d5328"
 
 [[projects]]
   branch = "master"
@@ -195,6 +195,14 @@
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:ec6f9bf5e274c833c911923c9193867f3f18788c461f76f05f62bb1510e0ae65"
+  name = "github.com/go-sql-driver/mysql"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "72cd26f257d44c1114970e19afddcd812016007e"
+  version = "v1.4.1"
+
+[[projects]]
   digest = "1:586ea76dbd0374d6fb649a91d70d652b7fe0ccffb8910a77468e7702e7901f3d"
   name = "github.com/go-stack/stack"
   packages = ["."]
@@ -288,10 +296,11 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:57072e5ce133ed6023e6ff49d9f19dcfb09f0fc8da693b1a8ac2eaa038ac858f"
+  digest = "1:d97449baab35722b65361a58c2b016404aa25c88dc31ded1c46df02f1e3a045d"
   name = "github.com/jinzhu/gorm"
   packages = [
     ".",
+    "dialects/mysql",
     "dialects/sqlite",
   ]
   pruneopts = "UT"
@@ -487,12 +496,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:98c46dbde8c257608669d6827aacb8c8722d6ea7b4ffd7c4d1ea32ead21bfea9"
@@ -741,15 +750,15 @@
     "websocket",
   ]
   pruneopts = "UT"
-  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
+  revision = "1e06a53dbb7e2ed46e91183f219db23c6943c532"
 
 [[projects]]
   branch = "master"
-  digest = "1:5004e851e5eccde563d17871cd9d11c82e2faa578b1a0de81dc74867ad3845a4"
+  digest = "1:f106a08663d0031b576f61ab81ffd80124da17096eab36aceb25b1b0d847da9a"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "82a175fd1598e8a172e58ebdf5ed262bb29129e5"
+  revision = "7fbe1cd0fcc20051e1fcb87fbabec4a1bacaaeba"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -785,7 +794,15 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "8a6051197512ff9cbf65108d80613b631fe0b4f3"
+  revision = "421f03a57a641a72b8ea4ceb640e73391675fc6f"
+
+[[projects]]
+  digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
+  name = "google.golang.org/appengine"
+  packages = ["cloudsql"]
+  pruneopts = "UT"
+  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
+  version = "v1.4.0"
 
 [[projects]]
   branch = "master"
@@ -793,7 +810,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "bd9b4fb69e2ffd37621a6caa54dcbead29b546f2"
+  revision = "ae2f86662275e140f395167f1dab7081a5bd5fa8"
 
 [[projects]]
   digest = "1:8c8ed249fa6a8db070bf2082f02052c697695fa5e1558b4e28dd0fb5f15f70a2"
@@ -898,6 +915,7 @@
     "github.com/gin-gonic/gin",
     "github.com/golang/protobuf/proto",
     "github.com/jinzhu/gorm",
+    "github.com/jinzhu/gorm/dialects/mysql",
     "github.com/jinzhu/gorm/dialects/sqlite",
     "github.com/manifoldco/promptui",
     "github.com/mitchellh/go-homedir",
