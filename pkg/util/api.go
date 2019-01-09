@@ -249,13 +249,13 @@ type AssetWithAddress struct {
 
 // BTCWithdrawAddressValidate validate withdraw endpoint address params
 func BTCWithdrawAddressValidate(from, to string) ([]byte, []byte, error) {
-  toAddress, err := btcutil.DecodeAddress(to, &chaincfg.RegressionNetParams)
+  toAddress, err := btcutil.DecodeAddress(to, &chaincfg.TestNet3Params)
   if err != nil {
     e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
     return nil, nil, e
   }
 
-  fromAddress, err := btcutil.DecodeAddress(from, &chaincfg.RegressionNetParams)
+  fromAddress, err := btcutil.DecodeAddress(from, &chaincfg.TestNet3Params)
   if err != nil {
     e := errors.New(strings.Join([]string{"From address address illegal", err.Error()}, ":"))
     return nil, nil, e

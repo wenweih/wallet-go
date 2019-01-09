@@ -400,11 +400,11 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
     return nil, errors.New(strings.Join([]string{"GenerateSeed err", err.Error()}, ":"))
   }
 
-  key, err := hdkeychain.NewMaster(seed, &chaincfg.RegressionNetParams)
+  key, err := hdkeychain.NewMaster(seed, &chaincfg.TestNet3Params)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
   }
-  add, err := key.Address(&chaincfg.RegressionNetParams)
+  add, err := key.Address(&chaincfg.TestNet3Params)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"NewAddressPubKeyHash err", err.Error()}, ":"))
   }
@@ -416,7 +416,7 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
       return nil, errors.New(strings.Join([]string{"master key to ec privite key error:", err.Error()}, ""))
     }
 
-    wif, err := btcutil.NewWIF(priv, &chaincfg.RegressionNetParams, true)
+    wif, err := btcutil.NewWIF(priv, &chaincfg.TestNet3Params, true)
     if err != nil {
       return nil, errors.New(strings.Join([]string{"btcec priv to wif:", err.Error()}, ""))
     }
