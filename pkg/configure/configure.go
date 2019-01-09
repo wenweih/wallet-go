@@ -31,7 +31,16 @@ type Configure struct {
 	BTCHTTPPostMode bool
 	BTCDisableTLS   bool
 
+	OmniNODEHOST     string
+	OmniNODEUSR      string
+	OmniNODEPASS     string
+	OmniHTTPPostMode bool
+	OmniDisableTLS   bool
+
 	EthRPCWS        string
+	EthRPC          string
+
+	DB              string
 
 	OldBTCWalletServerHost	string
 	OldBTCWalletServerUser	string
@@ -91,8 +100,24 @@ func InitConfig() *Configure {
 		case "btc_disable_tls":
 			conf.BTCDisableTLS = value.(bool)
 
+		case "omni_node_host":
+			conf.OmniNODEHOST = value.(string)
+		case "omni_node_usr":
+			conf.OmniNODEUSR = value.(string)
+		case "omni_node_pass":
+			conf.OmniNODEPASS = value.(string)
+		case "omni_http_mode":
+			conf.OmniHTTPPostMode = value.(bool)
+		case "omni_disable_tls":
+			conf.OmniDisableTLS = value.(bool)
+
 		case "eth_rpc_ws":
 			conf.EthRPCWS = value.(string)
+		case "eth_rpc":
+			conf.EthRPC = value.(string)
+
+		case "db_mysql":
+			conf.DB = value.(string)
 
 		// old btc wallet server info
 		case "old_btc_wallet_server_host":

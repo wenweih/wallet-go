@@ -7,8 +7,10 @@ import (
   "path/filepath"
   "github.com/qor/transition"
   "github.com/jinzhu/gorm"
+  "bytes"
   // sqlite driven
   _ "github.com/jinzhu/gorm/dialects/sqlite"
+  _ "github.com/jinzhu/gorm/dialects/mysql"
   "wallet-transition/pkg/configure"
   "github.com/btcsuite/btcd/btcjson"
 )
@@ -58,6 +60,20 @@ func NewSqlite() (*GormDB, error) {
   }
 
   db, err := gorm.Open("sqlite3", strings.Join([]string{configure.Config.BackupWalletPath, "wallet-transition.db"}, ""))
+  if err != nil {
+    return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
+  }
+  db.AutoMigrate(&SubAddress{}, &BTCBlock{}, &UTXO{}, &transition.StateChangeLog{})
+  return &GormDB{db}, nil
+}
+
+// NewMySQL new mysql connection
+func NewMySQL() (*GormDB, error) {
+  w := bytes.Buffer{}
+	w.WriteString(configure.Config.DB)
+	w.WriteString("?charset=utf8&parseTime=True&loc=Local")
+	dbInfo := w.String()
+	db, err := gorm.Open("mysql", dbInfo)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
   }
