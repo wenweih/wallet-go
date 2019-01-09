@@ -35,3 +35,5 @@ eth_token:
 
 confirmations:
   "btc": 6
+
+db_mysql: "username:password@tcp(hostname:port)/dabase_name"

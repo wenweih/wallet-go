@@ -33,7 +33,7 @@ func (client *ETHRPC) Close()  {
 
 // NewEthClient new ethereum rpc client
 func NewEthClient() (*ETHRPC, error) {
-  ethClient, err := ethclient.Dial(configure.Config.EthRPCWS)
+  ethClient, err := ethclient.Dial(configure.Config.EthRPC)
   if err != nil {
     return nil, err
   }
