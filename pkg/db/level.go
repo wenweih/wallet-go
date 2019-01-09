@@ -2,6 +2,7 @@ package db
 
 import (
 	"bufio"
+	"encoding/hex"
 	"github.com/syndtr/goleveldb/leveldb"
 	"os"
 	"errors"
@@ -81,14 +82,23 @@ func (db *LDB) MigrateETH ()  {
 	for scanner.Scan() {
 		splitArr := strings.Split(scanner.Text(), " ")
 		address := strings.ToLower(splitArr[0])
-		_, err := db.Get([]byte(address), nil)
+		address = strings.ToLower(address)
+		priv, err := hex.DecodeString(splitArr[1])
+		if err != nil {
+			configure.Sugar.Fatal("Decode priv error")
+		}
+
+		_, err = db.Get([]byte(address), nil)
 		if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
-			db.Put([]byte(address), []byte(splitArr[1]), nil)
+			db.Put([]byte(address), priv, nil)
 			configure.Sugar.Info("successful migrated ", address)
 		}else if err != nil {
 			configure.Sugar.Fatal("Failt to migrate: ", address)
 		}else {
-			configure.Sugar.Info("Exists in db, skip ", address)
+			if err := db.Put([]byte(address), priv, nil); err != nil {
+				configure.Sugar.Fatal("Exists in db, fail to override ", address)
+			}
+			configure.Sugar.Info("Exists in db, override ", address)
 		}
 	}
 	if err := scanner.Err(); err != nil {
