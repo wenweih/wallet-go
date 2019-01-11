@@ -42,7 +42,7 @@
   name = "github.com/aristanetworks/goarista"
   packages = ["monotime"]
   pruneopts = "UT"
-  revision = "a46b54cbd1ca34b44d2605220dcd38fe8651fb7b"
+  revision = "b3287ee629098a1640360d7b618be7ab046f7ac2"
 
 [[projects]]
   branch = "master"
@@ -684,6 +684,14 @@
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:564b31f09a21367ada5b019d8413afe99cf770775606f94c7bef42b2ef79dfdf"
+  name = "github.com/ybbus/jsonrpc"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "dd866631e904a5df2067d934985c5def68f391ac"
+  version = "v2.1.2"
+
+[[projects]]
   digest = "1:3c1a69cdae3501bf75e76d0d86dc6f2b0a7421bc205c0cb7b96b19eed464a34d"
   name = "go.uber.org/atomic"
   packages = ["."]
@@ -750,15 +758,15 @@
     "websocket",
   ]
   pruneopts = "UT"
-  revision = "1e06a53dbb7e2ed46e91183f219db23c6943c532"
+  revision = "be1c187aa6c66b9daa1d9461c228d17e9dd2cab7"
 
 [[projects]]
   branch = "master"
-  digest = "1:f106a08663d0031b576f61ab81ffd80124da17096eab36aceb25b1b0d847da9a"
+  digest = "1:91137b48dc3eb34409f731b49f63a5ebf73218168a065e1a93af24eb5b2f99e8"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "7fbe1cd0fcc20051e1fcb87fbabec4a1bacaaeba"
+  revision = "48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -794,7 +802,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "421f03a57a641a72b8ea4ceb640e73391675fc6f"
+  revision = "aa033095749b3c5414cb40cb5fb235173be6b186"
 
 [[projects]]
   digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
@@ -925,6 +933,7 @@
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/syndtr/goleveldb/leveldb",
+    "github.com/ybbus/jsonrpc",
     "go.uber.org/zap",
     "golang.org/x/crypto/ssh",
     "google.golang.org/grpc",
