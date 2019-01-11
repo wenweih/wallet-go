@@ -1,13 +1,14 @@
 package blockchain
 
 import (
+  "context"
   "errors"
   "net/http"
   "wallet-transition/pkg/db"
 )
 
 // RawTx raw transaction for withdraw endpoint
-func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB) (*string, *string, *int64, []db.UTXO, int, error) {
+func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB) (*string, *string, *int64, []db.UTXO, int, error) {
   var (
     chainID     string
     vinAmount   int64
@@ -25,14 +26,14 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
     unSignTxHex = *rawTxHex
     vinAmount = *vAmount
   case "eth":
-    netVersion, rawTxHex, err := ethClient.RawTx(from, to, amount)
+    netVersion, rawTxHex, err := ethClient.RawTx(ctx, from, to, amount)
     if err != nil {
       return nil, nil, nil, nil, http.StatusBadRequest, err
     }
     chainID = *netVersion
     unSignTxHex = *rawTxHex
   case "abb":
-    netVersion, rawTxHex, err := ethClient.RawTokenTx(from, to, asset, amount)
+    netVersion, rawTxHex, err := ethClient.RawTokenTx(ctx, from, to, asset, amount)
     if err != nil {
       return nil, nil, nil, nil, http.StatusBadRequest, err
     }
@@ -43,7 +44,7 @@ func RawTx(from, to, asset string, amount float64, subAddress *db.SubAddress, bt
 }
 
 // SendTx broadcast tx
-func SendTx(asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
+func SendTx(ctx context.Context, asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
   txid := ""
   switch asset {
   case "btc":
@@ -53,7 +54,7 @@ func SendTx(asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRP
     }
     txid = *btcTxid
   case "eth":
-    ethTxid, err := ethClient.SendTx(hexSignedTx)
+    ethTxid, err := ethClient.SendTx(ctx, hexSignedTx)
     if err != nil {
       return nil, http.StatusInternalServerError, err
     }

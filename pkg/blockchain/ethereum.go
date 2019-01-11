@@ -4,10 +4,12 @@ import (
   "bytes"
   "errors"
   "strings"
+  "reflect"
   "context"
   "math/big"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
+  "github.com/ybbus/jsonrpc"
   "github.com/shopspring/decimal"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum"
@@ -24,6 +26,11 @@ import (
 // ETHRPC bitcoin-core client alias
 type ETHRPC struct {
 	Client *ethclient.Client
+}
+
+type TxPoolInspect struct {
+  Pending map[string]map[uint64]string  `json:"pending"`
+  Queued  map[string]map[uint64]string  `json:"queued"`
 }
 
 // Close close rpc connect
@@ -109,12 +116,12 @@ func (client *ETHRPC) GetTokenBalance(asset, accountHex string) (*big.Int, error
 }
 
 // SendTx send signed tx
-func (client *ETHRPC) SendTx(hexSignedTx string) (*string, error){
+func (client *ETHRPC) SendTx(ctx context.Context, hexSignedTx string) (*string, error){
   tx, err := DecodeETHTx(hexSignedTx)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
   }
-  if err := client.Client.SendTransaction(context.Background(), tx); err != nil {
+  if err := client.Client.SendTransaction(ctx, tx); err != nil {
     return nil, errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
   }
   txid := tx.Hash().String()
@@ -122,16 +129,56 @@ func (client *ETHRPC) SendTx(hexSignedTx string) (*string, error){
 }
 
 // RawTx ethereum raw tx
-func (client *ETHRPC) RawTx(from, to string, amountF float64) (*string, *string, error){
+func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float64) (*string, *string, error){
   if !common.IsHexAddress(to) {
     err := errors.New(strings.Join([]string{"To: ", to, " isn't valid ethereum address"}, ""))
     return nil, nil, err
   }
 
-  balance, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), from)
+  balance, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(ctx, from)
+  configure.Sugar.Info("nonnnnnnnnnnnnn before:", *nonce)
   if err != nil {
     return nil, nil, err
   }
+
+  rpcClient := jsonrpc.NewClient(configure.Config.EthRPC)
+  response, err := rpcClient.Call("txpool_inspect")
+  if err != nil {
+    return nil, nil, err
+  }
+  var (
+    txPoolInspect *TxPoolInspect
+    txPoolMaxCount uint64
+  )
+  if err = response.GetObject(&txPoolInspect); err != nil {
+    return nil, nil, err
+  }
+  pending := reflect.ValueOf(txPoolInspect.Pending)
+  if pending.Kind() == reflect.Map {
+    for _, key := range pending.MapKeys() {
+      address := key.Interface().(string)
+      configure.Sugar.Info("address: ", address)
+      tx := reflect.ValueOf(pending.MapIndex(key).Interface())
+      if tx.Kind() == reflect.Map && strings.ToLower(from) == strings.ToLower(address){
+        for _, key := range tx.MapKeys() {
+          count := key.Interface().(uint64)
+          if count > txPoolMaxCount {
+            txPoolMaxCount = count
+          }
+        }
+      }
+    }
+  }
+  configure.Sugar.Info("count", txPoolMaxCount)
+
+  pendingNonce := *nonce
+  if *nonce !=0 && txPoolMaxCount + 1 > *nonce {
+    pendingNonce = txPoolMaxCount + 1
+  }
+
+  configure.Sugar.Info("pendingNoncexxxx: ", pendingNonce)
+
+
   chainID := netVersion.String()
   var (
     txFee = new(big.Int)
@@ -156,7 +203,7 @@ func (client *ETHRPC) RawTx(from, to string, amountF float64) (*string, *string,
     return nil, nil, errors.New("Set amount error")
   }
 
-  rawTxHex, _, err := CreateRawETHTx(*nonce, amount, gasPrice, to)
+  rawTxHex, _, err := CreateRawETHTx(pendingNonce, amount, gasPrice, to)
   if err != nil {
     return nil, nil, err
   }
@@ -181,7 +228,7 @@ func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressT
 }
 
 // RawTokenTx ethereum raw token tx
-func (client *ETHRPC) RawTokenTx(from, to, token string, amountF float64) (*string, *string, error) {
+func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, amountF float64) (*string, *string, error) {
   etherToWei := decimal.NewFromBigInt(big.NewInt(1000000000000000000), 0)
   amountDecimal := decimal.NewFromFloat(amountF)
   amountDecimal = amountDecimal.Mul(etherToWei)
@@ -220,7 +267,7 @@ func (client *ETHRPC) RawTokenTx(from, to, token string, amountF float64) (*stri
   data = append(data, paddedAddress...)
   data = append(data, paddedAmount...)
 
-  gasLimit, err := client.Client.EstimateGas(context.Background(), ethereum.CallMsg{
+  gasLimit, err := client.Client.EstimateGas(ctx, ethereum.CallMsg{
     To: &tokenAddress,
     Data: data,
   })
@@ -228,7 +275,7 @@ func (client *ETHRPC) RawTokenTx(from, to, token string, amountF float64) (*stri
     return nil, nil, errors.New(strings.Join([]string{"Estimate gas error: ", err.Error()}, ""))
   }
 
-  ethBal, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(context.Background(), from)
+  ethBal, nonce, gasPrice, netVersion, err := client.GetBalanceAndPendingNonceAtAndGasPrice(ctx, from)
   if err != nil {
     return nil, nil, err
   }

@@ -82,6 +82,7 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
 
     c.Set("detail", detail)
     c.Set("asset", *asset)
+    c.Next()
   }
 }
 
@@ -155,7 +156,6 @@ func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) 
   if err != nil {
     return nil, nil, err
   }
-
   if withdrawParams.From == "" || withdrawParams.To == "" {
     return nil, nil, errors.New("from or to params can't be empty")
   }
