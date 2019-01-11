@@ -1,7 +1,6 @@
 package main
 
 import (
-  "context"
   "errors"
   "reflect"
   "strconv"
@@ -37,7 +36,7 @@ func txHandle(c *gin.Context)  {
 
   switch asset.(string) {
   case "eth":
-    tx, _, err := ethClient.Client.TransactionByHash(context.Background(), common.HexToHash(txParams.Txid))
+    tx, _, err := ethClient.Client.TransactionByHash(c, common.HexToHash(txParams.Txid))
     if err != nil {
       util.GinRespException(c, http.StatusBadRequest, err)
       return
@@ -106,7 +105,7 @@ func blockHandle(c *gin.Context)  {
       util.GinRespException(c, http.StatusBadRequest, errors.New("height param error"))
       return
     }
-    ethBlock, err := ethClient.Client.BlockByNumber(context.Background(), height)
+    ethBlock, err := ethClient.Client.BlockByNumber(c, height)
     if err !=nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
@@ -161,7 +160,7 @@ func balanceHandle(c *gin.Context)  {
   }
 
   if asset.(string) == "eth" {
-    balance, err := ethClient.Client.BalanceAt(context.Background(), common.HexToAddress(balanceParams.Address), nil)
+    balance, err := ethClient.Client.BalanceAt(c, common.HexToAddress(balanceParams.Address), nil)
   	if err != nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
@@ -222,7 +221,7 @@ func bestBlock(c *gin.Context)  {
   asset, _ := c.Get("asset")
   switch asset.(string) {
   case "eth":
-    block, err := ethClient.Client.BlockByNumber(context.Background(), nil)
+    block, err := ethClient.Client.BlockByNumber(c, nil)
     if err != nil {
       util.GinRespException(c, http.StatusBadRequest, err)
       return

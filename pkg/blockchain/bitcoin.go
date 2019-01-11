@@ -404,16 +404,38 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
   if err != nil {
     return nil, errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
   }
-  add, err := key.Address(&chaincfg.TestNet3Params)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"NewAddressPubKeyHash err", err.Error()}, ":"))
+
+	acct0, err := key.Child(hdkeychain.HardenedKeyStart + 0)
+	if err != nil {
+    return nil, errors.New(strings.Join([]string{"Child 0 err", err.Error()}, ":"))
   }
+
+	acct0Ext, err := acct0.Child(0)
+	if err != nil {
+		return nil, errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
+	}
+
+	acct0Ext10, err := acct0Ext.Child(10)
+	if err != nil {
+		return nil, errors.New(strings.Join([]string{"acct0Ext10 err", err.Error()}, ":"))
+	}
+
+	add, err := acct0Ext10.Address(&chaincfg.TestNet3Params)
+	if err != nil {
+		return nil, errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
+	}
+
+  // add, err := key.Address(&chaincfg.TestNet3Params)
+  // if err != nil {
+  //   return nil, errors.New(strings.Join([]string{"NewAddressPubKeyHash err", err.Error()}, ":"))
+  // }
 
   _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
   if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
-    priv, err := key.ECPrivKey()
+    // priv, err := key.ECPrivKey()
+		priv, err := acct0Ext10.ECPrivKey()
     if err != nil {
-      return nil, errors.New(strings.Join([]string{"master key to ec privite key error:", err.Error()}, ""))
+      return nil, errors.New(strings.Join([]string{"acct0Ext10 key to ec privite key error:", err.Error()}, ""))
     }
 
     wif, err := btcutil.NewWIF(priv, &chaincfg.TestNet3Params, true)

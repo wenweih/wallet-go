@@ -6,6 +6,7 @@ import (
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
+  pb "wallet-transition/pkg/pb"
 )
 
 var (
@@ -14,6 +15,7 @@ var (
   btcClient *blockchain.BTCRPC
   omniClient *blockchain.BTCRPC
   ethClient *blockchain.ETHRPC
+  grpcClient pb.WalletCoreClient
 )
 
 func main() {
@@ -30,6 +32,7 @@ func main() {
     configure.Sugar.Fatal("fail to connect grpc server")
   }
   defer rpcConn.Close()
+  grpcClient = pb.NewWalletCoreClient(rpcConn)
 
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   ethClient, err = blockchain.NewEthClient()
@@ -37,9 +40,9 @@ func main() {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
-  // omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
-  // info, _ := omniClient.Client.RawRequest("getblockchaininfo", nil)
-  // configure.Sugar.Info("xxxx: ", info)
+  omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
+  info, _ := omniClient.Client.RawRequest("omni_getbalance", nil)
+  configure.Sugar.Info("xxxx: ", info)
 
   r := util.GinEngine()
   r.POST("/address", addressHandle)

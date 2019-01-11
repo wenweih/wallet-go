@@ -1,17 +1,13 @@
 package main
 
 import (
-  "time"
   "strings"
   "context"
   "wallet-transition/pkg/db"
   pb "wallet-transition/pkg/pb"
 )
 
-func genAddress(asset string) (*string, error) {
-  grpcClient := pb.NewWalletCoreClient(rpcConn)
-  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-  defer cancel()
+func genAddress(ctx context.Context, asset string) (*string, error) {
   res, err := grpcClient.Address(ctx, &pb.AddressReq{Asset: asset})
   if err != nil {
     return nil, err

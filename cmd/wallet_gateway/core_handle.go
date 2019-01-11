@@ -1,9 +1,7 @@
 package main
 
 import (
-  "time"
   "strconv"
-  "context"
   "net/http"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
@@ -15,7 +13,7 @@ import (
 
 func addressHandle(c *gin.Context) {
   asset, _ := c.Get("asset")
-  address, err := genAddress(asset.(string))
+  address, err := genAddress(c, asset.(string))
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
@@ -54,7 +52,7 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // raw tx
-  unSignTxHex, chainID, vinAmount, selectedUTXOs, httpStatus, err := blockchain.RawTx(withdrawParams.From,
+  unSignTxHex, chainID, vinAmount, selectedUTXOs, httpStatus, err := blockchain.RawTx(c, withdrawParams.From,
     withdrawParams.To, assetParams.(string), amount, subAddress, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
@@ -63,10 +61,7 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // sign raw tx
-  grpcClient := pb.NewWalletCoreClient(rpcConn)
-  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-  defer cancel()
-  res, err := grpcClient.SignTx(ctx, &pb.SignTxReq{Asset: asset,
+  res, err := grpcClient.SignTx(c, &pb.SignTxReq{Asset: asset,
     From: withdrawParams.From,
     HexUnsignedTx: *unSignTxHex,
     VinAmount: *vinAmount,
@@ -76,8 +71,10 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
+  configure.Sugar.Info("signeddddd: ", res.HexSignedTx)
+
   // send signed tx
-  txid, httpStatus, err := blockchain.SendTx(asset, res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
+  txid, httpStatus, err := blockchain.SendTx(c, asset, res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)
@@ -107,7 +104,7 @@ func sendToAddress(c *gin.Context)  {
   }
 
   txAmount, _ := btcutil.NewAmount(amount)
-  funbackAddress, err := genAddress("btc")
+  funbackAddress, err := genAddress(c, "btc")
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -124,16 +121,13 @@ func sendToAddress(c *gin.Context)  {
     configure.Sugar.Info("xxxx: ", utxo.ID)
     pOutPoints = append(pOutPoints, &pb.SendToAddressReq_PreviousOutPoint{Txid: utxo.Txid, Index: utxo.VoutIndex, Address: utxo.SubAddress.Address})
   }
-  grpcClient := pb.NewWalletCoreClient(rpcConn)
-  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-  defer cancel()
-  res, err := grpcClient.SendToAddressSignBTC(ctx, &pb.SendToAddressReq{VinAmount: *vAmount, HexUnsignedTx: *rawTxHex, Utxo: pOutPoints})
+  res, err := grpcClient.SendToAddressSignBTC(c, &pb.SendToAddressReq{VinAmount: *vAmount, HexUnsignedTx: *rawTxHex, Utxo: pOutPoints})
   if err != nil {
     configure.Sugar.Info("SendToAddressSignBTC error: ", err.Error())
   }
   configure.Sugar.Info("xxxxx: ", res.HexSignedTx)
   // send signed tx
-  txid, httpStatus, err := blockchain.SendTx(assetParams.(string), res.HexSignedTx, selectedutxos, btcClient, ethClient, sqldb)
+  txid, httpStatus, err := blockchain.SendTx(c, assetParams.(string), res.HexSignedTx, selectedutxos, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)
