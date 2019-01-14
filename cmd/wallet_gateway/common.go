@@ -9,6 +9,8 @@ import (
   pb "wallet-transition/pkg/pb"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
+  "github.com/btcsuite/btcutil"
+  "github.com/btcsuite/btcd/chaincfg"
   "github.com/ethereum/go-ethereum/common"
 )
 
@@ -55,6 +57,14 @@ func balanceParamsH(chain, asset string, detailParams []byte) (*util.BalancePara
     for k := range configure.Config.OmniToken {
       keys = append(keys, k)
     }
+    _, err := btcutil.DecodeAddress(balanceParams.Address, &chaincfg.TestNet3Params)
+    if err != nil {
+      e := errors.New(strings.Join([]string{"Address illegal", err.Error()}, ":"))
+      return nil, e
+    }
+  default:
+    e := errors.New("chain param illegal, only support ethereum and omnicore")
+    return nil, e
   }
 
   if !util.Contain(assetStr, keys) {

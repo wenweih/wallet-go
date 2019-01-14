@@ -41,9 +41,6 @@ func main() {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
-  balance, _ := omniClient.GetOmniBalance("mqb6duu66oFYr257DJKp2KGm7KESCeb4fq", 2147483652)
-  configure.Sugar.Info("balance: ", balance)
-
   r := util.GinEngine()
   r.POST("/address", addressHandle)
   r.POST("/send", withdrawHandle)
@@ -52,7 +49,7 @@ func main() {
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
   r.GET("/ethereum_balance", ethereumBalanceHandle)
-  r.GET("/omni_balance", omniBalanceHandle)
+  r.GET("/omnicore_balance", omniBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
   if err := r.Run(":8000"); err != nil {

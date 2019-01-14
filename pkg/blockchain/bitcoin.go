@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"encoding/hex"
+	"encoding/json"
 	"wallet-transition/pkg/db"
 	"wallet-transition/pkg/util"
 	"wallet-transition/pkg/configure"
@@ -58,7 +59,7 @@ func NewOmnicoreClient() *rpcclient.Client {
 	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		configure.Sugar.Fatal("bitcoind client err: ", err.Error())
+		configure.Sugar.Fatal("omnicore client err: ", err.Error())
 	}
 	return client
 }
@@ -125,6 +126,13 @@ func (btcClient *BTCRPC) DumpUTXO()  {
 		}
 		configure.Sugar.Fatal(strings.Join([]string{"database commit error: ", err.Error()}, ""))
 	}
+}
+
+// OmniBalance omni_getbalance response
+type OmniBalance struct {
+	Balance  string `json:"balance"`
+	Reserved string `json:"reserved"`
+	Frozen   string `json:"frozen"`
 }
 
 // DumpBTC dump wallet from node
@@ -195,6 +203,34 @@ func (btcClient *BTCRPC) ImportPrivateKey()  {
 	if err := scanner.Err(); err != nil {
 		configure.Sugar.Fatal("scanner error: ", err.Error())
 	}
+}
+
+// GetOmniBalance omni get balance
+func (btcClient *BTCRPC) GetOmniBalance(address string, propertyid int) (*OmniBalance, error) {
+	var params []json.RawMessage
+	{
+		address, err := json.Marshal(address)
+		if err != nil {
+			return nil, err
+		}
+		perpertyID, err := json.Marshal(propertyid)
+		if err != nil {
+			return nil, err
+		}
+
+		params = []json.RawMessage{address, perpertyID}
+	}
+
+	info, err := btcClient.Client.RawRequest("omni_getbalance", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var omniBalance OmniBalance
+	if err := json.Unmarshal(info, &omniBalance); err != nil {
+		return nil, err
+	}
+	return &omniBalance, nil
 }
 
 // GetBlock get block with tx
