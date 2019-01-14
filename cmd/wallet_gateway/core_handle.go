@@ -38,7 +38,7 @@ func withdrawHandle(c *gin.Context)  {
     asset = "eth"
   }
 
-  withdrawParams, subAddress, err := util.WithdrawParamsH(detailParams, asset, sqldb)
+  withdrawParams, subAddress, err := util.WithdrawParamsH(detailParams.([]byte), asset, sqldb)
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -71,8 +71,6 @@ func withdrawHandle(c *gin.Context)  {
     return
   }
 
-  configure.Sugar.Info("signeddddd: ", res.HexSignedTx)
-
   // send signed tx
   txid, httpStatus, err := blockchain.SendTx(c, asset, res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
   if err != nil {
@@ -90,8 +88,7 @@ func withdrawHandle(c *gin.Context)  {
 func sendToAddress(c *gin.Context)  {
   assetParams, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-
-  sendToAddressParams, err := util.SendToAddressParamsH(detailParams)
+  sendToAddressParams, err := util.SendToAddressParamsH(detailParams.([]byte))
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return

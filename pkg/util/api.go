@@ -3,7 +3,6 @@ package util
 import (
   "errors"
   "strconv"
-  "reflect"
   "strings"
   "net/http"
   "io/ioutil"
@@ -50,7 +49,6 @@ func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
 
 func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
   return func (c *gin.Context)  {
-    urlArr := strings.Split(c.Request.RequestURI, "/")
     ct := c.GetHeader("Content-Type")
     if ct != "application/json" {
       GinRespException(c, http.StatusUnauthorized, errors.New("Content-Type must be application/json"))
@@ -74,14 +72,25 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       return
     }
 
-    detail, asset, err := assetPram(decryptoParamBytes, urlArr[1])
-    if err != nil {
+    var params AddressParams
+    if err := json.Unmarshal(decryptoParamBytes, &params); err != nil {
       GinRespException(c, http.StatusBadRequest, err)
       return
     }
 
-    c.Set("detail", detail)
-    c.Set("asset", *asset)
+    asset := strings.ToLower(params.Asset)
+    if asset == "" {
+      GinRespException(c, http.StatusBadRequest, errors.New("asset params can't be empty"))
+      return
+    }
+    if !Contain(asset , configure.Config.APIASSETS) {
+      e := errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
+      GinRespException(c, http.StatusBadRequest, e)
+      return
+    }
+
+    c.Set("detail", decryptoParamBytes)
+    c.Set("asset", asset)
     c.Next()
   }
 }
@@ -94,64 +103,8 @@ func GinRespException(c *gin.Context, code int, err error) {
   })
 }
 
-func assetPram(paramsByte []byte, endpoint string) (map[string]interface{}, *string, error) {
-  asset := ""
-  detailParams := make(map[string]interface{})
-  // var detailParams map[string]interface{}
-  switch endpoint {
-  case "address":
-    var params AddressParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-  case "send", "sendtoaddress":
-    var params WithdrawParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal AddressParams error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-    detailParams["from"] = params.From
-    if asset == "eth" {
-      detailParams["from"] = strings.ToLower(params.From)
-    }
-    detailParams["to"] = params.To
-    detailParams["amount"] = params.Amount
-  case "balance", "address_validator":
-    var params BalanceParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-    detailParams["address"] = params.Address
-  case "block":
-    var params BlockParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-    detailParams["height"] = params.Height
-  case "tx":
-    var params TxParams
-    if err := json.Unmarshal(paramsByte, &params); err != nil {
-      return nil, nil, errors.New(strings.Join([]string{"Unmarshal params error", err.Error()}, ": "))
-    }
-    asset = strings.ToLower(params.Asset)
-    detailParams["txid"] = params.Txid
-  default:
-    return nil, nil, errors.New("no routes")
-  }
-  if asset == "" {
-    return nil, nil, errors.New("asset params can't be empty")
-  }
-  if !Contain(asset , configure.Config.APIASSETS) {
-    return nil, nil, errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
-  }
-  return detailParams, &asset, nil
-}
-
 // WithdrawParamsH handle withdraw endpoint request params
-func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) (*WithdrawParams, *db.SubAddress, error) {
+func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*WithdrawParams, *db.SubAddress, error) {
   withdrawParams, err := transferParams(detailParams)
   if err != nil {
     return nil, nil, err
@@ -173,7 +126,7 @@ func WithdrawParamsH(detailParams interface{}, asset string, sqldb  *db.GormDB) 
   return withdrawParams, &subAddress, nil
 }
 
-func SendToAddressParamsH(detailParams interface{}) (*WithdrawParams, error) {
+func SendToAddressParamsH(detailParams []byte) (*WithdrawParams, error) {
   params, err := transferParams(detailParams)
   if err != nil {
     return nil, err
@@ -181,22 +134,10 @@ func SendToAddressParamsH(detailParams interface{}) (*WithdrawParams, error) {
   return params, nil
 }
 
-func transferParams(detailParams interface{}) (*WithdrawParams, error) {
-  params := reflect.ValueOf(detailParams)
-  withdrawParams := WithdrawParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "from":
-        withdrawParams.From = params.MapIndex(key).Interface().(string)
-      case "to":
-        withdrawParams.To = params.MapIndex(key).Interface().(string)
-      case "amount":
-        withdrawParams.Amount = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    return nil, errors.New("detail params error")
+func transferParams(detailParams []byte) (*WithdrawParams, error) {
+  var withdrawParams WithdrawParams
+  if err := json.Unmarshal(detailParams, &withdrawParams); err != nil {
+    return nil, err
   }
 
   // params

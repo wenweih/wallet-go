@@ -66,6 +66,7 @@ type Configure struct {
 	WalletCoreRPCURL        string
 
 	ETHToken                map[string]interface{}
+	OmniToken               map[string]interface{}
 
 	Confirmations           map[string]interface{}
 }
@@ -164,6 +165,9 @@ func InitConfig() *Configure {
 
 		case "eth_token":
 			conf.ETHToken = viper.Sub("eth_token").AllSettings()
+
+		case "omni_token":
+			conf.OmniToken = viper.Sub("omni_token").AllSettings()
 
 		case "confirmations":
 			conf.Confirmations = viper.Sub("confirmations").AllSettings()

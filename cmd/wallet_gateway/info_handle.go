@@ -2,11 +2,11 @@ package main
 
 import (
   "errors"
-  "reflect"
   "strconv"
   "strings"
   "net/http"
   "math/big"
+  "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
@@ -20,17 +20,10 @@ import (
 func txHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  params := reflect.ValueOf(detailParams)
-  txParams := util.TxParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "txid":
-        txParams.Txid = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
+
+  var txParams util.TxParams
+  if err := json.Unmarshal(detailParams.([]byte), &txParams); err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
 
@@ -57,7 +50,6 @@ func txHandle(c *gin.Context)  {
       util.GinRespException(c, http.StatusBadRequest, err)
       return
     }
-    configure.Sugar.Info("xffff: ", tx.MsgTx())
     c.JSON(http.StatusOK, gin.H {
       "status": http.StatusOK,
       "tx": tx.MsgTx(),
@@ -69,19 +61,13 @@ func txHandle(c *gin.Context)  {
 func blockHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  params := reflect.ValueOf(detailParams)
-  blockParams := util.BlockParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "height":
-        blockParams.Height = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
+
+  var blockParams util.BlockParams
+  if err := json.Unmarshal(detailParams.([]byte), &blockParams); err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
+
   switch asset.(string) {
   case "btc":
     height, err := strconv.ParseInt(blockParams.Height, 10, 64)
@@ -124,27 +110,22 @@ func blockHandle(c *gin.Context)  {
 func balanceHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  params := reflect.ValueOf(detailParams)
-  balanceParams := util.BalanceParams{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "address":
-        balanceParams.Address = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("detail params error"))
+  var balanceParams util.BalanceParams
+  if err := json.Unmarshal(detailParams.([]byte), &balanceParams); err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
+
+  assetStr := strings.ToLower(asset.(string))
 
   keys := make([]string, len(configure.Config.ETHToken))
   keys = append(keys, "eth")
   for k := range configure.Config.ETHToken {
     keys = append(keys, k)
   }
-  if !util.Contain(asset.(string), keys) {
-    util.GinRespException(c, http.StatusBadRequest, errors.New(strings.Join([]string{asset.(string), " balance query is not be supported"}, "")))
+
+  if !util.Contain(assetStr, keys) {
+    util.GinRespException(c, http.StatusBadRequest, errors.New(strings.Join([]string{assetStr, " balance query is not be supported"}, "")))
     return
   }
 
@@ -159,7 +140,7 @@ func balanceHandle(c *gin.Context)  {
     return
   }
 
-  if asset.(string) == "eth" {
+  if assetStr == "eth" {
     balance, err := ethClient.Client.BalanceAt(c, common.HexToAddress(balanceParams.Address), nil)
   	if err != nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
@@ -173,7 +154,7 @@ func balanceHandle(c *gin.Context)  {
     return
   }
 
-  balance, err := ethClient.GetTokenBalance(asset.(string), balanceParams.Address)
+  balance, err := ethClient.GetTokenBalance(assetStr, balanceParams.Address)
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
@@ -187,7 +168,7 @@ func balanceHandle(c *gin.Context)  {
 func addressValidator(c *gin.Context) {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  addressHex, err := addressWithAssetParams(detailParams)
+  addressHex, err := addressWithAssetParams(detailParams.([]byte))
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -247,18 +228,10 @@ func bestBlock(c *gin.Context)  {
   }
 }
 
-func addressWithAssetParams(paramsI interface{}) (*string, error) {
-  params := reflect.ValueOf(paramsI)
-  addressAsset := util.AssetWithAddress{}
-  if params.Kind() == reflect.Map {
-    for _, key := range params.MapKeys() {
-      switch key.Interface() {
-      case "address":
-        addressAsset.Address = params.MapIndex(key).Interface().(string)
-      }
-    }
-  }else {
-    return nil, errors.New("detail params error")
+func addressWithAssetParams(params []byte) (*string, error) {
+  var addressAsset util.AssetWithAddress
+  if err := json.Unmarshal(params, &addressAsset); err != nil {
+    return nil, err
   }
 
   if addressAsset.Address == "" {

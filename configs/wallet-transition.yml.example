@@ -33,6 +33,9 @@ eth_token:
   "abb": "0x9ac793a28d5207ce2ddd41542dbf5363d68324a8"
   "aaa": "0x9ac793a28d5207ce2ddd41542dbf5363d68324a8"
 
+omni_token:
+  "omni_second_token": 2147483652
+
 confirmations:
   "btc": 6
 
