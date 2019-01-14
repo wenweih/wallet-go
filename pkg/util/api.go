@@ -66,7 +66,7 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       return
     }
 
-   decryptoParamBytes, err := DecryptWithPrivateKey(decodeToken, rsaPriv)
+    decryptoParamBytes, err := DecryptWithPrivateKey(decodeToken, rsaPriv)
     if err != nil {
       GinRespException(c, http.StatusForbidden, errors.New(strings.Join([]string{"Decrypt Token error", err.Error()}, ":")))
       return
@@ -126,6 +126,7 @@ func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*Wit
   return withdrawParams, &subAddress, nil
 }
 
+// SendToAddressParamsH send to address enpoint request params
 func SendToAddressParamsH(detailParams []byte) (*WithdrawParams, error) {
   params, err := transferParams(detailParams)
   if err != nil {

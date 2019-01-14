@@ -375,11 +375,11 @@ func GenETHAddress() (*string, error) {
     return nil, errors.New(strings.Join([]string{"fail to generate ethereum key", err.Error()}, ":"))
   }
   privateKeyBytes := crypto.FromECDSA(privateKey)
-  address := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
+  address := strings.ToLower(crypto.PubkeyToAddress(privateKey.PublicKey).Hex())
 
-  _, err = ldb.Get([]byte(strings.ToLower(address)), nil)
+  _, err = ldb.Get([]byte(address), nil)
   if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
-    if err := ldb.Put([]byte(strings.ToLower(address)), privateKeyBytes, nil); err != nil {
+    if err = ldb.Put([]byte(address), privateKeyBytes, nil); err != nil {
       return nil, errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
     }
   }else if err != nil {
