@@ -9,7 +9,6 @@ import (
   "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
-  "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
@@ -107,54 +106,17 @@ func blockHandle(c *gin.Context)  {
   }
 }
 
-func balanceHandle(c *gin.Context)  {
+func ethereumBalanceHandle(c *gin.Context)  {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  var balanceParams util.BalanceParams
-  if err := json.Unmarshal(detailParams.([]byte), &balanceParams); err != nil {
+
+  balanceParams, err := balanceParamsH("ethereum", asset.(string), detailParams.([]byte))
+  if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
 
-  assetStr := strings.ToLower(asset.(string))
-
-  keys := make([]string, len(configure.Config.ETHToken))
-  keys = append(keys, "eth")
-  for k := range configure.Config.ETHToken {
-    keys = append(keys, k)
-  }
-
-  if !util.Contain(assetStr, keys) {
-    util.GinRespException(c, http.StatusBadRequest, errors.New(strings.Join([]string{assetStr, " balance query is not be supported"}, "")))
-    return
-  }
-
-  if balanceParams.Address == "" {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("address param is required"))
-    return
-  }
-
-  if !common.IsHexAddress(balanceParams.Address) {
-    err := errors.New(strings.Join([]string{"To: ", balanceParams.Address, " isn't valid ethereum address"}, ""))
-    util.GinRespException(c, http.StatusBadRequest, err)
-    return
-  }
-
-  if assetStr == "eth" {
-    balance, err := ethClient.Client.BalanceAt(c, common.HexToAddress(balanceParams.Address), nil)
-  	if err != nil {
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-  	}
-
-    c.JSON(http.StatusOK, gin.H {
-      "status": http.StatusOK,
-      "balance": util.ToEther(balance).String(),
-    })
-    return
-  }
-
-  balance, err := ethClient.GetTokenBalance(assetStr, balanceParams.Address)
+  balance, err := ethClient.GetEthereumBalance(balanceParams.Asset, balanceParams.Address)
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
@@ -163,6 +125,10 @@ func balanceHandle(c *gin.Context)  {
     "status": http.StatusOK,
     "balance": util.ToEther(balance).String(),
   })
+}
+
+func omniBalanceHandle(c *gin.Context)  {
+
 }
 
 func addressValidator(c *gin.Context) {

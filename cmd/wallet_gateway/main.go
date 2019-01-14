@@ -34,15 +34,15 @@ func main() {
   defer rpcConn.Close()
   grpcClient = pb.NewWalletCoreClient(rpcConn)
 
+  omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   ethClient, err = blockchain.NewEthClient()
   if err != nil {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
-  // omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
-  // info, _ := omniClient.Client.RawRequest("omni_getbalance", nil)
-  // configure.Sugar.Info("xxxx: ", info)
+  balance, _ := omniClient.GetOmniBalance("mqb6duu66oFYr257DJKp2KGm7KESCeb4fq", 2147483652)
+  configure.Sugar.Info("balance: ", balance)
 
   r := util.GinEngine()
   r.POST("/address", addressHandle)
@@ -51,7 +51,8 @@ func main() {
 
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
-  r.GET("/balance", balanceHandle)
+  r.GET("/ethereum_balance", ethereumBalanceHandle)
+  r.GET("/omni_balance", omniBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
   if err := r.Run(":8000"); err != nil {

@@ -92,20 +92,25 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
 	return balance, &pendingNonceAt, gasPrice, netVersion, nil
 }
 
-// GetTokenBalance get specify token balance of an EOA account
-func (client *ETHRPC) GetTokenBalance(asset, accountHex string) (*big.Int, error) {
-  tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
+// GetEthereumBalance get specify token balance of an EOA account
+func (client *ETHRPC) GetEthereumBalance(asset, accountHex string) (*big.Int, error) {
   accountAddress := common.HexToAddress(accountHex)
+  if asset == "eth" {
+    bal, err := client.Client.BalanceAt(context.Background(), accountAddress, nil)
+    if err != nil {
+      return nil, err
+    }
+    return bal, nil
+  }
+  tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
   contractInstance, err := NewEthToken(tokenAddress, client.Client)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"Get token instance error: ", err.Error()}, ""))
   }
-
   bal, err := contractInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
   if err!= nil {
     return nil, errors.New(strings.Join([]string{"Get token balance error: ", err.Error()}, ""))
   }
-
   return bal, nil
 }
 
@@ -232,7 +237,7 @@ func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, am
   }
 
   // get token balance for from account
-  tokenBal, err := client.GetTokenBalance(token, from)
+  tokenBal, err := client.GetEthereumBalance(token, from)
   if err != nil {
     return nil, nil, errors.New(strings.Join([]string{"Get Token balance error: ", err.Error()}, ""))
   }
