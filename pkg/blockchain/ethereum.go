@@ -279,6 +279,50 @@ func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, am
   if err != nil {
     return nil, nil, err
   }
+
+  configure.Sugar.Info("nonnnnnnnnnnnnn before:", *nonce)
+  if err != nil {
+    return nil, nil, err
+  }
+
+  rpcClient := jsonrpc.NewClient(configure.Config.EthRPC)
+  response, err := rpcClient.Call("txpool_inspect")
+  if err != nil {
+    return nil, nil, err
+  }
+  var (
+    txPoolInspect *TxPoolInspect
+    txPoolMaxCount uint64
+  )
+  if err = response.GetObject(&txPoolInspect); err != nil {
+    return nil, nil, err
+  }
+  pending := reflect.ValueOf(txPoolInspect.Pending)
+  if pending.Kind() == reflect.Map {
+    for _, key := range pending.MapKeys() {
+      address := key.Interface().(string)
+      configure.Sugar.Info("address: ", address)
+      tx := reflect.ValueOf(pending.MapIndex(key).Interface())
+      if tx.Kind() == reflect.Map && strings.ToLower(from) == strings.ToLower(address){
+        for _, key := range tx.MapKeys() {
+          count := key.Interface().(uint64)
+          if count > txPoolMaxCount {
+            txPoolMaxCount = count
+          }
+        }
+      }
+    }
+  }
+  configure.Sugar.Info("count", txPoolMaxCount)
+
+  pendingNonce := *nonce
+  if *nonce !=0 && txPoolMaxCount + 1 > *nonce {
+    pendingNonce = txPoolMaxCount + 1
+  }
+
+  configure.Sugar.Info("pendingNoncexxxx: ", pendingNonce)
+
+
   chainID := netVersion.String()
 
   txFee := new(big.Int)
@@ -290,7 +334,7 @@ func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, am
     return nil, nil, errors.New(strings.Join([]string{"fee not enough", ethBalDecimal.String(), ":", feeDecimal.String()}, ""))
   }
 
-  tx := types.NewTransaction(*nonce, tokenAddress, value, gasLimit, gasPrice, data)
+  tx := types.NewTransaction(pendingNonce, tokenAddress, value, gasLimit, gasPrice, data)
   rawTxHex, err := EncodeETHTx(tx)
   if err != nil {
     return nil, nil, errors.New(strings.Join([]string{"encode raw tx error", err.Error()}, " "))

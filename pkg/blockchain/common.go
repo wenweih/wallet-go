@@ -32,7 +32,7 @@ func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddre
     }
     chainID = *netVersion
     unSignTxHex = *rawTxHex
-  case "abb":
+  case "abb", "abb2", "sb":
     netVersion, rawTxHex, err := ethClient.RawTokenTx(ctx, from, to, asset, amount)
     if err != nil {
       return nil, nil, nil, nil, http.StatusBadRequest, err
