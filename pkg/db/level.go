@@ -32,6 +32,12 @@ func NewLDB(asset string) (*LDB, error) {
 
 // MigrateBTC migrate btc wallet to lleveldb
 func (db *LDB) MigrateBTC() {
+	sqldb, err := NewMySQL()
+	if err != nil {
+		configure.Sugar.Fatal("NewMySQL error: ", err.Error())
+	}
+	defer sqldb.Close()
+
 	file, err := os.Open(strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup_new"}, ""))
 	if err != nil {
 		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
@@ -57,7 +63,11 @@ func (db *LDB) MigrateBTC() {
 				}else if err != nil {
 					configure.Sugar.Fatal("Failt to migrate: ", address)
 				}else {
-					configure.Sugar.Info("Exists in db, skip ", address)
+					configure.Sugar.Info("Exists in level db, skip ", address)
+				}
+				var subAddress SubAddress
+				if err := sqldb.Where(SubAddress{Address: address, Asset: "btc"}).FirstOrCreate(&subAddress).Error; err != nil {
+					configure.Sugar.Fatal("insert address to db error: ", err.Error())
 				}
 			}
 		}
@@ -69,6 +79,12 @@ func (db *LDB) MigrateBTC() {
 
 // MigrateETH migrate eth wallet to lleveldb
 func (db *LDB) MigrateETH ()  {
+	sqldb, err := NewMySQL()
+	if err != nil {
+		configure.Sugar.Fatal("NewMySQL error: ", err.Error())
+	}
+	defer sqldb.Close()
+
 	file, err := os.Open(strings.Join([]string{configure.Config.BackupWalletPath, "eth.backup_new"}, ""))
 	if err != nil {
 		configure.Sugar.Fatal("open dump wallet file error: ", err.Error())
@@ -99,6 +115,11 @@ func (db *LDB) MigrateETH ()  {
 				configure.Sugar.Fatal("Exists in db, fail to override ", address)
 			}
 			configure.Sugar.Info("Exists in db, override ", address)
+		}
+
+		var subAddress SubAddress
+		if err := sqldb.Where(SubAddress{Address: address, Asset: "eth"}).FirstOrCreate(&subAddress).Error; err != nil {
+			configure.Sugar.Fatal("insert address to db error: ", err.Error())
 		}
 	}
 	if err := scanner.Err(); err != nil {
