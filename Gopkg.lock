@@ -42,11 +42,11 @@
   name = "github.com/aristanetworks/goarista"
   packages = ["monotime"]
   pruneopts = "UT"
-  revision = "b3287ee629098a1640360d7b618be7ab046f7ac2"
+  revision = "b7a59f2ffb2369336aaa78fc9a555e4fd277616b"
 
 [[projects]]
   branch = "master"
-  digest = "1:ebed5ad39579d8e86b2eda736d2e5c627c7fdc69ce33d51753bf80882d62e9f5"
+  digest = "1:3d213c1dfbf7cd7d8c00bbfc89c2dcfd94c2df319038660472fac17bf0ca6d9a"
   name = "github.com/btcsuite/btcd"
   packages = [
     "blockchain",
@@ -63,7 +63,7 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "5bda5314ca9549a589e63d7b2e6104492a0d5328"
+  revision = "ed77733ec07dfc8a513741138419b8d9d3de9d2d"
 
 [[projects]]
   branch = "master"
@@ -75,7 +75,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f9b41590b386510db0ea5ae8b54b6ef7d82c5c01ceec0ea8c3e6bf6b478c32e3"
+  digest = "1:8c23fb859512bf42c60e0dde6324799c30233c77d8567a8ebbea2b921103d566"
   name = "github.com/btcsuite/btcutil"
   packages = [
     ".",
@@ -87,7 +87,7 @@
     "hdkeychain",
   ]
   pruneopts = "UT"
-  revision = "ab6388e0c60ae4834a1f57511e20c17b5f78be4b"
+  revision = "bf1e1be935893b7c8ac9f020195f6b0dfd1f14e0"
 
 [[projects]]
   branch = "master"
@@ -743,7 +743,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:751204a5f27f263d9354fbc80449854712c800df079e9cfd76914937fbf899e1"
+  digest = "1:dd2688c98d9af7eab90ab56eccd17f612f079406df84658b5ff99f88ad4c71f5"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -758,15 +758,15 @@
     "websocket",
   ]
   pruneopts = "UT"
-  revision = "be1c187aa6c66b9daa1d9461c228d17e9dd2cab7"
+  revision = "915654e7eabcea33ae277abbecf52f0d8b7a9fdc"
 
 [[projects]]
   branch = "master"
-  digest = "1:91137b48dc3eb34409f731b49f63a5ebf73218168a065e1a93af24eb5b2f99e8"
+  digest = "1:d8e319d450f0e90df8dcf8c9934a878af800d0f4c692cb9657748f0cffff486e"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf"
+  revision = "2be51725563103c17124a318f1745b66f2347acb"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -802,7 +802,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "aa033095749b3c5414cb40cb5fb235173be6b186"
+  revision = "bf090417da8b6150dcfe96795325f5aa78fff718"
 
 [[projects]]
   digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
@@ -818,7 +818,7 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "ae2f86662275e140f395167f1dab7081a5bd5fa8"
+  revision = "db91494dd46c1fdcbbde05e5ff5eb56df8f7d79a"
 
 [[projects]]
   digest = "1:8c8ed249fa6a8db070bf2082f02052c697695fa5e1558b4e28dd0fb5f15f70a2"
