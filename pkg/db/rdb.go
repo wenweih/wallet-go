@@ -70,7 +70,8 @@ func NewSqlite() (*GormDB, error) {
 // NewMySQL new mysql connection
 func NewMySQL() (*GormDB, error) {
   w := bytes.Buffer{}
-	w.WriteString(configure.Config.DB)
+  dbConfig := configure.Config.MySQLUser + ":" + configure.Config.MySQLPass + "@tcp(" + configure.Config.MySQLHost + ")/" + configure.Config.MySQLName
+	w.WriteString(dbConfig)
 	w.WriteString("?charset=utf8&parseTime=True&loc=Local")
 	dbInfo := w.String()
 	db, err := gorm.Open("mysql", dbInfo)

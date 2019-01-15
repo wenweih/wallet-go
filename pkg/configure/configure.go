@@ -40,7 +40,10 @@ type Configure struct {
 	EthRPCWS        string
 	EthRPC          string
 
-	DB              string
+	MySQLHost       string
+	MySQLUser       string
+	MySQLPass       string
+	MySQLName       string
 
 	OldBTCWalletServerHost	string
 	OldBTCWalletServerUser	string
@@ -116,8 +119,14 @@ func InitConfig() *Configure {
 		case "eth_rpc":
 			conf.EthRPC = value.(string)
 
-		case "db_mysql":
-			conf.DB = value.(string)
+		case "db_mysql_host":
+			conf.MySQLHost = value.(string)
+		case "db_mysql_user":
+			conf.MySQLUser = value.(string)
+		case "db_mysql_pass":
+			conf.MySQLPass = value.(string)
+		case "db_mysql_name":
+			conf.MySQLName = value.(string)
 
 		// old btc wallet server info
 		case "old_btc_wallet_server_host":

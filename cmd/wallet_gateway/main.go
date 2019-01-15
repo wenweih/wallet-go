@@ -40,9 +40,9 @@ func main() {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
-  omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
-  info, _ := omniClient.Client.RawRequest("omni_getbalance", nil)
-  configure.Sugar.Info("xxxx: ", info)
+  // omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
+  // info, _ := omniClient.Client.RawRequest("omni_getbalance", nil)
+  // configure.Sugar.Info("xxxx: ", info)
 
   r := util.GinEngine()
   r.POST("/address", addressHandle)
