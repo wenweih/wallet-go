@@ -58,7 +58,7 @@ func (s *WalletCoreServerRPC) SendToAddressSignBTC(ctx context.Context, in *prot
     pOutPoint := txIn.PreviousOutPoint
     for i, utxo := range in.Utxo {
       if pOutPoint.Hash.String() == utxo.Txid && pOutPoint.Index == utxo.Index {
-        address, err := btcutil.DecodeAddress(utxo.Address, &chaincfg.TestNet3Params)
+        address, err := btcutil.DecodeAddress(utxo.Address, &chaincfg.MainNetParams)
         if err != nil {
           return nil, errors.New(strings.Join([]string{"DecodeAddress error", err.Error()}, ":"))
         }
@@ -139,7 +139,7 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
     if err != nil {
       return nil, errors.New(strings.Join([]string{"fail to decode wif", err.Error()}, ":"))
     }
-    fromAddress, _ := btcutil.DecodeAddress(in.From, &chaincfg.TestNet3Params)
+    fromAddress, _ := btcutil.DecodeAddress(in.From, &chaincfg.MainNetParams)
     subscript, _ := txscript.PayToAddrScript(fromAddress)
     for i, txIn := range tx.MsgTx().TxIn {
       sigScript, err := txscript.SignatureScript(tx.MsgTx(), i, subscript, txscript.SigHashAll, wif.PrivKey, true)

@@ -762,11 +762,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d8e319d450f0e90df8dcf8c9934a878af800d0f4c692cb9657748f0cffff486e"
+  digest = "1:f6f6d9d6f80c9e32acc0f4f3b904e0b9f5b18a7757c2ef941121bd79a10e7bdf"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "2be51725563103c17124a318f1745b66f2347acb"
+  revision = "11f53e03133963fb11ae0588e08b5e0b85be8be5"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -802,7 +802,7 @@
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "bf090417da8b6150dcfe96795325f5aa78fff718"
+  revision = "b258f6da23835bf37e95cc50af792447c7c67fe4"
 
 [[projects]]
   digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
@@ -821,7 +821,7 @@
   revision = "db91494dd46c1fdcbbde05e5ff5eb56df8f7d79a"
 
 [[projects]]
-  digest = "1:8c8ed249fa6a8db070bf2082f02052c697695fa5e1558b4e28dd0fb5f15f70a2"
+  digest = "1:468bc9b39a60a4ac6726976d60d32cb0fbcaf749fea4139be8cec53fdfbd82d5"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -859,8 +859,8 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "df014850f6dee74ba2fc94874043a9f3f75fbfd8"
-  version = "v1.17.0"
+  revision = "a02b0774206b209466313a0b525d2c738fe407eb"
+  version = "v1.18.0"
 
 [[projects]]
   branch = "v3-unstable"
