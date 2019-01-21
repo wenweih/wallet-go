@@ -71,6 +71,62 @@ type BtcUTXO struct {
 	VoutIndex uint32  `json:"voutindex"`
 }
 
+// DumpUTXO dump utxo in wallet
+func (btcClient *BTCRPC) DumpUTXO()  {
+	resp, err := btcClient.Client.ListUnspent()
+	if err != nil {
+		configure.Sugar.Fatal("ListUnspent error", err.Error())
+	}
+	sqldb, err := db.NewMySQL()
+	if err != nil {
+		configure.Sugar.Fatal("NewMySQL error: ", err.Error())
+	}
+	defer sqldb.Close()
+	ts := sqldb.Begin()
+	for _, utxo := range resp {
+		var subAddress db.SubAddress
+		if err := ts.Where(db.SubAddress{Address: utxo.Address, Asset: "btc"}).FirstOrCreate(&subAddress).Error; err != nil {
+			configure.Sugar.Fatal("insert address to db error: ", err.Error())
+		}
+
+		txHash, err := chainhash.NewHashFromStr(utxo.TxID)
+		if err != nil {
+			configure.Sugar.Fatal("NewHashFromStr error", err.Error())
+		}
+		tx, err := btcClient.Client.GetTransaction(txHash)
+		if err != nil {
+			configure.Sugar.Fatal("GetTransaction error", err.Error())
+		}
+
+		blockHash, err := chainhash.NewHashFromStr(tx.BlockHash)
+		if err != nil {
+			configure.Sugar.Fatal("NewHashFromStr error", err.Error())
+		}
+		rawBlock, err := btcClient.Client.GetBlockVerboseTxM(blockHash)
+		if err != nil {
+			configure.Sugar.Fatal("GetBlock error", err.Error())
+		}
+
+		dbUTXO := db.UTXO{Txid: utxo.TxID, Amount: utxo.Amount, Height: rawBlock.Height, VoutIndex: utxo.Vout, SubAddress: subAddress}
+		dbUTXO.SetState("original")
+		var qUTXO db.UTXO
+		addStr := "exist"
+		if err := ts.Where("txid = ? AND vout_index = ?", utxo.TxID, utxo.Vout).First(&qUTXO).Error; err != nil && strings.Contains(err.Error(), "record not found"){
+			ts.Create(&dbUTXO)
+			addStr = "add to db"
+		}else if err != nil {
+			configure.Sugar.Fatal("Fail to create utxo: ", err.Error())
+		}
+		configure.Sugar.Info("utxo ", "txid: ", dbUTXO.Txid, " index: ", dbUTXO.VoutIndex, " ", addStr)
+	}
+	if err := ts.Commit().Error; err != nil {
+		if err = ts.Rollback().Error; err != nil {
+			configure.Sugar.Fatal(strings.Join([]string{"database rollback error: create utxo record ", err.Error()}, ""))
+		}
+		configure.Sugar.Fatal(strings.Join([]string{"database commit error: ", err.Error()}, ""))
+	}
+}
+
 // DumpBTC dump wallet from node
 func (btcClient *BTCRPC) DumpBTC(local bool) {
 	oldWalletServerClient, err := util.NewServerClient(configure.Config.OldBTCWalletServerUser,
@@ -92,8 +148,8 @@ func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 	if _, err := btcClient.Client.DumpWallet(btcWalletBackupPath); err != nil {
 		if strings.Contains(err.Error(), "already exists. If you are sure this is what you want") {
 			prompt := promptui.Prompt {
-				Label:     strings.Join([]string{"File: ", filepath.Base(configure.Config.BackupWalletPath),
-					"backup wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
+				Label:     strings.Join([]string{"File: ", filepath.Base(btcWalletBackupPath),
+					" wallet already exists, If you are sure this is what you want, move it out of the way first "}, ""),
 				IsConfirm: true,
 			}
 			if _, err = prompt.Run(); err != nil {
@@ -101,7 +157,7 @@ func (btcClient *BTCRPC) DumpOldWallet(serverClient *util.ServerClient) {
 				return
 			}
 			if err = serverClient.SftpClient.Remove(btcWalletBackupPath); err != nil {
-				configure.Sugar.Fatal("Remove old backup wallet from old wallet server error: ", err.Error())
+				configure.Sugar.Fatal("Remove backup wallet:", btcWalletBackupPath, " from old wallet server:", serverClient.SSHClient.RemoteAddr().String(), " error: ", err.Error())
 			}
 			btcClient.DumpOldWallet(serverClient)
 		} else {

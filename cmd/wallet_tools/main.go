@@ -11,6 +11,7 @@ import (
 var (
 	asset	string
 	local	bool
+	utxo bool
 )
 
 var rootCmd = &cobra.Command {
@@ -39,7 +40,12 @@ var dumpWallet = &cobra.Command {
 	Run: func(cmd *cobra.Command, args []string) {
 		switch asset {
 		case "btc":
-			btcClient := blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
+			client := blockchain.NewbitcoinClient()
+			btcClient := blockchain.BTCRPC{Client: client}
+			if utxo {
+				btcClient.DumpUTXO()
+				return
+			}
 			btcClient.DumpBTC(local)
 		case "eth":
 			blockchain.DumpETHAccount(local)
@@ -94,6 +100,7 @@ func init() {
 	dumpWallet.Flags().StringVarP(&asset, "asset", "a", "btc", "asset type, support btc, eth")
 	dumpWallet.MarkFlagRequired("asset")
 	dumpWallet.Flags().BoolVarP(&local, "local", "l", false, "copy dump wallet file to local machine. default copy to remote server, which is set in configure")
+	dumpWallet.Flags().BoolVarP(&utxo, "utxo", "u", false, "Dump utxo")
 
 	migrateWallet.Flags().StringVarP(&asset, "asset", "a", "", "asset type, support btc, eth")
 	migrateWallet.MarkFlagRequired("asset")
