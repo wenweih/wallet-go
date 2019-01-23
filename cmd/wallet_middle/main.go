@@ -32,6 +32,9 @@ func main() {
     configure.Sugar.Fatal("GetBlockChainInfo error:", err.Error())
   }
   rollbackBlock, err := btcClient.GetBlock(int64(binfo.Headers - 5))
+  if err != nil {
+    configure.Sugar.Fatal("Get Rollback BlockChainInfo error:", err.Error())
+  }
 
   bestBlock, err := sqldb.GetBTCBestBlockOrCreate(rollbackBlock)
   if err != nil {

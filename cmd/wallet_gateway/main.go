@@ -1,12 +1,14 @@
 package main
 
 import (
+  "flag"
   "google.golang.org/grpc"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
+  "github.com/btcsuite/btcd/chaincfg"
 )
 
 var (
@@ -16,10 +18,21 @@ var (
   omniClient *blockchain.BTCRPC
   ethClient *blockchain.ETHRPC
   grpcClient pb.WalletCoreClient
+  bitcoinnet *chaincfg.Params
 )
 
 func main() {
-  var err error
+  var (
+    err error
+    bitcoinmode string
+  )
+
+  flag.StringVar(&bitcoinmode, "bitcoinmode", "mainnet", "btc base chain mode: testnet, regtest or mainnet")
+  flag.Parse()
+  bitcoinnet, err = blockchain.BitcoinNet(bitcoinmode)
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
   // sqldb, err = db.NewSqlite()
   sqldb, err = db.NewMySQL()
   if err != nil {

@@ -13,7 +13,6 @@ import (
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
@@ -161,7 +160,7 @@ func addressValidator(c *gin.Context) {
   }
   switch asset.(string) {
   case "btc":
-    _, err := btcutil.DecodeAddress(*addressHex, &chaincfg.MainNetParams)
+    _, err := btcutil.DecodeAddress(*addressHex, bitcoinnet)
     if err != nil {
       e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
       util.GinRespException(c, http.StatusBadRequest, e)

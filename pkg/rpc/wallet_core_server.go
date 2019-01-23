@@ -18,14 +18,16 @@ import (
 )
 
 // WalletCoreServerRPC WalletCore rpc server
-type WalletCoreServerRPC struct {}
+type WalletCoreServerRPC struct {
+  BTCNet *chaincfg.Params
+}
 
 // Address walletcore server: address method
 func (s *WalletCoreServerRPC) Address(ctx context.Context, in *proto.AddressReq) (*proto.AddressResp, error) {
   var address string
   switch in.Asset {
   case "btc":
-    add, err := blockchain.GenBTCAddress()
+    add, err := blockchain.GenBTCAddress(s.BTCNet)
     if err != nil {
       return nil, err
     }
@@ -58,7 +60,7 @@ func (s *WalletCoreServerRPC) SendToAddressSignBTC(ctx context.Context, in *prot
     pOutPoint := txIn.PreviousOutPoint
     for i, utxo := range in.Utxo {
       if pOutPoint.Hash.String() == utxo.Txid && pOutPoint.Index == utxo.Index {
-        address, err := btcutil.DecodeAddress(utxo.Address, &chaincfg.MainNetParams)
+        address, err := btcutil.DecodeAddress(utxo.Address, s.BTCNet)
         if err != nil {
           return nil, errors.New(strings.Join([]string{"DecodeAddress error", err.Error()}, ":"))
         }
@@ -139,7 +141,7 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
     if err != nil {
       return nil, errors.New(strings.Join([]string{"fail to decode wif", err.Error()}, ":"))
     }
-    fromAddress, _ := btcutil.DecodeAddress(in.From, &chaincfg.MainNetParams)
+    fromAddress, _ := btcutil.DecodeAddress(in.From, s.BTCNet)
     subscript, _ := txscript.PayToAddrScript(fromAddress)
     for i, txIn := range tx.MsgTx().TxIn {
       sigScript, err := txscript.SignatureScript(tx.MsgTx(), i, subscript, txscript.SigHashAll, wif.PrivKey, true)
