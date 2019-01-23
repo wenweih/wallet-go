@@ -23,7 +23,9 @@ import (
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcutil/coinset"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil/hdkeychain"
+	// "encoding/binary"
 )
 
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
@@ -248,7 +250,7 @@ func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult,
 }
 
 // RawSendToAddressTx btc raw tx without specify the from address
-func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddress, to string, sqldb *db.GormDB) (*int64, []db.UTXO, *string, int, error) {
+func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddress, to string, sqldb *db.GormDB, net *chaincfg.Params) (*int64, []db.UTXO, *string, int, error) {
 	var (
 		utxos			[]db.UTXO
 		vinAmount	int64
@@ -280,23 +282,26 @@ func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddr
 		return nil, nil, nil, http.StatusBadRequest, err
 	}
 
-	funBackAddressPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(funbackAddress, to)
+	funBackAddressPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(funbackAddress, to, net)
 	if err != nil {
 		return nil, nil, nil, http.StatusBadRequest, err
 	}
 
-	vAmount, unSignTxHex := RawBTCTx(funBackAddressPkScript, toPkScript, feeKB, txAmount, selectedCoins)
+	// TODO: add omni support
+	vAmount, unSignTxHex, err := RawBTCTx(funBackAddressPkScript, toPkScript, feeKB, txAmount, btcutil.Amount(5000), selectedCoins, false)
+	if err != nil {
+		return nil, nil, nil, http.StatusInternalServerError, nil
+	}
 
-	return &vAmount, selectedutxos, &unSignTxHex, http.StatusOK, nil
+	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
 }
 // RawTx btc raw tx
-func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB) (*int64, []db.UTXO, *string, int, error) {
+func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB, isUSDT bool, net *chaincfg.Params) (*int64, []db.UTXO, *string, int, error) {
 	var (
 		utxos			[]db.UTXO
-		vinAmount	int64
 	)
 
-	fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(from, to)
+	fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(from, to, net)
 	if err != nil {
 		return nil, nil, nil, http.StatusBadRequest, err
 	}
@@ -324,24 +329,35 @@ func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.
 	if err != nil {
 		return nil, nil, nil, http.StatusBadRequest, errors.New(strings.Join([]string{"convert utxo amount(float64) to btc amount(int64 as Satoshi) error:", err.Error()}, ""))
 	}
+
+	btcAmount, err := btcutil.NewAmount(0)
+	if err != nil {
+		return nil, nil, nil, http.StatusBadRequest, errors.New(strings.Join([]string{"init coinselect amount error:", err.Error()}, ""))
+	}
+	if !isUSDT {
+		btcAmount = txAmount
+	}
 	fee := btcutil.Amount(5000)
 	// coin select
-	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
+	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), btcAmount + fee, utxos)
 	if err != nil {
 		code := http.StatusInternalServerError
 		if err.Error() == "CoinSelect error: no coin selection possible" {
 			code = http.StatusBadRequest
 		}
-		// util.GinRespException(c, code, err)
 		return nil, nil, nil, code, err
 	}
 
-	for _, coin := range selectedCoins.Coins() {
-		vinAmount += int64(coin.Value())
+	vAmount, unSignTxHex, err := RawBTCTx(fromPkScript, toPkScript, feeKB, btcAmount, txAmount, selectedCoins, isUSDT)
+	if err != nil {
+		return nil, nil, nil, http.StatusInternalServerError, err
 	}
+	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
+}
 
-	vAmount, unSignTxHex := RawBTCTx(fromPkScript, toPkScript, feeKB, txAmount, selectedCoins)
-	return &vAmount, selectedutxos, &unSignTxHex, http.StatusOK, nil
+// RawTokenTx omnicore token raw tx
+func (btcClient *BTCRPC) RawTokenTx() {
+
 }
 
 // SendTx broadcast signed tx
@@ -447,7 +463,7 @@ func CoinSelect(bheader int64, txAmount btcutil.Amount, utxos []db.UTXO) ([]db.U
 }
 
 // RawBTCTx btc raw tx
-func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, txAmount btcutil.Amount, selectedCoins coinset.Coins) (int64, string ){
+func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, btcAmount, txAmount btcutil.Amount, selectedCoins coinset.Coins, isUSDT bool) (*int64, *string, error ) {
 	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
 	var vinAmount int64
 	for _, coin := range selectedCoins.Coins() {
@@ -456,9 +472,36 @@ func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResu
 
 	vAmount := vinAmount
 
-	txOutTo := wire.NewTxOut(int64(txAmount), toPkScript)
-	txOutReBack := wire.NewTxOut((vinAmount-int64(txAmount)), funbackPkScript)
-	msgTx.AddTxOut(txOutTo)
+	if isUSDT {
+		b := txscript.NewScriptBuilder()
+		b.AddOp(txscript.OP_RETURN)
+
+		omniVersion := util.Int2byte(uint64(0), 2)	// omnicore version
+		txType := util.Int2byte(uint64(0), 2)	// omnicore tx type: simple send
+		tokenPropertyid := configure.Config.OmniToken["omni_first_token"].(int)
+		tokenIdentifier := util.Int2byte(uint64(tokenPropertyid), 4)	// omni token identifier
+		tokenAmount := util.Int2byte(uint64(txAmount), 8)	// omni token transfer amount
+
+		b.AddData([]byte("omni"))	// transaction maker
+		b.AddData(omniVersion)
+		b.AddData(txType)
+		b.AddData(tokenIdentifier)
+
+		b.AddData(tokenAmount)
+		pkScript, err := b.Script()
+		if err != nil {
+			return nil, nil, errors.New(strings.Join([]string{"usdt pkScript error", err.Error()}, ":"))
+		}
+		msgTx.AddTxOut(wire.NewTxOut(0, pkScript))
+
+		txOutReference := wire.NewTxOut(0, toPkScript)
+		msgTx.AddTxOut(txOutReference)
+	} else {
+		txOutTo := wire.NewTxOut(int64(btcAmount), toPkScript)
+		msgTx.AddTxOut(txOutTo)
+	}
+
+	txOutReBack := wire.NewTxOut((vinAmount-int64(btcAmount)), funbackPkScript)
 	msgTx.AddTxOut(txOutReBack)
 
 	rate := mempool.SatoshiPerByte(feeKB.FeeRate)
@@ -470,18 +513,19 @@ func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResu
 
 	// sub tx fee
 	for _, out := range msgTx.TxOut {
-		if out.Value != int64(txAmount) && (vinAmount - int64(txAmount) - int64(fee)) > 0 {
-			out.Value = vinAmount - int64(txAmount) - int64(fee)
+		if out.Value != int64(btcAmount) && (vinAmount - int64(btcAmount) - int64(fee)) > 0 {
+			out.Value = vinAmount - int64(btcAmount) - int64(fee)
 		}
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
 	msgTx.Serialize(buf)
-	return vAmount, hex.EncodeToString(buf.Bytes())
+	rawTxHex := hex.EncodeToString(buf.Bytes())
+	return &vAmount, &rawTxHex, nil
 }
 
 // GenBTCAddress generate btc address
-func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
+func GenBTCAddress(net *chaincfg.Params) (*btcutil.AddressPubKeyHash, error) {
   ldb, err := db.NewLDB("btc")
   if err != nil {
     return nil, err
@@ -492,7 +536,7 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
     return nil, errors.New(strings.Join([]string{"GenerateSeed err", err.Error()}, ":"))
   }
 
-  key, err := hdkeychain.NewMaster(seed, &chaincfg.MainNetParams)
+  key, err := hdkeychain.NewMaster(seed, net)
   if err != nil {
     return nil, errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
   }
@@ -512,15 +556,10 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
 		return nil, errors.New(strings.Join([]string{"acct0Ext10 err", err.Error()}, ":"))
 	}
 
-	add, err := acct0Ext10.Address(&chaincfg.MainNetParams)
+	add, err := acct0Ext10.Address(net)
 	if err != nil {
 		return nil, errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
 	}
-
-  // add, err := key.Address(&chaincfg.TestNet3Params)
-  // if err != nil {
-  //   return nil, errors.New(strings.Join([]string{"NewAddressPubKeyHash err", err.Error()}, ":"))
-  // }
 
   _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
   if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
@@ -530,7 +569,7 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
       return nil, errors.New(strings.Join([]string{"acct0Ext10 key to ec privite key error:", err.Error()}, ""))
     }
 
-    wif, err := btcutil.NewWIF(priv, &chaincfg.MainNetParams, true)
+    wif, err := btcutil.NewWIF(priv, net, true)
     if err != nil {
       return nil, errors.New(strings.Join([]string{"btcec priv to wif:", err.Error()}, ""))
     }
@@ -543,4 +582,22 @@ func GenBTCAddress() (*btcutil.AddressPubKeyHash, error) {
   ldb.Close()
 
   return add, nil
+}
+
+// BitcoinNet bitcoin base chain net
+func BitcoinNet(bitcoinnet string) (*chaincfg.Params, error) {
+  if !util.Contain(bitcoinnet, []string{"testnet", "regtest", "mainnet"}) {
+		configure.Sugar.Fatal("bitcoinmode flag only supports testnet, regtest or mainnet")
+	}
+	configure.Sugar.Info("bitcoin mode: ", bitcoinnet)
+  var net chaincfg.Params
+  switch bitcoinnet {
+  case "testnet":
+    net = chaincfg.TestNet3Params
+  case "regtest":
+    net = chaincfg.RegressionNetParams
+  case "mainnet":
+    net = chaincfg.MainNetParams
+  }
+  return &net, nil
 }

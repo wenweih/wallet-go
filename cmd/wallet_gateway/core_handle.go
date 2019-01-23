@@ -29,16 +29,9 @@ func withdrawHandle(c *gin.Context)  {
   assetParams, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
 
-  keys := make([]string, len(configure.Config.ETHToken))
-  for k := range configure.Config.ETHToken {
-    keys = append(keys, k)
-  }
-  asset := assetParams.(string)
-  if util.Contain(asset, keys) {
-    asset = "eth"
-  }
+  chain := util.WithdrawChain(assetParams.(string))
 
-  withdrawParams, subAddress, err := util.WithdrawParamsH(detailParams.([]byte), asset, sqldb)
+  withdrawParams, subAddress, err := util.WithdrawParamsH(detailParams.([]byte), chain, sqldb)
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -53,7 +46,7 @@ func withdrawHandle(c *gin.Context)  {
 
   // raw tx
   unSignTxHex, chainID, vinAmount, selectedUTXOs, httpStatus, err := blockchain.RawTx(c, withdrawParams.From,
-    withdrawParams.To, assetParams.(string), amount, subAddress, btcClient, ethClient, sqldb)
+    withdrawParams.To, assetParams.(string), amount, subAddress, btcClient, ethClient, sqldb, bitcoinnet)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)
@@ -61,7 +54,7 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // sign raw tx
-  res, err := grpcClient.SignTx(c, &pb.SignTxReq{Asset: asset,
+  res, err := grpcClient.SignTx(c, &pb.SignTxReq{Asset: chain,
     From: withdrawParams.From,
     HexUnsignedTx: *unSignTxHex,
     VinAmount: *vinAmount,
@@ -72,7 +65,7 @@ func withdrawHandle(c *gin.Context)  {
   }
 
   // send signed tx
-  txid, httpStatus, err := blockchain.SendTx(c, asset, res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
+  txid, httpStatus, err := blockchain.SendTx(c, chain, res.HexSignedTx, selectedUTXOs, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)
@@ -106,7 +99,7 @@ func sendToAddress(c *gin.Context)  {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
-  vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawSendToAddressTx(txAmount, *funbackAddress, sendToAddressParams.To, sqldb)
+  vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawSendToAddressTx(txAmount, *funbackAddress, sendToAddressParams.To, sqldb, bitcoinnet)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)

@@ -5,10 +5,11 @@ import (
   "errors"
   "net/http"
   "wallet-transition/pkg/db"
+  "github.com/btcsuite/btcd/chaincfg"
 )
 
 // RawTx raw transaction for withdraw endpoint
-func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB) (*string, *string, *int64, []db.UTXO, int, error) {
+func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB, bitcoinnet *chaincfg.Params) (*string, *string, *int64, []db.UTXO, int, error) {
   var (
     chainID     string
     vinAmount   int64
@@ -18,7 +19,7 @@ func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddre
   // raw tx
   switch asset {
   case "btc":
-    vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(from, to, amount, subAddress, sqldb)
+    vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(from, to, amount, subAddress, sqldb, false, bitcoinnet)
     if err != nil {
       return nil, nil, nil, nil, httpStatus, err
     }
@@ -39,6 +40,14 @@ func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddre
     }
     chainID = *netVersion
     unSignTxHex = *rawTxHex
+  case "omni_first_token":
+    vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(from, to, amount, subAddress, sqldb, true, bitcoinnet)
+    if err != nil {
+      return nil, nil, nil, nil, httpStatus, err
+    }
+    selectedUTXOs = selectedutxos
+    unSignTxHex = *rawTxHex
+    vinAmount = *vAmount
   }
   return &unSignTxHex, &chainID, &vinAmount, selectedUTXOs, http.StatusOK, nil
 }
