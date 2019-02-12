@@ -87,7 +87,7 @@ func InitConfig() *Configure {
 	if err == nil {
 		Sugar.Info("Using Configure file: ", viper.ConfigFileUsed(), " Time: ", time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	} else {
-		Sugar.Fatal("Error: wallet-service not found in: ", HomeDir())
+		Sugar.Fatal("Error: wallet-transition not found in: ", HomeDir(), err.Error())
 	}
 
 	for key, value := range viper.AllSettings() {
