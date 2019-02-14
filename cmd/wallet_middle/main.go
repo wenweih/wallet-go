@@ -19,8 +19,7 @@ var (
 
 func main() {
   var err error
-  client := blockchain.NewbitcoinClient()
-  btcClient = &blockchain.BTCRPC{Client: client}
+  btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   sqldb, err = db.NewMySQL()
   if err != nil {
     configure.Sugar.Fatal(err.Error())

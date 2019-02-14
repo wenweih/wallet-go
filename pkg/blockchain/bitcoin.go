@@ -66,14 +66,6 @@ func NewOmnicoreClient() *rpcclient.Client {
 	return client
 }
 
-// BtcUTXO utxo type
-type BtcUTXO struct {
-	Txid      string  `json:"txid"`
-	Amount    float64 `json:"amount"`
-	Height    int64   `json:"height"`
-	VoutIndex uint32  `json:"voutindex"`
-}
-
 // DumpUTXO dump utxo in wallet
 func (btcClient *BTCRPC) DumpUTXO()  {
 	resp, err := btcClient.Client.ListUnspent()
@@ -128,13 +120,6 @@ func (btcClient *BTCRPC) DumpUTXO()  {
 		}
 		configure.Sugar.Fatal(strings.Join([]string{"database commit error: ", err.Error()}, ""))
 	}
-}
-
-// OmniBalance omni_getbalance response
-type OmniBalance struct {
-	Balance  string `json:"balance"`
-	Reserved string `json:"reserved"`
-	Frozen   string `json:"frozen"`
 }
 
 // DumpBTC dump wallet from node
@@ -402,14 +387,6 @@ func DecodeBtcTxHex(txHex string) (*btcutil.Tx, error) {
 	}
 
 	return btcutil.NewTx(&msgTx), nil
-}
-
-// SimpleCoin implements coinset Coin interface
-type SimpleCoin struct {
-	TxHash     *chainhash.Hash
-	TxIndex    uint32
-	TxValue    btcutil.Amount
-	TxNumConfs int64
 }
 
 // Hash implements coinset Coin interface

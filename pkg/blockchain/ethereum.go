@@ -28,11 +28,6 @@ type ETHRPC struct {
 	Client *ethclient.Client
 }
 
-type TxPoolInspect struct {
-  Pending map[string]map[uint64]string  `json:"pending"`
-  Queued  map[string]map[uint64]string  `json:"queued"`
-}
-
 // Close close rpc connect
 func (client *ETHRPC) Close()  {
   client.Client.Close()
