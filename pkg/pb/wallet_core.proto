@@ -1,10 +1,14 @@
 syntax = "proto3";
 package proto;
 
+import "google/protobuf/empty.proto";
+
 service WalletCore {
   rpc Address (addressReq) returns (AddressResp);
   rpc SignTx (SignTxReq) returns (SignTxResp);
   rpc SendToAddressSignBTC (SendToAddressReq) returns (SignTxResp);
+  rpc BitcoinWallet (google.protobuf.Empty) returns (WalletResponse);
+  rpc EthereumWallet (google.protobuf.Empty) returns (WalletResponse);
 }
 
 message addressReq {
@@ -37,4 +41,8 @@ message SendToAddressReq {
   repeated PreviousOutPoint utxo = 1;
   int64   vinAmount = 2;
   string hexUnsignedTx = 3;
+}
+
+message WalletResponse {
+  string address = 1;
 }

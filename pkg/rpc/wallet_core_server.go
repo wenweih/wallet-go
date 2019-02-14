@@ -15,11 +15,34 @@ import (
   "github.com/ethereum/go-ethereum/crypto"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/btcsuite/btcd/chaincfg"
+  empty "github.com/golang/protobuf/ptypes/empty"
 )
 
 // WalletCoreServerRPC WalletCore rpc server
 type WalletCoreServerRPC struct {
   BTCNet *chaincfg.Params
+}
+
+// BitcoinWallet generate bitcoin wallet
+func (s *WalletCoreServerRPC) BitcoinWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
+  btcChain := blockchain.BitcoinCoreChain{Mode: s.BTCNet}
+  b := blockchain.NewBlockchain(btcChain, nil)
+  address, err := b.Wallet.Create()
+  if err != nil {
+    return nil, err
+  }
+  return &proto.WalletResponse{Address: address}, nil
+}
+
+// EthereumWallet generate ethereum wallet
+func (s *WalletCoreServerRPC) EthereumWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
+  ethChain := blockchain.EthereumChain{}
+  b := blockchain.NewBlockchain(ethChain, nil)
+  address, err := b.Wallet.Create()
+  if err != nil {
+    return nil, err
+  }
+  return &proto.WalletResponse{Address: address}, nil
 }
 
 // Address walletcore server: address method

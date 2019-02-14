@@ -365,7 +365,7 @@ func EncodeETHTx(tx *types.Transaction) (*string, error) {
 }
 
 // Create generate ethereum wallet
-func (c *EthereumChain) Create() (string, error)  {
+func (c EthereumChain) Create() (string, error)  {
   ldb, err := db.NewLDB(db.EthereumLD)
   if err != nil {
     return "", err
