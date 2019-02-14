@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	// TODO: remove bitcoin mode flag, it should be determined by rpc client
 	var bitcoinmode string
 	flag.StringVar(&bitcoinmode, "bitcoinmode", "mainnet", "btc base chain mode: testnet, regtest or mainnet")
 	flag.Parse()

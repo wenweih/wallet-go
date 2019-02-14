@@ -21,7 +21,7 @@ func addressHandle(c *gin.Context) {
 
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
-    "address": *address,
+    "address": address,
   })
 }
 
@@ -99,7 +99,7 @@ func sendToAddress(c *gin.Context)  {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
   }
-  vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawSendToAddressTx(txAmount, *funbackAddress, sendToAddressParams.To, sqldb, bitcoinnet)
+  vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawSendToAddressTx(txAmount, funbackAddress, sendToAddressParams.To, sqldb, bitcoinnet)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)

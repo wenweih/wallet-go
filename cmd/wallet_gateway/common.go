@@ -6,24 +6,35 @@ import (
   "context"
   "encoding/json"
   "wallet-transition/pkg/db"
-  pb "wallet-transition/pkg/pb"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "github.com/btcsuite/btcutil"
   "github.com/ethereum/go-ethereum/common"
+  empty "github.com/golang/protobuf/ptypes/empty"
 )
 
-func genAddress(ctx context.Context, asset string) (*string, error) {
-  res, err := grpcClient.Address(ctx, &pb.AddressReq{Asset: asset})
-  if err != nil {
-    return nil, err
+func genAddress(ctx context.Context, asset string) (string, error) {
+  var address string
+  switch asset {
+  case "btc":
+    res, err := grpcClient.BitcoinWallet(ctx, &empty.Empty{})
+    if err != nil {
+      return "", err
+    }
+    address = res.Address
+  case "eth":
+    res, err := grpcClient.EthereumWallet(ctx, &empty.Empty{})
+    if err != nil {
+      return "", err
+    }
+    address = res.Address
+  default:
+    return "", errors.New(strings.Join([]string{asset, " not implement yep!"}, ""))
   }
-
-  address := res.Address
   if err := sqldb.Create(&db.SubAddress{Address: address, Asset: asset}).Error; err != nil {
-    return nil, err
+    return "", err
   }
-  return &address, nil
+  return address, nil
 }
 
 // chain: ethereum or omnicore
