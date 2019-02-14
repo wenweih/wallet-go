@@ -16,6 +16,13 @@ type LDB struct {
 	*leveldb.DB
 }
 
+const (
+  // BitcoinCoreLD bitcoin private key folder name
+  BitcoinCoreLD string = "btc"
+  // EthereumLD ethereum private key folder name
+  EthereumLD    string = "eth"
+)
+
 // NewLDB new leveldb
 func NewLDB(asset string) (*LDB, error) {
 	dir := strings.Join([]string{configure.HomeDir(), configure.Config.DBWalletPath, asset}, "/")

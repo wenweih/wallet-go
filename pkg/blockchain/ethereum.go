@@ -364,6 +364,31 @@ func EncodeETHTx(tx *types.Transaction) (*string, error) {
 	return &txHex, nil
 }
 
+// Create generate ethereum wallet
+func (c *EthereumChain) Create() (string, error)  {
+  ldb, err := db.NewLDB(db.EthereumLD)
+  if err != nil {
+    return "", err
+  }
+  privateKey, err := crypto.GenerateKey()
+  if err != nil {
+    return "", errors.New(strings.Join([]string{"fail to generate ethereum key", err.Error()}, ":"))
+  }
+  privateKeyBytes := crypto.FromECDSA(privateKey)
+  address := strings.ToLower(crypto.PubkeyToAddress(privateKey.PublicKey).Hex())
+
+  _, err = ldb.Get([]byte(address), nil)
+  if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
+    if err = ldb.Put([]byte(address), privateKeyBytes, nil); err != nil {
+      return "", errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
+    }
+  }else if err != nil {
+    return "", errors.New(strings.Join([]string{"Fail to add address:", address, " ", err.Error()}, ""))
+  }
+  defer ldb.Close()
+  return address, nil
+}
+
 // GenETHAddress generate ethereum account
 func GenETHAddress() (*string, error) {
   ldb, err := db.NewLDB("eth")

@@ -3,6 +3,7 @@ package blockchain
 import (
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
+  "github.com/btcsuite/btcd/chaincfg"
 )
 
 type chainNetwork string
@@ -15,6 +16,18 @@ const (
   // BitcoinMainnet bitcoin-core mainnet
   BitcoinMainnet chainNetwork = "mainnet"
 )
+
+// BitcoinCoreChain bitcoin-core chain type
+type BitcoinCoreChain struct {
+  Address string
+  Mode    *chaincfg.Params
+}
+
+// EthereumChain ethereum chain type
+type EthereumChain struct {
+  Address string
+  ChainID int
+}
 
 // TxOperator transaction operator
 type TxOperator interface {
@@ -29,8 +42,6 @@ type ChainWallet interface {
 type Blockchain struct {
   Operator  TxOperator
   Wallet    ChainWallet
-  Asset     string
-  NetWork   string
 }
 
 // BtcUTXO utxo type

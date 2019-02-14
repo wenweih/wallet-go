@@ -8,6 +8,20 @@ import (
   "github.com/btcsuite/btcd/chaincfg"
 )
 
+// NewBlockchain chain object
+func NewBlockchain(wallet ChainWallet, operator TxOperator) *Blockchain {
+  return &Blockchain{Wallet: wallet, Operator: operator}
+}
+// CreateWallet generate wallet
+func (chain *Blockchain) CreateWallet() (string, error) {
+  return "", nil
+}
+
+// Tx the life cycle of transaction: construct, sign, broadcast
+func (chain *Blockchain) Tx() (string, error) {
+  return "", nil
+}
+
 // RawTx raw transaction for withdraw endpoint
 func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB, bitcoinnet *chaincfg.Params) (*string, *string, *int64, []db.UTXO, int, error) {
   var (
