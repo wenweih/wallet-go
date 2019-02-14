@@ -45,27 +45,6 @@ func (s *WalletCoreServerRPC) EthereumWallet(ctx context.Context, in *empty.Empt
   return &proto.WalletResponse{Address: address}, nil
 }
 
-// Address walletcore server: address method
-func (s *WalletCoreServerRPC) Address(ctx context.Context, in *proto.AddressReq) (*proto.AddressResp, error) {
-  var address string
-  switch in.Asset {
-  case "btc":
-    add, err := blockchain.GenBTCAddress(s.BTCNet)
-    if err != nil {
-      return nil, err
-    }
-    address = add.EncodeAddress()
-  case "eth":
-    add, err := blockchain.GenETHAddress()
-    if err != nil {
-      return nil ,err
-    }
-    address = *add
-  default:
-  }
-  return &proto.AddressResp{Address: address}, nil
-}
-
 // SendToAddressSignBTC btc sendtoaddress tx signature
 func (s *WalletCoreServerRPC) SendToAddressSignBTC(ctx context.Context, in *proto.SendToAddressReq) (*proto.SignTxResp, error) {
   ldb, err := db.NewLDB("btc")

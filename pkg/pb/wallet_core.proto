@@ -4,15 +4,10 @@ package proto;
 import "google/protobuf/empty.proto";
 
 service WalletCore {
-  rpc Address (addressReq) returns (AddressResp);
   rpc SignTx (SignTxReq) returns (SignTxResp);
   rpc SendToAddressSignBTC (SendToAddressReq) returns (SignTxResp);
   rpc BitcoinWallet (google.protobuf.Empty) returns (WalletResponse);
   rpc EthereumWallet (google.protobuf.Empty) returns (WalletResponse);
-}
-
-message addressReq {
-  string asset = 1;
 }
 
 message AddressResp {

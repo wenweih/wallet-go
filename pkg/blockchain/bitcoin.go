@@ -561,66 +561,6 @@ func (b BitcoinCoreChain) Create() (string, error) {
   return add.String(), nil
 }
 
-// GenBTCAddress generate btc address
-func GenBTCAddress(net *chaincfg.Params) (*btcutil.AddressPubKeyHash, error) {
-  ldb, err := db.NewLDB("btc")
-  if err != nil {
-    return nil, err
-  }
-
-  seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"GenerateSeed err", err.Error()}, ":"))
-  }
-
-  key, err := hdkeychain.NewMaster(seed, net)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
-  }
-
-	acct0, err := key.Child(hdkeychain.HardenedKeyStart + 0)
-	if err != nil {
-    return nil, errors.New(strings.Join([]string{"Child 0 err", err.Error()}, ":"))
-  }
-
-	acct0Ext, err := acct0.Child(0)
-	if err != nil {
-		return nil, errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
-	}
-
-	acct0Ext10, err := acct0Ext.Child(10)
-	if err != nil {
-		return nil, errors.New(strings.Join([]string{"acct0Ext10 err", err.Error()}, ":"))
-	}
-
-	add, err := acct0Ext10.Address(net)
-	if err != nil {
-		return nil, errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
-	}
-
-  _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
-  if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
-    // priv, err := key.ECPrivKey()
-		priv, err := acct0Ext10.ECPrivKey()
-    if err != nil {
-      return nil, errors.New(strings.Join([]string{"acct0Ext10 key to ec privite key error:", err.Error()}, ""))
-    }
-
-    wif, err := btcutil.NewWIF(priv, net, true)
-    if err != nil {
-      return nil, errors.New(strings.Join([]string{"btcec priv to wif:", err.Error()}, ""))
-    }
-    if err := ldb.Put([]byte(add.EncodeAddress()), []byte(wif.String()), nil); err != nil {
-      return nil, errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
-    }
-  }else if err != nil {
-    return nil, errors.New(strings.Join([]string{"Fail to add address:", add.EncodeAddress(), " ", err.Error()}, ""))
-  }
-  ldb.Close()
-
-  return add, nil
-}
-
 // BitcoinNet bitcoin base chain net
 func BitcoinNet(bitcoinnet string) (*chaincfg.Params, error) {
   if !util.Contain(bitcoinnet, []string{"testnet", "regtest", "mainnet"}) {
