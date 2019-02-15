@@ -24,7 +24,6 @@ import (
 	"github.com/btcsuite/btcutil/coinset"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcutil/hdkeychain"
 	// "encoding/binary"
 )
 
@@ -500,65 +499,6 @@ func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResu
 	msgTx.Serialize(buf)
 	rawTxHex := hex.EncodeToString(buf.Bytes())
 	return &vAmount, &rawTxHex, nil
-}
-
-// Create generate bitcoin wallet
-func (b BitcoinCoreChain) Create() (string, error) {
-	ldb, err := db.NewLDB(db.BitcoinCoreLD)
-  if err != nil {
-    return "", err
-  }
-
-  seed, err := hdkeychain.GenerateSeed(hdkeychain.RecommendedSeedLen)
-  if err != nil {
-    return "", errors.New(strings.Join([]string{"GenerateSeed err", err.Error()}, ":"))
-  }
-
-  key, err := hdkeychain.NewMaster(seed, b.Mode)
-  if err != nil {
-    return "", errors.New(strings.Join([]string{"NewMaster err", err.Error()}, ":"))
-  }
-
-	acct0, err := key.Child(hdkeychain.HardenedKeyStart + 0)
-	if err != nil {
-    return "", errors.New(strings.Join([]string{"Child 0 err", err.Error()}, ":"))
-  }
-
-	acct0Ext, err := acct0.Child(0)
-	if err != nil {
-		return "", errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
-	}
-
-	acct0Ext10, err := acct0Ext.Child(10)
-	if err != nil {
-		return "", errors.New(strings.Join([]string{"acct0Ext10 err", err.Error()}, ":"))
-	}
-
-	add, err := acct0Ext10.Address(b.Mode)
-	if err != nil {
-		return "", errors.New(strings.Join([]string{"acct0Ext err", err.Error()}, ":"))
-	}
-
-  _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
-  if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
-    // priv, err := key.ECPrivKey()
-		priv, err := acct0Ext10.ECPrivKey()
-    if err != nil {
-      return "", errors.New(strings.Join([]string{"acct0Ext10 key to ec privite key error:", err.Error()}, ""))
-    }
-
-    wif, err := btcutil.NewWIF(priv, b.Mode, true)
-    if err != nil {
-      return "", errors.New(strings.Join([]string{"btcec priv to wif:", err.Error()}, ""))
-    }
-    if err := ldb.Put([]byte(add.EncodeAddress()), []byte(wif.String()), nil); err != nil {
-      return "", errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
-    }
-  }else if err != nil {
-    return "", errors.New(strings.Join([]string{"Fail to add address:", add.EncodeAddress(), " ", err.Error()}, ""))
-  }
-  defer ldb.Close()
-  return add.String(), nil
 }
 
 // BitcoinNet bitcoin base chain net
