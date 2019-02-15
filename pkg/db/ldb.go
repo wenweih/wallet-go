@@ -11,11 +11,6 @@ import (
 	"wallet-transition/pkg/configure"
 )
 
-// LDB level db
-type LDB struct {
-	*leveldb.DB
-}
-
 const (
   // BitcoinCoreLD bitcoin private key folder name
   BitcoinCoreLD string = "btc"

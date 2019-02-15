@@ -67,7 +67,7 @@ func NewOmnicoreClient() *rpcclient.Client {
 }
 
 // DumpUTXO dump utxo in wallet
-func (btcClient *BTCRPC) DumpUTXO()  {
+func (btcClient *BTCRPC) DumpUTXO() {
 	resp, err := btcClient.Client.ListUnspent()
 	if err != nil {
 		configure.Sugar.Fatal("ListUnspent error", err.Error())

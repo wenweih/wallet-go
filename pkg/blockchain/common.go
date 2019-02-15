@@ -12,6 +12,7 @@ import (
 func NewBlockchain(wallet ChainWallet, operator TxOperator) *Blockchain {
   return &Blockchain{Wallet: wallet, Operator: operator}
 }
+
 // CreateWallet generate wallet
 func (chain *Blockchain) CreateWallet() (string, error) {
   return "", nil
