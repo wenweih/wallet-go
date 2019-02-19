@@ -2,6 +2,7 @@ package configure
 
 import (
 	"time"
+	"strings"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	homedir "github.com/mitchellh/go-homedir"
@@ -12,6 +13,10 @@ var (
 	Sugar *zap.SugaredLogger
 	// Config configure
 	Config *Configure
+	// ChainsInfo chain info
+	ChainsInfo map[string]ChainInfo
+	// ChainAssets chain assets
+	ChainAssets map[string]string
 )
 
 // HomeDir 获取服务器当前用户目录路径
@@ -21,54 +26,6 @@ func HomeDir() string {
 		Sugar.Fatal(err.Error())
 	}
 	return home
-}
-
-// Configure 配置数据
-type Configure struct {
-	BTCNODEHOST     string
-	BTCNODEUSR      string
-	BTCNODEPASS     string
-	BTCHTTPPostMode bool
-	BTCDisableTLS   bool
-
-	OmniNODEHOST     string
-	OmniNODEUSR      string
-	OmniNODEPASS     string
-	OmniHTTPPostMode bool
-	OmniDisableTLS   bool
-
-	EthRPCWS        string
-	EthRPC          string
-
-	MySQLHost       string
-	MySQLUser       string
-	MySQLPass       string
-	MySQLName       string
-
-	OldBTCWalletServerHost	string
-	OldBTCWalletServerUser	string
-	OldBTCWalletServerPass	string
-
-	DBWalletPath 			  		string
-	BackupWalletPath				string
-
-	NewWalletServerHost			string
-	NewWalletServerUser			string
-	NewWalletServerPass			string
-
-	OldETHWalletServerHost	string
-	OldETHWalletServerUser	string
-	OldETHWalletServerPass	string
-	KeystorePath            string
-	KSPass                  string
-
-	APIASSETS               []string
-	WalletCoreRPCURL        string
-
-	ETHToken                map[string]interface{}
-	OmniToken               map[string]interface{}
-
-	Confirmations           map[string]interface{}
 }
 
 // InitConfig 配置信息
@@ -169,6 +126,9 @@ func InitConfig() *Configure {
 		case "omni_token":
 			conf.OmniToken = viper.Sub("omni_token").AllSettings()
 
+		case "chains":
+			conf.Chains = viper.Sub("chains").AllSettings()
+
 		case "confirmations":
 			conf.Confirmations = viper.Sub("confirmations").AllSettings()
 		}
@@ -176,9 +136,40 @@ func InitConfig() *Configure {
 	return &conf
 }
 
+// ChainConfigInfo chain info
+func (c *Configure) ChainConfigInfo() (map[string]ChainInfo, map[string]string) {
+	chains := c.Chains
+	var (
+		chainsInfo = make(map[string]ChainInfo)
+		chainAssets = make(map[string]string)
+	)
+
+	for k, v := range chains {
+		var chaininfo  ChainInfo
+		for kv, vv := range v.(map[string]interface{}) {
+			switch kv {
+			case "confirmations":
+				chaininfo.Confirmations = vv.(int)
+			case "coin":
+				chaininfo.Coin = vv.(string)
+				chainAssets[strings.ToLower(vv.(string))] = k
+			case "tokens":
+				chaininfo.Tokens = make(map[string]string)
+				for kt, vt := range vv.(map[string]interface{}) {
+					chaininfo.Tokens[kt] = vt.(string)
+					chainAssets[strings.ToLower(kt)] = k
+				}
+			}
+		}
+		chainsInfo[k] = chaininfo
+	}
+	return chainsInfo, chainAssets
+}
+
 func init() {
 	Config = new(Configure)
 	Sugar = zap.NewExample().Sugar()
 	defer Sugar.Sync()
 	Config = InitConfig()
+	ChainsInfo, ChainAssets = Config.ChainConfigInfo()
 }
