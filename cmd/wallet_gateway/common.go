@@ -7,22 +7,25 @@ import (
   "encoding/json"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
+  "wallet-transition/pkg/blockchain"
   "wallet-transition/pkg/configure"
   "github.com/btcsuite/btcutil"
   "github.com/ethereum/go-ethereum/common"
+  pb "wallet-transition/pkg/pb"
   empty "github.com/golang/protobuf/ptypes/empty"
 )
 
 func genAddress(ctx context.Context, asset string) (string, error) {
   var address string
-  switch asset {
-  case "btc":
-    res, err := grpcClient.BitcoinWallet(ctx, &empty.Empty{})
+  c := configure.ChainAssets[asset]
+  switch c {
+  case blockchain.Bitcoin:
+    res, err := grpcClient.BitcoinWallet(ctx, &pb.BitcoinWalletReq{Mode: bitcoinnet.Net.String()})
     if err != nil {
       return "", err
     }
     address = res.Address
-  case "eth":
+  case blockchain.Ethereum:
     res, err := grpcClient.EthereumWallet(ctx, &empty.Empty{})
     if err != nil {
       return "", err

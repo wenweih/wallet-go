@@ -8,8 +8,12 @@ import (
 )
 
 // BitcoinWallet generate bitcoin wallet
-func (s *WalletCoreServerRPC) BitcoinWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
-  btcChain := blockchain.BitcoinCoreChain{Mode: s.BTCNet}
+func (s *WalletCoreServerRPC) BitcoinWallet(ctx context.Context, in *proto.BitcoinWalletReq) (*proto.WalletResponse, error) {
+  mode, err := blockchain.BitcoinNet(in.Mode)
+  if err != nil {
+    return nil, err
+  }
+  btcChain := blockchain.BitcoinCoreChain{Mode: mode}
   b := blockchain.NewBlockchain(btcChain, nil)
   address, err := b.Wallet.Create()
   if err != nil {
