@@ -13,11 +13,6 @@ func NewBlockchain(wallet ChainWallet, operator TxOperator) *Blockchain {
   return &Blockchain{Wallet: wallet, Operator: operator}
 }
 
-// CreateWallet generate wallet
-func (chain *Blockchain) CreateWallet() (string, error) {
-  return "", nil
-}
-
 // Tx the life cycle of transaction: construct, sign, broadcast
 func (chain *Blockchain) Tx() (string, error) {
   return "", nil

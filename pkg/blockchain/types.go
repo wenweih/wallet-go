@@ -4,29 +4,43 @@ import (
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/btcsuite/btcd/chaincfg"
+  "github.com/btcsuite/btcd/rpcclient"
 )
-
-type chainNetwork string
 
 const (
   // BitcoinRegTest bitcoin-core Regression test mode
-  BitcoinRegTest chainNetwork = "regtest"
+  BitcoinRegTest string = "regtest"
   // BitcoinTestNet bitcoin-core Testnet mode
-  BitcoinTestNet chainNetwork = "testnet"
+  BitcoinTestNet string = "testnet"
   // BitcoinMainnet bitcoin-core mainnet
-  BitcoinMainnet chainNetwork = "mainnet"
+  BitcoinMainnet string = "mainnet"
+)
+
+const (
+  // Bitcoin bitcoin-core network
+  Bitcoin string = "bitcoin"
+  // Ethereum ethereum network
+  Ethereum  string = "ethereum"
 )
 
 // BitcoinCoreChain bitcoin-core chain type
 type BitcoinCoreChain struct {
-  Address string
   Mode    *chaincfg.Params
+  Info    *WalletInfo
 }
 
 // EthereumChain ethereum chain type
 type EthereumChain struct {
-  Address string
   ChainID int
+  Info    *WalletInfo
+}
+
+// WalletInfo wallet info
+type WalletInfo struct {
+  Chain   string
+  Address string
+  Coin    string
+  Tokens  map[string]interface{}
 }
 
 // TxOperator transaction operator
@@ -42,6 +56,11 @@ type ChainWallet interface {
 type Blockchain struct {
   Operator  TxOperator
   Wallet    ChainWallet
+}
+
+// BTCRPC bitcoin-core client alias
+type BTCRPC struct {
+	Client *rpcclient.Client
 }
 
 // BtcUTXO utxo type

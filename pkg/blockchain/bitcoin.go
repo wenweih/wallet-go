@@ -24,15 +24,9 @@ import (
 	"github.com/btcsuite/btcutil/coinset"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
-	// "encoding/binary"
 )
 
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
-
-// BTCRPC bitcoin-core client alias
-type BTCRPC struct {
-	Client *rpcclient.Client
-}
 
 // NewbitcoinClient bitcoin rpc client
 func NewbitcoinClient() *rpcclient.Client {
@@ -503,18 +497,16 @@ func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResu
 
 // BitcoinNet bitcoin base chain net
 func BitcoinNet(bitcoinnet string) (*chaincfg.Params, error) {
-  if !util.Contain(bitcoinnet, []string{"testnet", "regtest", "mainnet"}) {
-		configure.Sugar.Fatal("bitcoinmode flag only supports testnet, regtest or mainnet")
-	}
-	configure.Sugar.Info("bitcoin mode: ", bitcoinnet)
   var net chaincfg.Params
   switch bitcoinnet {
-  case "testnet":
+  case BitcoinTestNet, "TestNet3":
     net = chaincfg.TestNet3Params
-  case "regtest":
+  case BitcoinRegTest, "TestNet":
     net = chaincfg.RegressionNetParams
-  case "mainnet":
+  case BitcoinMainnet, "MainNet":
     net = chaincfg.MainNetParams
+  default:
+    return nil, errors.New("bitcoinmode flag only supports testnet, regtest or mainnet")
   }
   return &net, nil
 }
