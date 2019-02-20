@@ -7,6 +7,7 @@ import (
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcutil/hdkeychain"
   "github.com/ethereum/go-ethereum/crypto"
+  "github.com/eoscanada/eos-go/ecc"
 )
 
 // Create generate bitcoin wallet
@@ -91,4 +92,30 @@ func (c EthereumChain) Create() (string, error) {
   }
   defer ldb.Close()
   return address, nil
+}
+
+// Create generate eos key pair
+func (c EOSChain) Create() (string, error) {
+  ldb, err := db.NewLDB(db.EOSLD)
+  if err != nil {
+    return "", err
+  }
+  privateKey, err := ecc.NewRandomPrivateKey()
+  if err != nil {
+    return "", errors.New(strings.Join([]string{"fail to generate eos key", err.Error()}, ":"))
+  }
+
+  wif := privateKey.String()
+  pub := privateKey.PublicKey()
+  _, err = ldb.Get([]byte(pub.String()), nil)
+  if err != nil && strings.Contains(err.Error(), "leveldb: not found") {
+    if err = ldb.Put([]byte(pub.String()), []byte(wif), nil); err != nil {
+      return "", errors.New(strings.Join([]string{"put privite key to leveldb error:", err.Error()}, ""))
+    }
+  }else if err != nil {
+    return "", errors.New(strings.Join([]string{"Fail to add address:", pub.String(), " ", err.Error()}, ""))
+  }
+
+  defer ldb.Close()
+  return pub.String(), nil
 }

@@ -59,10 +59,8 @@ func Contain(obj interface{}, target interface{}) bool {
             return true
         }
     }
-
     return false
 }
-
 
 func ToWei(iamount interface{}, decimals int) *big.Int {
     amount := decimal.NewFromFloat(0)
@@ -78,13 +76,10 @@ func ToWei(iamount interface{}, decimals int) *big.Int {
     case *decimal.Decimal:
         amount = *v
     }
-
     mul := decimal.NewFromFloat(float64(10)).Pow(decimal.NewFromFloat(float64(decimals)))
     result := amount.Mul(mul)
-
     wei := new(big.Int)
     wei.SetString(result.String(), 10)
-
     return wei
 }
 

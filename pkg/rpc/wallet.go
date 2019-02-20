@@ -32,3 +32,14 @@ func (s *WalletCoreServerRPC) EthereumWallet(ctx context.Context, in *empty.Empt
   }
   return &proto.WalletResponse{Address: address}, nil
 }
+
+// EOSIOWallet generate eosio key paire
+func (s *WalletCoreServerRPC) EOSIOWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
+  eosChain := blockchain.EOSChain{}
+  b := blockchain.NewBlockchain(eosChain, nil)
+  address, err := b.Wallet.Create()
+  if err != nil {
+    return nil, err
+  }
+  return &proto.WalletResponse{Address: address}, nil
+}

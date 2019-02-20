@@ -21,6 +21,8 @@ const (
   Bitcoin string = "bitcoin"
   // Ethereum ethereum network
   Ethereum  string = "ethereum"
+  // EOSIO eos network
+  EOSIO    string = "eosio"
 )
 
 // BitcoinCoreChain bitcoin-core chain type
@@ -34,6 +36,9 @@ type EthereumChain struct {
   ChainID int
   Info    *WalletInfo
 }
+
+// EOSChain EOS chain type
+type EOSChain struct {}
 
 // WalletInfo wallet info
 type WalletInfo struct {

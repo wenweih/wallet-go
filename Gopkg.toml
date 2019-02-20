@@ -69,3 +69,7 @@
 [[constraint]]
   name = "github.com/ybbus/jsonrpc"
   version = "2.1.2"
+
+[[constraint]]
+  name = "github.com/eoscanada/eos-go"
+  version = "0.8.5"

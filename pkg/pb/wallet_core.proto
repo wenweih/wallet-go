@@ -8,6 +8,7 @@ service WalletCore {
   rpc SendToAddressSignBTC (SendToAddressReq) returns (SignTxResp);
   rpc BitcoinWallet (BitcoinWalletReq) returns (WalletResponse);
   rpc EthereumWallet (google.protobuf.Empty) returns (WalletResponse);
+  rpc EOSIOWallet (google.protobuf.Empty) returns (WalletResponse);
 }
 
 message AddressResp {

@@ -31,6 +31,12 @@ func genAddress(ctx context.Context, asset string) (string, error) {
       return "", err
     }
     address = res.Address
+  case blockchain.EOSIO:
+    res, err := grpcClient.EOSIOWallet(ctx, &empty.Empty{})
+    if err != nil {
+      return "", err
+    }
+    address = res.Address
   default:
     return "", errors.New(strings.Join([]string{asset, " not implement yep!"}, ""))
   }

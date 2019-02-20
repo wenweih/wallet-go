@@ -16,6 +16,8 @@ const (
   BitcoinCoreLD string = "btc"
   // EthereumLD ethereum private key folder name
   EthereumLD    string = "eth"
+	// EOSLD eos private key folder name
+	EOSLD         string = "eos"
 )
 
 // NewLDB new leveldb
