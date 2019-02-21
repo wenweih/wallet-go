@@ -5,6 +5,7 @@ import (
   "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/btcsuite/btcd/chaincfg"
   "github.com/btcsuite/btcd/rpcclient"
+  "github.com/ethereum/go-ethereum/ethclient"
 )
 
 const (
@@ -35,10 +36,12 @@ type BitcoinCoreChain struct {
 type EthereumChain struct {
   ChainID int
   Info    *WalletInfo
+  Client  *ethclient.Client
 }
 
 // EOSChain EOS chain type
-type EOSChain struct {}
+type EOSChain struct {
+}
 
 // WalletInfo wallet info
 type WalletInfo struct {
@@ -57,10 +60,16 @@ type ChainWallet interface {
   Create() (string, error)
 }
 
+// ChainQuery blockchain client query
+type ChainQuery interface {
+  Balance() (string, error)
+}
+
 // Blockchain chain info
 type Blockchain struct {
   Operator  TxOperator
   Wallet    ChainWallet
+  Query     ChainQuery
 }
 
 // BTCRPC bitcoin-core client alias
@@ -95,4 +104,9 @@ type SimpleCoin struct {
 type TxPoolInspect struct {
   Pending map[string]map[uint64]string  `json:"pending"`
   Queued  map[string]map[uint64]string  `json:"queued"`
+}
+
+// ETHRPC bitcoin-core client alias
+type ETHRPC struct {
+	Client *ethclient.Client
 }

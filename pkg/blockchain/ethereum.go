@@ -21,11 +21,6 @@ import (
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-// ETHRPC bitcoin-core client alias
-type ETHRPC struct {
-	Client *ethclient.Client
-}
-
 // Close close rpc connect
 func (client *ETHRPC) Close()  {
   client.Client.Close()

@@ -52,11 +52,6 @@ func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult) 
     configure.Sugar.Info("best block info not found in btc_blocks table, init ....")
     bestBlock.Hash = block.Hash
     bestBlock.Height = block.Height
-    // db.Create(&SubAddress{Address: "n11UuUNSMv4JpYZ7fBuKojhFTkVisHYQGA", Asset: "btc"}) // for testing
-    // db.Create(&SubAddress{Address: "mzoeJSS1uNG8WpeeGVmEE7Mormyy2UzvRN", Asset: "btc"}) // for testing
-    // db.Create(&SubAddress{Address: "mwHsUZM6aEC24Bya8pT4R4jdpotgBydJtu", Asset: "btc"}) // for testing
-    // db.Create(&SubAddress{Address: "mthFqGtp1CZfKQvxnfTXPP6C8hUYcsp6Kp", Asset: "btc"}) // for testing
-    // db.Create(&SubAddress{Address: "mkSNQT8qbdFAv4XQDn9dSAwdBuA7in44Di", Asset: "btc"}) // for testing
     if err = db.BlockInfo2DB(bestBlock, block); err != nil {
       return nil, err
     }

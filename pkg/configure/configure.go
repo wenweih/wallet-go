@@ -151,7 +151,7 @@ func (c *Configure) ChainConfigInfo() (map[string]ChainInfo, map[string]string) 
 			case "confirmations":
 				chaininfo.Confirmations = vv.(int)
 			case "coin":
-				chaininfo.Coin = vv.(string)
+				chaininfo.Coin = strings.ToLower(vv.(string))
 				chainAssets[strings.ToLower(vv.(string))] = k
 			case "tokens":
 				chaininfo.Tokens = make(map[string]string)
