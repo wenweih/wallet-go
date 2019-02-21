@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-  "bytes"
   "errors"
   "strings"
   "reflect"
@@ -12,12 +11,10 @@ import (
   "github.com/shopspring/decimal"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum"
-  "github.com/ethereum/go-ethereum/rlp"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/crypto/sha3"
-  "github.com/ethereum/go-ethereum/common/hexutil"
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
@@ -102,19 +99,6 @@ func (client *ETHRPC) GetEthereumBalance(asset, accountHex string) (*big.Int, er
   return bal, nil
 }
 
-// SendTx send signed tx
-func (client *ETHRPC) SendTx(ctx context.Context, hexSignedTx string) (*string, error){
-  tx, err := DecodeETHTx(hexSignedTx)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
-  }
-  if err := client.Client.SendTransaction(ctx, tx); err != nil {
-    return nil, errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
-  }
-  txid := tx.Hash().String()
-  return &txid, nil
-}
-
 // RawTx ethereum raw tx
 func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float64) (*string, *string, error){
   if !common.IsHexAddress(to) {
@@ -164,8 +148,6 @@ func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float6
   }
 
   configure.Sugar.Info("pendingNoncexxxx: ", pendingNonce)
-
-
   chainID := netVersion.String()
   var (
     txFee = new(big.Int)
@@ -195,23 +177,6 @@ func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float6
     return nil, nil, err
   }
   return &chainID, rawTxHex, nil
-}
-
-// CreateRawETHTx create eth raw tx
-func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressTo string) (*string, *string, error) {
-	gasLimit := uint64(21000) // in units
-
-	if !common.IsHexAddress(hexAddressTo) {
-		return nil, nil, errors.New(strings.Join([]string{hexAddressTo, "invalidate"}, " "))
-	}
-
-	tx := types.NewTransaction(nonce, common.HexToAddress(hexAddressTo), transferAmount, gasLimit, gasPrice, nil)
-	rawTxHex, err := EncodeETHTx(tx)
-	if err != nil {
-		return nil, nil, errors.New(strings.Join([]string{"encode raw tx error", err.Error()}, " "))
-	}
-	txHashHex := tx.Hash().Hex()
-	return rawTxHex, &txHashHex, nil
 }
 
 // RawTokenTx ethereum raw token tx
@@ -306,10 +271,7 @@ func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, am
   if *nonce !=0 && txPoolMaxCount + 1 > *nonce {
     pendingNonce = txPoolMaxCount + 1
   }
-
   configure.Sugar.Info("pendingNoncexxxx: ", pendingNonce)
-
-
   chainID := netVersion.String()
 
   txFee := new(big.Int)
@@ -328,21 +290,4 @@ func (client *ETHRPC) RawTokenTx(ctx context.Context, from, to, token string, am
   }
 
   return &chainID, rawTxHex, nil
-}
-
-// DecodeETHTx ethereum transaction hex
-func DecodeETHTx(txHex string) (*types.Transaction, error) {
-	txc, err := hexutil.Decode(txHex)
-	if err != nil {
-		return nil, err
-	}
-
-	var txde types.Transaction
-
-	t, err := &txde, rlp.Decode(bytes.NewReader(txc), &txde)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
 }

@@ -2,6 +2,7 @@ package blockchain
 
 import (
   "fmt"
+  "bytes"
   "regexp"
   "github.com/eoscanada/eos-go"
   "github.com/ethereum/go-ethereum/rlp"
@@ -40,4 +41,21 @@ func EncodeETHTx(tx *types.Transaction) (*string, error) {
 	}
 	txHex := hexutil.Encode(txb)
 	return &txHex, nil
+}
+
+// DecodeETHTx ethereum transaction hex
+func DecodeETHTx(txHex string) (*types.Transaction, error) {
+	txc, err := hexutil.Decode(txHex)
+	if err != nil {
+		return nil, err
+	}
+
+	var txde types.Transaction
+
+	t, err := &txde, rlp.Decode(bytes.NewReader(txc), &txde)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
