@@ -63,6 +63,7 @@ func main() {
   r.GET("/block", blockHandle)
   r.GET("/ethereum_balance", ethereumBalanceHandle)
   r.GET("/omnicore_balance", omniBalanceHandle)
+  r.GET("/eosio_balance", eosioBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
   if err := r.Run(":8000"); err != nil {

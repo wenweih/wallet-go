@@ -64,7 +64,7 @@ type ChainWallet interface {
 
 // ChainQuery blockchain client query
 type ChainQuery interface {
-  Balance() (string, error)
+  Balance(account, symbol, code string) (string, error)
 }
 
 // Blockchain chain info

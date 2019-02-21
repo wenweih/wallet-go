@@ -9,8 +9,8 @@ import (
 )
 
 // NewBlockchain chain object
-func NewBlockchain(wallet ChainWallet, operator TxOperator) *Blockchain {
-  return &Blockchain{Wallet: wallet, Operator: operator}
+func NewBlockchain(wallet ChainWallet, operator TxOperator, query ChainQuery) *Blockchain {
+  return &Blockchain{Wallet: wallet, Operator: operator, Query: query}
 }
 
 // Tx the life cycle of transaction: construct, sign, broadcast

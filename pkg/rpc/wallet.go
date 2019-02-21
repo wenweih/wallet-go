@@ -14,7 +14,7 @@ func (s *WalletCoreServerRPC) BitcoinWallet(ctx context.Context, in *proto.Bitco
     return nil, err
   }
   btcChain := blockchain.BitcoinCoreChain{Mode: mode}
-  b := blockchain.NewBlockchain(btcChain, nil)
+  b := blockchain.NewBlockchain(btcChain, nil, nil)
   address, err := b.Wallet.Create()
   if err != nil {
     return nil, err
@@ -25,7 +25,7 @@ func (s *WalletCoreServerRPC) BitcoinWallet(ctx context.Context, in *proto.Bitco
 // EthereumWallet generate ethereum wallet
 func (s *WalletCoreServerRPC) EthereumWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
   ethChain := blockchain.EthereumChain{}
-  b := blockchain.NewBlockchain(ethChain, nil)
+  b := blockchain.NewBlockchain(ethChain, nil, nil)
   address, err := b.Wallet.Create()
   if err != nil {
     return nil, err
@@ -36,7 +36,7 @@ func (s *WalletCoreServerRPC) EthereumWallet(ctx context.Context, in *empty.Empt
 // EOSIOWallet generate eosio key paire
 func (s *WalletCoreServerRPC) EOSIOWallet(ctx context.Context, in *empty.Empty) (*proto.WalletResponse, error) {
   eosChain := blockchain.EOSChain{}
-  b := blockchain.NewBlockchain(eosChain, nil)
+  b := blockchain.NewBlockchain(eosChain, nil, nil)
   address, err := b.Wallet.Create()
   if err != nil {
     return nil, err
