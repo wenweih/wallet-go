@@ -6,6 +6,7 @@ import (
   "github.com/btcsuite/btcd/chaincfg"
   "github.com/btcsuite/btcd/rpcclient"
   "github.com/ethereum/go-ethereum/ethclient"
+  "github.com/eoscanada/eos-go"
 )
 
 const (
@@ -41,6 +42,7 @@ type EthereumChain struct {
 
 // EOSChain EOS chain type
 type EOSChain struct {
+  Client  *eos.API
 }
 
 // WalletInfo wallet info

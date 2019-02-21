@@ -346,13 +346,3 @@ func DecodeETHTx(txHex string) (*types.Transaction, error) {
 
 	return t, nil
 }
-
-// EncodeETHTx encode eth tx
-func EncodeETHTx(tx *types.Transaction) (*string, error) {
-	txb, err := rlp.EncodeToBytes(tx)
-	if err != nil {
-		return nil, err
-	}
-	txHex := hexutil.Encode(txb)
-	return &txHex, nil
-}
