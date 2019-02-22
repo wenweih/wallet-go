@@ -1,5 +1,19 @@
 package configure
 
+import (
+	"go.uber.org/zap"
+)
+
+var (
+	// Sugar log
+	Sugar *zap.SugaredLogger
+	// Config configure
+	Config *Configure
+	// ChainsInfo chain info
+	ChainsInfo map[string]ChainInfo
+	// ChainAssets chain assets
+	ChainAssets map[string]string
+)
 
 // Configure 配置数据
 type Configure struct {
@@ -57,4 +71,5 @@ type ChainInfo struct {
 	Chain         string
 	Coin          string
 	Tokens        map[string]string
+	Accounts      map[string]string
 }

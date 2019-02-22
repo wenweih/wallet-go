@@ -5,7 +5,6 @@ import (
   "errors"
   "context"
   "wallet-transition/pkg/configure"
-  // "github.com/eoscanada/eos-go"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )

@@ -2,42 +2,29 @@ package configure
 
 import (
 	"time"
-	"strings"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
-var (
-	// Sugar log
-	Sugar *zap.SugaredLogger
-	// Config configure
-	Config *Configure
-	// ChainsInfo chain info
-	ChainsInfo map[string]ChainInfo
-	// ChainAssets chain assets
-	ChainAssets map[string]string
+const (
+	// LDBPath leveldb folder name for key-pair
+	LDBPath = ".db_wallet"
+	// BackUpWalletPath backup wallet path
+	BackUpWalletPath = "/usr/local/wallet-transition/"
+	// ConfigureFile configure file name
+	ConfigureFile = "wallet-transition"
 )
-
-// HomeDir 获取服务器当前用户目录路径
-func HomeDir() string {
-	home, err := homedir.Dir()
-	if err != nil {
-		Sugar.Fatal(err.Error())
-	}
-	return home
-}
 
 // InitConfig 配置信息
 func InitConfig() *Configure {
 	var conf Configure
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(HomeDir())
-	viper.SetConfigName("wallet-transition")
+	viper.SetConfigName(ConfigureFile)
 	viper.AutomaticEnv() // read in environment variables that match
 
-	conf.DBWalletPath = ".db_wallet"
-	conf.BackupWalletPath = "/usr/local/wallet-transition/"
+	conf.DBWalletPath = LDBPath
+	conf.BackupWalletPath = BackUpWalletPath
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -113,57 +100,21 @@ func InitConfig() *Configure {
 			conf.KeystorePath = value.(string)
 		case "ks_pass":
 			conf.KSPass = value.(string)
-
 		case "api_assets":
 			conf.APIASSETS = viper.GetStringSlice(key)
-
 		case "wallet_core_rpc_url":
 			conf.WalletCoreRPCURL = value.(string)
-
 		case "eth_token":
 			conf.ETHToken = viper.Sub("eth_token").AllSettings()
-
 		case "omni_token":
 			conf.OmniToken = viper.Sub("omni_token").AllSettings()
-
 		case "chains":
 			conf.Chains = viper.Sub("chains").AllSettings()
-
 		case "confirmations":
 			conf.Confirmations = viper.Sub("confirmations").AllSettings()
 		}
 	}
 	return &conf
-}
-
-// ChainConfigInfo chain info
-func (c *Configure) ChainConfigInfo() (map[string]ChainInfo, map[string]string) {
-	chains := c.Chains
-	var (
-		chainsInfo = make(map[string]ChainInfo)
-		chainAssets = make(map[string]string)
-	)
-
-	for k, v := range chains {
-		var chaininfo  ChainInfo
-		for kv, vv := range v.(map[string]interface{}) {
-			switch kv {
-			case "confirmations":
-				chaininfo.Confirmations = vv.(int)
-			case "coin":
-				chaininfo.Coin = strings.ToLower(vv.(string))
-				chainAssets[strings.ToLower(vv.(string))] = k
-			case "tokens":
-				chaininfo.Tokens = make(map[string]string)
-				for kt, vt := range vv.(map[string]interface{}) {
-					chaininfo.Tokens[kt] = vt.(string)
-					chainAssets[strings.ToLower(kt)] = k
-				}
-			}
-		}
-		chainsInfo[k] = chaininfo
-	}
-	return chainsInfo, chainAssets
 }
 
 func init() {
