@@ -64,6 +64,9 @@ func InitConfig() *Configure {
 		case "eth_rpc":
 			conf.EthRPC = value.(string)
 
+		case "eosio_rpc":
+			conf.EOSIORPC = value.(string)
+
 		case "db_mysql_host":
 			conf.MySQLHost = value.(string)
 		case "db_mysql_user":
@@ -100,8 +103,6 @@ func InitConfig() *Configure {
 			conf.KeystorePath = value.(string)
 		case "ks_pass":
 			conf.KSPass = value.(string)
-		case "api_assets":
-			conf.APIASSETS = viper.GetStringSlice(key)
 		case "wallet_core_rpc_url":
 			conf.WalletCoreRPCURL = value.(string)
 		case "eth_token":

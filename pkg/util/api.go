@@ -83,8 +83,9 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
       GinRespException(c, http.StatusBadRequest, errors.New("asset params can't be empty"))
       return
     }
-    if !Contain(asset , configure.Config.APIASSETS) {
-      e := errors.New(strings.Join([]string{asset, " is not supported currently, ", "only support: ", strings.Join(configure.Config.APIASSETS[:],",")}, ""))
+
+    if configure.ChainAssets[asset] == "" {
+      e := errors.New(strings.Join([]string{asset, " is't implement yep!"}, ""))
       GinRespException(c, http.StatusBadRequest, e)
       return
     }

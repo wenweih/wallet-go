@@ -29,6 +29,8 @@ type Configure struct {
 	OmniHTTPPostMode bool
 	OmniDisableTLS   bool
 
+	EOSIORPC         string
+
 	EthRPCWS        string
 	EthRPC          string
 
@@ -54,7 +56,6 @@ type Configure struct {
 	KeystorePath            string
 	KSPass                  string
 
-	APIASSETS               []string
 	WalletCoreRPCURL        string
 
 	ETHToken                map[string]interface{}
