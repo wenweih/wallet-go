@@ -10,12 +10,10 @@ import (
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
-  "wallet-transition/pkg/blockchain"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
-  "github.com/eoscanada/eos-go"
 )
 
 func txHandle(c *gin.Context)  {
@@ -149,21 +147,6 @@ func omniBalanceHandle(c *gin.Context)  {
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
     "balance": bal.Balance,
-  })
-}
-
-func eosioBalanceHandle(c *gin.Context) {
-  client := eos.New("http://192.168.12.101:8888")
-  eosChain := blockchain.EOSChain{Client: client}
-  b := blockchain.NewBlockchain(nil, nil, eosChain)
-  bal, err := b.Query.Balance("huangwenwei", "EOS", "eosio.token")
-  if err !=nil {
-    util.GinRespException(c, http.StatusBadRequest, err)
-    return
-  }
-  c.JSON(http.StatusOK, gin.H {
-    "status": http.StatusOK,
-    "balance": bal,
   })
 }
 

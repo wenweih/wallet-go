@@ -9,6 +9,7 @@ import (
   "wallet-transition/pkg/blockchain"
   pb "wallet-transition/pkg/pb"
   "github.com/btcsuite/btcd/chaincfg"
+  "github.com/eoscanada/eos-go"
 )
 
 var (
@@ -17,6 +18,7 @@ var (
   btcClient *blockchain.BTCRPC
   omniClient *blockchain.BTCRPC
   ethClient *blockchain.ETHRPC
+  eosClient *eos.API
   grpcClient pb.WalletCoreClient
   bitcoinnet *chaincfg.Params
 )
@@ -54,16 +56,20 @@ func main() {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }
 
+  eosClient = eos.New(configure.Config.EOSIORPC)
+
   r := util.GinEngine()
   r.POST("/address", addressHandle)
   r.POST("/send", withdrawHandle)
   r.POST("/sendtoaddress", sendToAddress)
 
+  r.POST("/eosio/tx", eosiotxHandle)
+  r.GET("/eosio/balance", eosioBalanceHandle)
+
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
   r.GET("/ethereum_balance", ethereumBalanceHandle)
   r.GET("/omnicore_balance", omniBalanceHandle)
-  r.GET("/eosio_balance", eosioBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
   if err := r.Run(":8000"); err != nil {

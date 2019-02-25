@@ -55,6 +55,7 @@ type WalletInfo struct {
 
 // TxOperator transaction operator
 type TxOperator interface {
+  RawTx(from, to, amount, memo, asset string) (string, error)
 }
 
 // ChainWallet chain wallet

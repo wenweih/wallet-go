@@ -45,5 +45,8 @@ func (c EOSChain) Balance(account, symbol, code string) (string, error) {
   if err != nil {
     return "", err
   }
-  return balances[0].String(), nil
+  if len(balances) > 0 {
+    return balances[0].String(), nil
+  }
+  return "", errors.New("balance not found")
 }
