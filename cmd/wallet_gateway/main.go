@@ -66,9 +66,10 @@ func main() {
   r.POST("/eosio/tx", eosiotxHandle)
   r.GET("/eosio/balance", eosioBalanceHandle)
 
+  r.GET("ethereum/balance", ethereumBalanceHandle)
+
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
-  r.GET("/ethereum_balance", ethereumBalanceHandle)
   r.GET("/omnicore_balance", omniBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
