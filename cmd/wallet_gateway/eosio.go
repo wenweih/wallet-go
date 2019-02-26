@@ -11,6 +11,7 @@ import (
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   "github.com/eoscanada/eos-go"
+  pb "wallet-transition/pkg/pb"
 )
 
 func eosioBalanceHandle(c *gin.Context) {
@@ -52,9 +53,9 @@ func eosiotxHandle(c *gin.Context) {
   }
 
   contract := configure.ChainsInfo[blockchain.EOSIO].Tokens[strings.ToLower(params.Asset)]
-  ammountMap := configure.ChainsInfo[blockchain.EOSIO].Accounts
+  accountMap := configure.ChainsInfo[blockchain.EOSIO].Accounts
   var fromName string
-  for name := range ammountMap {
+  for name := range accountMap {
     bal, err := b.Query.Balance(name, params.Asset, contract)
     if err != nil {
       util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("get account balance error: %s", err))
@@ -77,5 +78,26 @@ func eosiotxHandle(c *gin.Context) {
     return
   }
 
-  configure.Sugar.Info("rawTxHex: ", rawTxHex)
+
+  eosioInfo, err := eosChain.Client.GetInfo()
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  pubkey := accountMap[fromName]
+  res, err := grpcClient.SignatureEOSIO(c, &pb.SignatureEOSIOReq{Pubkey: pubkey, RawTxHex: rawTxHex, ChainID: eosioInfo.ChainID.String()})
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  txid, err := b.Operator.BroadcastTx(res.HexSignedTx)
+  if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
+  configure.Sugar.Info("txid: ", txid)
+
 }

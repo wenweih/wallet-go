@@ -49,7 +49,6 @@ func (b BitcoinCoreChain) Create() (string, error) {
 
   _, err = ldb.Get([]byte(add.EncodeAddress()), nil)
   if err != nil && strings.Contains(err.Error(), "leveldb: not found") && key.IsPrivate(){
-    // priv, err := key.ECPrivKey()
 		priv, err := acct0Ext10.ECPrivKey()
     if err != nil {
       return "", errors.New(strings.Join([]string{"acct0Ext10 key to ec privite key error:", err.Error()}, ""))

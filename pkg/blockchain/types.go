@@ -56,7 +56,7 @@ type WalletInfo struct {
 // TxOperator transaction operator
 type TxOperator interface {
   RawTx(from, to, amount, memo, asset string) (string, error)
-  SignedTx(rawTxHex, account string) (string, error)
+  SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error)
   BroadcastTx(signedTxHex string) (string, error)
 }
 
@@ -115,3 +115,10 @@ type TxPoolInspect struct {
 type ETHRPC struct {
 	Client *ethclient.Client
 }
+
+// ChainsOptions chain info
+type ChainsOptions struct {
+	ChainID    string
+  ModeBTC    string
+}
+type ChainsOption func(*ChainsOptions)

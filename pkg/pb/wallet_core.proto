@@ -9,10 +9,17 @@ service WalletCore {
   rpc BitcoinWallet (BitcoinWalletReq) returns (WalletResponse);
   rpc EthereumWallet (google.protobuf.Empty) returns (WalletResponse);
   rpc EOSIOWallet (google.protobuf.Empty) returns (WalletResponse);
+  rpc SignatureEOSIO (SignatureEOSIOReq) returns (SignTxResp);
 }
 
 message AddressResp {
   string address = 1;
+}
+
+message SignatureEOSIOReq {
+  string pubkey = 1;
+  string rawTxHex = 2;
+  string chainID = 3;
 }
 
 message SignTxReq{

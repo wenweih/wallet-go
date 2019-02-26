@@ -31,32 +31,32 @@ func (c EOSChain) RawTx(from, to, amount, memo, asset string) (string, error) {
 }
 
 // SignedTx EOSIO tx signature
-func (c EOSChain) SignedTx(rawTxHex, wif string) (string, error) {
+func (c EOSChain) SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error) {
   txB, err := hex.DecodeString(rawTxHex)
   if err != nil {
     return "", err
   }
 
   var tx eos.Transaction
-  if err := json.Unmarshal(txB, &tx); err != nil {
+  if err = json.Unmarshal(txB, &tx); err != nil {
     return "", err
   }
 
   keyBag := eos.NewKeyBag()
-  // "5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"
   keyBag.ImportPrivateKey(wif)
 
-  txOpts := &eos.TxOptions{}
-  if err := txOpts.FillFromChain(c.Client); err != nil {
-    return "", fmt.Errorf("filling tx opts: %s", err)
-  }
-
   signTx := eos.NewSignedTransaction(&tx)
-  requiredKey, err := ecc.NewPublicKey("EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV")
+  privateKey, err := ecc.NewPrivateKey(wif)
   if err != nil {
     return "", err
   }
-  signedTx, err := keyBag.Sign(signTx, txOpts.ChainID, requiredKey)
+  requiredKey := privateKey.PublicKey()
+  chainID, err := hex.DecodeString(options.ChainID)
+  if err != nil {
+    return "", err
+  }
+
+  signedTx, err := keyBag.Sign(signTx, chainID, requiredKey)
   if err != nil {
     return "", err
   }
@@ -65,7 +65,6 @@ func (c EOSChain) SignedTx(rawTxHex, wif string) (string, error) {
   if err != nil {
     return "", err
   }
-
   return hex.EncodeToString(signedTxB), nil
 }
 
@@ -77,7 +76,7 @@ func (c EOSChain) BroadcastTx(signedTxHex string) (string, error) {
   }
 
   var tx eos.SignedTransaction
-  if err := json.Unmarshal(txB, &tx); err != nil {
+  if err = json.Unmarshal(txB, &tx); err != nil {
     return "", err
   }
   packedTx, err := tx.Pack(eos.CompressionNone)
