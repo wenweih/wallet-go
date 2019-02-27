@@ -104,7 +104,6 @@ func eosiotxHandle(c *gin.Context) {
     return
   }
 
-
   eosioInfo, err := eosChain.Client.GetInfo()
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
@@ -124,6 +123,8 @@ func eosiotxHandle(c *gin.Context) {
     return
   }
 
-  configure.Sugar.Info("txid: ", txid)
-
+  c.JSON(http.StatusOK, gin.H {
+    "status": http.StatusOK,
+    "txid": txid,
+  })
 }
