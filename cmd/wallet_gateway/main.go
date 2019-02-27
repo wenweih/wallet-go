@@ -10,6 +10,7 @@ import (
   pb "wallet-transition/pkg/pb"
   "github.com/btcsuite/btcd/chaincfg"
   "github.com/eoscanada/eos-go"
+  "github.com/ethereum/go-ethereum/ethclient"
 )
 
 var (
@@ -17,6 +18,7 @@ var (
   rpcConn *grpc.ClientConn
   btcClient *blockchain.BTCRPC
   omniClient *blockchain.BTCRPC
+  ethereumClient *ethclient.Client
   ethClient *blockchain.ETHRPC
   eosClient *eos.API
   grpcClient pb.WalletCoreClient
@@ -52,6 +54,11 @@ func main() {
   omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
   ethClient, err = blockchain.NewEthClient()
+  if err != nil {
+    configure.Sugar.Fatal("Ethereum client error: ", err.Error())
+  }
+
+  ethereumClient, err = ethclient.Dial(configure.Config.EthRPC)
   if err != nil {
     configure.Sugar.Fatal("Ethereum client error: ", err.Error())
   }

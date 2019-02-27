@@ -2,7 +2,10 @@ package main
 
 import (
   "fmt"
+  "errors"
+  "math/big"
   "net/http"
+  "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/db"
@@ -38,19 +41,37 @@ func ethereumWalletHandle(c *gin.Context) {
 func ethereumBalanceHandle(c *gin.Context) {
   asset, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
-  balanceParams, err := balanceParamsH("ethereum", asset.(string), detailParams.([]byte))
-  if err != nil {
-    util.GinRespException(c, http.StatusBadRequest, err)
+
+  if configure.ChainAssets[asset.(string)] != blockchain.Ethereum {
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("%s is't Ethereum asset", asset.(string)))
     return
   }
 
-  balance, err := ethClient.GetEthereumBalance(balanceParams.Asset, balanceParams.Address)
+  var balanceParams util.BalanceParams
+  if err := json.Unmarshal(detailParams.([]byte), &balanceParams); err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
+  if balanceParams.Address == "" {
+    util.GinRespException(c, http.StatusInternalServerError, errors.New("address param is required"))
+    return
+  }
+
+  chain := blockchain.EthereumChain{Client: ethereumClient}
+  b := blockchain.NewBlockchain(nil, nil, chain)
+  balance, err := b.Query.Balance(balanceParams.Address, balanceParams.Asset, "")
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
   }
+  amount, ok := new(big.Int).SetString(balance, 10)
+  if !ok {
+    util.GinRespException(c, http.StatusInternalServerError, errors.New("Set amount error"))
+    return
+  }
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
-    "balance": util.ToEther(balance).String(),
+    "balance": util.ToEther(amount).String(),
   })
 }

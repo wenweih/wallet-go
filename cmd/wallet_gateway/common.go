@@ -7,7 +7,6 @@ import (
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "github.com/btcsuite/btcutil"
-  "github.com/ethereum/go-ethereum/common"
 )
 
 // chain: ethereum or omnicore
@@ -26,16 +25,6 @@ func balanceParamsH(chain, asset string, detailParams []byte) (*util.BalancePara
   keys := make([]string, 10)
 
   switch chain {
-  case "ethereum":
-    keys = append(keys, "eth")
-    for k := range configure.Config.ETHToken {
-      keys = append(keys, k)
-    }
-
-    if !common.IsHexAddress(balanceParams.Address) {
-      err := errors.New(strings.Join([]string{"Address: ", balanceParams.Address, " isn't valid ethereum address"}, ""))
-      return nil, err
-    }
   case "omnicore":
     for k := range configure.Config.OmniToken {
       keys = append(keys, k)

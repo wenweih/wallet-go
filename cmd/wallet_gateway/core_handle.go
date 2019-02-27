@@ -65,7 +65,7 @@ func withdrawHandle(c *gin.Context)  {
   })
 }
 
-func sendToAddress(c *gin.Context)  {
+func sendToAddress(c *gin.Context) {
   assetParams, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
   sendToAddressParams, err := util.SendToAddressParamsH(detailParams.([]byte))

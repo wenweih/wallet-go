@@ -15,7 +15,6 @@ import (
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/crypto/sha3"
-  "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // Close close rpc connect
@@ -77,30 +76,8 @@ func (client *ETHRPC) GetBalanceAndPendingNonceAtAndGasPrice(ctx context.Context
 	return balance, &pendingNonceAt, gasPrice, netVersion, nil
 }
 
-// GetEthereumBalance get specify token balance of an EOA account
-func (client *ETHRPC) GetEthereumBalance(asset, accountHex string) (*big.Int, error) {
-  accountAddress := common.HexToAddress(accountHex)
-  if asset == "eth" {
-    bal, err := client.Client.BalanceAt(context.Background(), accountAddress, nil)
-    if err != nil {
-      return nil, err
-    }
-    return bal, nil
-  }
-  tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
-  contractInstance, err := NewEthToken(tokenAddress, client.Client)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"Get token instance error: ", err.Error()}, ""))
-  }
-  bal, err := contractInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
-  if err!= nil {
-    return nil, errors.New(strings.Join([]string{"Get token balance error: ", err.Error()}, ""))
-  }
-  return bal, nil
-}
-
 // RawTx ethereum raw tx
-func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float64) (*string, *string, error){
+func (client *ETHRPC) RawTx(ctx context.Context, from, to string, amountF float64) (*string, *string, error) {
   if !common.IsHexAddress(to) {
     err := errors.New(strings.Join([]string{"To: ", to, " isn't valid ethereum address"}, ""))
     return nil, nil, err

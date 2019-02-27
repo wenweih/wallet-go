@@ -10,16 +10,17 @@ import (
 )
 
 // Balance get specify token balance of an Ethereum EOA account
-func (c EthereumChain) Balance(asset, accountHex string) (string, error) {
-  accountAddress := common.HexToAddress(accountHex)
-  if strings.ToLower(asset) == configure.ChainsInfo[Ethereum].Coin {
+func (c EthereumChain) Balance(account, symbol, code string) (string, error) {
+  accountAddress := common.HexToAddress(account)
+  if strings.ToLower(symbol) == strings.ToLower(configure.ChainsInfo[Ethereum].Coin) {
     bal, err := c.Client.BalanceAt(context.Background(), accountAddress, nil)
     if err != nil {
       return "", err
     }
     return bal.String(), nil
   }
-  tokenAddress := common.HexToAddress(configure.Config.ETHToken[asset].(string))
+  token := configure.ChainsInfo[Ethereum].Tokens[strings.ToLower(symbol)]
+  tokenAddress := common.HexToAddress(token)
   contractInstance, err := NewEthToken(tokenAddress, c.Client)
   if err != nil {
     return "", errors.New(strings.Join([]string{"Get token instance error: ", err.Error()}, ""))
