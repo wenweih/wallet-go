@@ -78,9 +78,10 @@ func main() {
   r.POST("/ethereum/wallet", ethereumWalletHandle)
   r.GET("/ethereum/balance", ethereumBalanceHandle)
 
+  r.GET("/omnicore/balance", omniBalanceHandle)
+
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
-  r.GET("/omnicore_balance", omniBalanceHandle)
   r.GET("/address_validator", addressValidator)
   r.GET("/best_block", bestBlock)
   if err := r.Run(":8000"); err != nil {

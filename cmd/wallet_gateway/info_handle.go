@@ -9,7 +9,6 @@ import (
   "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
-  "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
@@ -104,29 +103,6 @@ func blockHandle(c *gin.Context)  {
     })
     return
   }
-}
-
-func omniBalanceHandle(c *gin.Context)  {
-  asset, _ := c.Get("asset")
-  detailParams, _ := c.Get("detail")
-
-  balanceParams, err := balanceParamsH("omnicore", asset.(string), detailParams.([]byte))
-  if err != nil {
-    util.GinRespException(c, http.StatusBadRequest, err)
-    return
-  }
-
-  propertyid := configure.Config.OmniToken[balanceParams.Asset].(int)
-
-  bal, err := omniClient.GetOmniBalance(balanceParams.Address, propertyid)
-  if err != nil {
-    util.GinRespException(c, http.StatusInternalServerError, err)
-    return
-  }
-  c.JSON(http.StatusOK, gin.H {
-    "status": http.StatusOK,
-    "balance": bal.Balance,
-  })
 }
 
 func addressValidator(c *gin.Context) {
