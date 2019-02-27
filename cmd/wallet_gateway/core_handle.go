@@ -4,26 +4,13 @@ import (
   "strconv"
   "net/http"
   "github.com/gin-gonic/gin"
+  "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   "github.com/btcsuite/btcutil"
   pb "wallet-transition/pkg/pb"
 )
-
-func addressHandle(c *gin.Context) {
-  asset, _ := c.Get("asset")
-  address, err := genAddress(c, asset.(string))
-  if err != nil {
-    util.GinRespException(c, http.StatusInternalServerError, err)
-    return
-  }
-
-  c.JSON(http.StatusOK, gin.H {
-    "status": http.StatusOK,
-    "address": address,
-  })
-}
 
 func withdrawHandle(c *gin.Context)  {
   assetParams, _ := c.Get("asset")
@@ -93,8 +80,19 @@ func sendToAddress(c *gin.Context)  {
     return
   }
 
+  res, err := grpcClient.BitcoinWallet(c, &pb.BitcoinWalletReq{Mode: bitcoinnet.Net.String()})
+  if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+  funbackAddress := res.Address
+  if err = sqldb.Create(&db.SubAddress{Address: funbackAddress, Asset: blockchain.Bitcoin}).Error; err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
   txAmount, _ := btcutil.NewAmount(amount)
-  funbackAddress, err := genAddress(c, "btc")
+  // funbackAddress, err := genAddress(c, "btc")
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -111,13 +109,13 @@ func sendToAddress(c *gin.Context)  {
     configure.Sugar.Info("xxxx: ", utxo.ID)
     pOutPoints = append(pOutPoints, &pb.SendToAddressReq_PreviousOutPoint{Txid: utxo.Txid, Index: utxo.VoutIndex, Address: utxo.SubAddress.Address})
   }
-  res, err := grpcClient.SendToAddressSignBTC(c, &pb.SendToAddressReq{VinAmount: *vAmount, HexUnsignedTx: *rawTxHex, Utxo: pOutPoints})
+  resp, err := grpcClient.SendToAddressSignBTC(c, &pb.SendToAddressReq{VinAmount: *vAmount, HexUnsignedTx: *rawTxHex, Utxo: pOutPoints})
   if err != nil {
     configure.Sugar.Info("SendToAddressSignBTC error: ", err.Error())
   }
-  configure.Sugar.Info("xxxxx: ", res.HexSignedTx)
+  configure.Sugar.Info("xxxxx: ", resp.HexSignedTx)
   // send signed tx
-  txid, httpStatus, err := blockchain.SendTx(c, assetParams.(string), res.HexSignedTx, selectedutxos, btcClient, ethClient, sqldb)
+  txid, httpStatus, err := blockchain.SendTx(c, assetParams.(string), resp.HexSignedTx, selectedutxos, btcClient, ethClient, sqldb)
   if err != nil {
     configure.Sugar.DPanic(err.Error())
     util.GinRespException(c, httpStatus, err)

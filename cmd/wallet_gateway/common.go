@@ -3,48 +3,12 @@ package main
 import (
   "errors"
   "strings"
-  "context"
   "encoding/json"
-  "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
-  "wallet-transition/pkg/blockchain"
   "wallet-transition/pkg/configure"
   "github.com/btcsuite/btcutil"
   "github.com/ethereum/go-ethereum/common"
-  pb "wallet-transition/pkg/pb"
-  empty "github.com/golang/protobuf/ptypes/empty"
 )
-
-func genAddress(ctx context.Context, asset string) (string, error) {
-  var address string
-  c := configure.ChainAssets[asset]
-  switch c {
-  case blockchain.Bitcoin:
-    res, err := grpcClient.BitcoinWallet(ctx, &pb.BitcoinWalletReq{Mode: bitcoinnet.Net.String()})
-    if err != nil {
-      return "", err
-    }
-    address = res.Address
-  case blockchain.Ethereum:
-    res, err := grpcClient.EthereumWallet(ctx, &empty.Empty{})
-    if err != nil {
-      return "", err
-    }
-    address = res.Address
-  case blockchain.EOSIO:
-    res, err := grpcClient.EOSIOWallet(ctx, &empty.Empty{})
-    if err != nil {
-      return "", err
-    }
-    address = res.Address
-  default:
-    return "", errors.New(strings.Join([]string{asset, " not implement yep!"}, ""))
-  }
-  if err := sqldb.Create(&db.SubAddress{Address: address, Asset: asset}).Error; err != nil {
-    return "", err
-  }
-  return address, nil
-}
 
 // chain: ethereum or omnicore
 func balanceParamsH(chain, asset string, detailParams []byte) (*util.BalanceParams, error) {

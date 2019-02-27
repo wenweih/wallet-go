@@ -7,12 +7,38 @@ import (
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
+  "wallet-transition/pkg/db"
   "wallet-transition/pkg/util"
   "wallet-transition/pkg/configure"
   "wallet-transition/pkg/blockchain"
   "github.com/eoscanada/eos-go"
   pb "wallet-transition/pkg/pb"
+  empty "github.com/golang/protobuf/ptypes/empty"
 )
+
+func eosioWalletHandle(c *gin.Context) {
+  asset, _ := c.Get("asset")
+  chain := configure.ChainAssets[asset.(string)]
+  if chain == blockchain.EOSIO {
+    res, err := grpcClient.EOSIOWallet(c, &empty.Empty{})
+    if err != nil {
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    address := res.Address
+    if err := sqldb.Create(&db.SubAddress{Address: address, Asset: blockchain.EOSIO}).Error; err != nil {
+      util.GinRespException(c, http.StatusInternalServerError, err)
+      return
+    }
+    c.JSON(http.StatusOK, gin.H {
+      "status": http.StatusOK,
+      "address": address,
+    })
+  }else {
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("%s is't EOSIO token", asset.(string)))
+    return
+  }
+}
 
 func eosioBalanceHandle(c *gin.Context) {
   eosChain := blockchain.EOSChain{Client: eosClient}

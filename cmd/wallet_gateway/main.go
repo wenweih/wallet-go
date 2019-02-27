@@ -59,14 +59,17 @@ func main() {
   eosClient = eos.New(configure.Config.EOSIORPC)
 
   r := util.GinEngine()
-  r.POST("/address", addressHandle)
   r.POST("/send", withdrawHandle)
   r.POST("/sendtoaddress", sendToAddress)
 
+  r.POST("/eosio/wallet", eosioWalletHandle)
   r.POST("/eosio/tx", eosiotxHandle)
   r.GET("/eosio/balance", eosioBalanceHandle)
 
-  r.GET("ethereum/balance", ethereumBalanceHandle)
+  r.POST("/bitcoincore/wallet", bitcoincoreWalletHandle)
+
+  r.POST("/ethereum/wallet", ethereumWalletHandle)
+  r.GET("/ethereum/balance", ethereumBalanceHandle)
 
   r.GET("/tx", txHandle)
   r.GET("/block", blockHandle)
