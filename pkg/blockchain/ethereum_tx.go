@@ -207,6 +207,13 @@ func (c EthereumChain) SignedTx(rawTxHex, wif string, options *ChainsOptions) (s
 }
 
 // BroadcastTx ethereum tx broadcast
-func (c EthereumChain) BroadcastTx(signedTxHex string) (string, error) {
-  return "", nil
+func (c EthereumChain) BroadcastTx(ctx context.Context, signedTxHex string) (string, error) {
+  tx, err := DecodeETHTx(signedTxHex)
+  if err != nil {
+    return "", fmt.Errorf("Decode signed tx %s", err)
+  }
+  if err := c.Client.SendTransaction(ctx, tx); err != nil {
+    return "", fmt.Errorf("Ethereum SendTransactionsigned %s", err)
+  }
+  return tx.Hash().String(), nil
 }

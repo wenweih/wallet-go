@@ -117,7 +117,7 @@ func eosiotxHandle(c *gin.Context) {
     return
   }
 
-  txid, err := b.Operator.BroadcastTx(res.HexSignedTx)
+  txid, err := b.Operator.BroadcastTx(c, res.HexSignedTx)
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return

@@ -70,7 +70,7 @@ func (c EOSChain) SignedTx(rawTxHex, wif string, options *ChainsOptions) (string
 }
 
 // BroadcastTx EOSIO tx broadcast
-func (c EOSChain) BroadcastTx(signedTxHex string) (string, error) {
+func (c EOSChain) BroadcastTx(ctx context.Context, signedTxHex string) (string, error) {
   txB, err := hex.DecodeString(signedTxHex)
   if err != nil {
     return "", err

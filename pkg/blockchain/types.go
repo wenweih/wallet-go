@@ -58,7 +58,7 @@ type WalletInfo struct {
 type TxOperator interface {
   RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error)
   SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error)
-  BroadcastTx(signedTxHex string) (string, error)
+  BroadcastTx(ctx context.Context, signedTxHex string) (string, error)
 }
 
 // ChainWallet chain wallet
