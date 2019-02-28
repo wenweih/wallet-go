@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+  "context"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/btcsuite/btcd/chaincfg"
@@ -55,7 +56,7 @@ type WalletInfo struct {
 
 // TxOperator transaction operator
 type TxOperator interface {
-  RawTx(from, to, amount, memo, asset string) (string, error)
+  RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error)
   SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error)
   BroadcastTx(signedTxHex string) (string, error)
 }
@@ -67,7 +68,7 @@ type ChainWallet interface {
 
 // ChainQuery blockchain client query
 type ChainQuery interface {
-  Balance(account, symbol, code string) (string, error)
+  Balance(ctx context.Context, account, symbol, code string) (string, error)
 }
 
 // Blockchain chain info

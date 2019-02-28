@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+  "fmt"
   "strings"
   "errors"
   "context"
@@ -10,7 +11,7 @@ import (
 )
 
 // Balance get specify token balance of an Ethereum EOA account
-func (c EthereumChain) Balance(account, symbol, code string) (string, error) {
+func (c EthereumChain) Balance(ctx context.Context, account, symbol, code string) (string, error) {
   accountAddress := common.HexToAddress(account)
   if strings.ToLower(symbol) == strings.ToLower(configure.ChainsInfo[Ethereum].Coin) {
     bal, err := c.Client.BalanceAt(context.Background(), accountAddress, nil)
@@ -20,6 +21,9 @@ func (c EthereumChain) Balance(account, symbol, code string) (string, error) {
     return bal.String(), nil
   }
   token := configure.ChainsInfo[Ethereum].Tokens[strings.ToLower(symbol)]
+  if token == "" {
+    return "", fmt.Errorf("Token not implement yet: %s", symbol)
+  }
   tokenAddress := common.HexToAddress(token)
   contractInstance, err := NewEthToken(tokenAddress, c.Client)
   if err != nil {
@@ -33,7 +37,7 @@ func (c EthereumChain) Balance(account, symbol, code string) (string, error) {
 }
 
 // Balance EOSIO balance query
-func (c EOSChain) Balance(account, symbol, code string) (string, error) {
+func (c EOSChain) Balance(ctx context.Context, account, symbol, code string) (string, error) {
   accountName, err := ToAccountNameEOS(account)
   if err != nil {
     return "", err

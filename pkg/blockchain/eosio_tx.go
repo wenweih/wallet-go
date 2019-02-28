@@ -2,6 +2,7 @@ package blockchain
 
 import (
   "fmt"
+  "context"
   "encoding/hex"
   "encoding/json"
   "github.com/eoscanada/eos-go"
@@ -10,7 +11,7 @@ import (
 )
 
 // RawTx eos raw tx
-func (c EOSChain) RawTx(from, to, amount, memo, asset string) (string, error) {
+func (c EOSChain) RawTx(cxt context.Context, from, to, amount, memo, asset string) (string, error) {
   txOpts := &eos.TxOptions{}
   if err := txOpts.FillFromChain(c.Client); err != nil {
     return "", fmt.Errorf("filling tx opts: %s", err)

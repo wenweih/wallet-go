@@ -43,7 +43,7 @@ func eosioWalletHandle(c *gin.Context) {
 func eosioBalanceHandle(c *gin.Context) {
   eosChain := blockchain.EOSChain{Client: eosClient}
   b := blockchain.NewBlockchain(nil, nil, eosChain)
-  bal, err := b.Query.Balance("huangwenwei", "EOS", "eosio.token")
+  bal, err := b.Query.Balance(c, "huangwenwei", "EOS", "eosio.token")
   if err !=nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return
@@ -82,7 +82,7 @@ func eosiotxHandle(c *gin.Context) {
   accountMap := configure.ChainsInfo[blockchain.EOSIO].Accounts
   var fromName string
   for name := range accountMap {
-    bal, err := b.Query.Balance(name, params.Asset, contract)
+    bal, err := b.Query.Balance(c, name, params.Asset, contract)
     if err != nil {
       util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("get account balance error: %s", err))
       return
@@ -98,7 +98,7 @@ func eosiotxHandle(c *gin.Context) {
     }
     fromName = name
   }
-  rawTxHex, err := b.Operator.RawTx(fromName, params.Receiptor, params.Amount, params.Memo, params.Asset)
+  rawTxHex, err := b.Operator.RawTx(c, fromName, params.Receiptor, params.Amount, params.Memo, params.Asset)
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
     return

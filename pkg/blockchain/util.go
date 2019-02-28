@@ -34,13 +34,13 @@ func ToAccountNameEOS(in string) (out eos.AccountName, err error) {
 }
 
 // EncodeETHTx encode eth tx
-func EncodeETHTx(tx *types.Transaction) (*string, error) {
+func EncodeETHTx(tx *types.Transaction) (string, error) {
 	txb, err := rlp.EncodeToBytes(tx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	txHex := hexutil.Encode(txb)
-	return &txHex, nil
+	return txHex, nil
 }
 
 // DecodeETHTx ethereum transaction hex
