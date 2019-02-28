@@ -4,6 +4,7 @@ import (
   "fmt"
   "strings"
   "context"
+  "encoding/hex"
   "wallet-transition/pkg/pb"
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/blockchain"
@@ -49,7 +50,7 @@ func (s *WalletCoreServerRPC) SignatureEthereum(ctx context.Context, in *proto.S
 
   chain := blockchain.EthereumChain{}
   b := blockchain.NewBlockchain(nil, chain, nil)
-  signedTx, err := b.Operator.SignedTx(in.RawTxHex, string(priv[:]), blockchain.NewChainsOptions(blockchain.ChainID(in.ChainID)))
+  signedTx, err := b.Operator.SignedTx(in.RawTxHex, hex.EncodeToString(priv), blockchain.NewChainsOptions(blockchain.ChainID(in.ChainID)))
   if err != nil {
     return nil, err
   }

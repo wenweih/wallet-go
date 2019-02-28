@@ -77,6 +77,7 @@ func main() {
 
   r.POST("/ethereum/wallet", ethereumWalletHandle)
   r.GET("/ethereum/balance", ethereumBalanceHandle)
+  r.POST("/ethereum/tx", ethereumWithdrawHandle)
 
   r.GET("/omnicore/balance", omniBalanceHandle)
 

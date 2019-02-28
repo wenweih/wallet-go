@@ -11,6 +11,8 @@ import (
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/blockchain"
   "wallet-transition/pkg/configure"
+  "github.com/ethereum/go-ethereum/common"
+  pb "wallet-transition/pkg/pb"
   empty "github.com/golang/protobuf/ptypes/empty"
 )
 
@@ -60,7 +62,7 @@ func ethereumBalanceHandle(c *gin.Context) {
 
   chain := blockchain.EthereumChain{Client: ethereumClient}
   b := blockchain.NewBlockchain(nil, nil, chain)
-  balance, err := b.Query.Balance(balanceParams.Address, balanceParams.Asset, "")
+  balance, err := b.Query.Balance(c, balanceParams.Address, balanceParams.Asset, "")
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
@@ -74,4 +76,80 @@ func ethereumBalanceHandle(c *gin.Context) {
     "status": http.StatusOK,
     "balance": util.ToEther(amount).String(),
   })
+}
+
+func ethereumWithdrawHandle(c *gin.Context) {
+  assetParams, _ := c.Get("asset")
+  detailParams, _ := c.Get("detail")
+
+  // asset validate
+  if configure.ChainAssets[assetParams.(string)] != blockchain.Ethereum {
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Unsupported Ethereum asset %s", assetParams.(string)))
+    return
+  }
+
+  // extract params
+  var params util.EthereumWithdrawParams
+  if err := json.Unmarshal(detailParams.([]byte), &params); err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  // from and to address validate
+  if !common.IsHexAddress(params.From) {
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Invalid address: %s", params.From))
+    return
+  }
+  if !common.IsHexAddress(params.To) {
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Invalid address: %s", params.To))
+    return
+  }
+
+  // sub address query by From account
+  var subAddress db.SubAddress
+  // query from address
+  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", params.From, blockchain.Ethereum).Error; err !=nil && err.Error() == "record not found" {
+    util.GinRespException(c, http.StatusNotFound, fmt.Errorf("SubAddress not found in database: %s : %s", params.From, blockchain.Ethereum))
+    return
+  }else if err != nil {
+    util.GinRespException(c, http.StatusNotFound, err)
+    return
+  }
+
+  // ethereum chain
+  chain := blockchain.EthereumChain{Client: ethereumClient}
+  b := blockchain.NewBlockchain(nil, chain, chain)
+
+  // raw tx
+  rawTxHex, err := b.Operator.RawTx(c, params.From, params.To, params.Amount, "", params.Asset)
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  // query ethereum chainID
+  chainID, err := chain.Client.NetworkID(c)
+  if err != nil {
+    util.GinRespException(c, http.StatusBadRequest, err)
+    return
+  }
+
+  // ethereum tx signatrue
+  res, err := grpcClient.SignatureEthereum(c, &pb.SignatureEthereumReq{Account: params.From, RawTxHex: rawTxHex, ChainID: chainID.String()})
+  if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
+  txid, err := b.Operator.BroadcastTx(c, res.HexSignedTx)
+  if err != nil {
+    util.GinRespException(c, http.StatusInternalServerError, err)
+    return
+  }
+
+  c.JSON(http.StatusOK, gin.H {
+    "status": http.StatusOK,
+    "txid": txid,
+  })
+
 }

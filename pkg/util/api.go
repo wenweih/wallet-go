@@ -33,12 +33,6 @@ func GinEngine() *gin.Engine {
   return r
 }
 
-// JSONAbortMsg about json
-type JSONAbortMsg struct {
-  Code  int `json:"code"`
-  Msg   string `json:"msg"`
-}
-
 func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
   return func(c *gin.Context) {
     ginInstance.NoRoute(func(c *gin.Context) {
@@ -175,43 +169,6 @@ func transferParams(detailParams []byte) (*WithdrawParams, error) {
     return nil, errors.New("amount can't be empty and less than 0")
   }
   return &withdrawParams, nil
-}
-
-// AddressParams /address endpoint default params
-type AddressParams struct {
-  Asset string  `json:"asset"`
-}
-
-// TxParams /tx endpoint default params
-type TxParams struct {
-  Asset string  `json:"asset"`
-  Txid  string  `json:"txid"`
-}
-
-// WithdrawParams withdraw endpoint params
-type WithdrawParams struct {
-  Asset   string  `json:"asset" binding:"required"`
-  From    string  `json:"from" binding:"required"`
-  To      string  `json:"to" binding:"required"`
-  Amount  string `json:"amount" binding:"required"`
-}
-
-// BlockParams block endpoint params
-type BlockParams struct {
-  Asset   string  `json:"asset" binding:"required"`
-  Height  string  `json:"height" binding:"required"`
-}
-
-// BalanceParams balance endpoint params
-type BalanceParams struct {
-  Asset   string  `json:"asset" binding:"required"`
-  Address string  `json:"address" binding:"required"`
-}
-
-// AssetWithAddress struct
-type AssetWithAddress struct {
-  Asset   string  `json:"asset" binding:"required"`
-  Address string  `json:"address" binding:"required"`
 }
 
 // BTCWithdrawAddressValidate validate withdraw endpoint address params
