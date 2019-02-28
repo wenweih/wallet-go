@@ -156,7 +156,7 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
       return nil, errors.New(strings.Join([]string{"sign tx error", err.Error()}, " "))
     }
     txHex, err := blockchain.EncodeETHTx(signtx)
-    return &proto.SignTxResp{Result: true, HexSignedTx: *txHex}, nil
+    return &proto.SignTxResp{Result: true, HexSignedTx: txHex}, nil
   }
   return nil, nil
 }
