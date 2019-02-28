@@ -122,4 +122,6 @@ type ChainsOptions struct {
 	ChainID    string
   ModeBTC    string
 }
+
+// ChainsOption options for tx
 type ChainsOption func(*ChainsOptions)

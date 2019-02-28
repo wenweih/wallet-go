@@ -13,6 +13,7 @@ import (
   "github.com/shopspring/decimal"
   "github.com/ethereum/go-ethereum"
   "github.com/ethereum/go-ethereum/common"
+  "github.com/ethereum/go-ethereum/crypto"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/crypto/sha3"
 )
@@ -184,7 +185,25 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
 
 // SignedTx ethereum tx signature
 func (c EthereumChain) SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error) {
-  return "", nil
+  ecPriv, err := crypto.HexToECDSA(wif)
+  if err != nil {
+    return "", err
+  }
+  tx, err := DecodeETHTx(rawTxHex)
+  if err != nil {
+    return "", err
+  }
+
+  chainID, _ := new(big.Int).SetString(options.ChainID, 10)
+  signtx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), ecPriv)
+  if err != nil {
+    return "", fmt.Errorf("Ethereum transaction signatrue %s", err)
+  }
+  txHex, err := EncodeETHTx(signtx)
+  if err != nil {
+    return "", err
+  }
+  return txHex, nil
 }
 
 // BroadcastTx ethereum tx broadcast
