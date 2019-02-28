@@ -1,7 +1,6 @@
 package rpc
 
 import (
-  "math/big"
   "strings"
   "errors"
   "bytes"
@@ -12,8 +11,6 @@ import (
   "wallet-transition/pkg/blockchain"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/txscript"
-  "github.com/ethereum/go-ethereum/crypto"
-  "github.com/ethereum/go-ethereum/core/types"
 )
 
 // SendToAddressSignBTC btc sendtoaddress tx signature
@@ -87,10 +84,6 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
   from := in.From
   asset := in.Asset
 
-  if asset == "eth" {
-    from = strings.ToLower(from)
-  }
-
   ldb, err := db.NewLDB(asset)
   if err != nil {
     return nil, err
@@ -138,24 +131,6 @@ func (s *WalletCoreServerRPC) SignTx(ctx context.Context, in *proto.SignTxReq) (
     buf := bytes.NewBuffer(make([]byte, 0, tx.MsgTx().SerializeSize()))
     tx.MsgTx().Serialize(buf)
     txHex := hex.EncodeToString(buf.Bytes())
-    return &proto.SignTxResp{Result: true, HexSignedTx: txHex}, nil
-  case "eth":
-    tx, err := blockchain.DecodeETHTx(in.HexUnsignedTx)
-    if err != nil {
-      return nil, errors.New(strings.Join([]string{"fail to DecodeETHTx", err.Error()}, ":"))
-    }
-
-    ecPriv, err := crypto.ToECDSA(priv)
-    if err != nil {
-      return nil, errors.New(strings.Join([]string{"Get private key error: ", err.Error()}, " "))
-    }
-
-    chainID, _ := new(big.Int).SetString(in.Network, 10)
-    signtx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), ecPriv)
-    if err != nil {
-      return nil, errors.New(strings.Join([]string{"sign tx error", err.Error()}, " "))
-    }
-    txHex, err := blockchain.EncodeETHTx(signtx)
     return &proto.SignTxResp{Result: true, HexSignedTx: txHex}, nil
   }
   return nil, nil

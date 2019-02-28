@@ -35,19 +35,6 @@ func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressT
 	return &rawTxHex, &txHashHex, nil
 }
 
-// SendTx send signed tx
-func (client *ETHRPC) SendTx(ctx context.Context, hexSignedTx string) (*string, error){
-  tx, err := DecodeETHTx(hexSignedTx)
-  if err != nil {
-    return nil, errors.New(strings.Join([]string{"Decode signed tx error", err.Error()}, ":"))
-  }
-  if err := client.Client.SendTransaction(ctx, tx); err != nil {
-    return nil, errors.New(strings.Join([]string{"Ethereum SendTransactionsigned tx error", err.Error()}, ":"))
-  }
-  txid := tx.Hash().String()
-  return &txid, nil
-}
-
 // RawTx ethereum raw tx
 func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error) {
   if !common.IsHexAddress(from) {

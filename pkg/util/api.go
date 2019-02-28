@@ -112,10 +112,6 @@ func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*Wit
     subAddress db.SubAddress
   )
 
-  if asset == "eth" {
-    withdrawParams.From = strings.ToLower(withdrawParams.From)
-  }
-
   // query from address
   if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
     return nil, nil, errors.New(strings.Join([]string{asset, " ", withdrawParams.From, " not found in database"}, ""))
@@ -127,14 +123,6 @@ func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*Wit
 
 // WithdrawChain withdraw endpoint asset param
 func WithdrawChain(chain string) string {
-  ethTokenkeys := make([]string, len(configure.Config.ETHToken))
-  for k := range configure.Config.ETHToken {
-    ethTokenkeys = append(ethTokenkeys, k)
-  }
-  if Contain(chain, ethTokenkeys) {
-    chain = "eth"
-  }
-
   omniTokenkeys := make([]string, len(configure.Config.OmniToken))
   for k := range configure.Config.OmniToken {
     omniTokenkeys = append(omniTokenkeys, k)

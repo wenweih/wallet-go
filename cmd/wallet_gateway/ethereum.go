@@ -2,6 +2,7 @@ package main
 
 import (
   "fmt"
+  "strings"
   "errors"
   "math/big"
   "net/http"
@@ -25,7 +26,7 @@ func ethereumWalletHandle(c *gin.Context) {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
     }
-    address := res.Address
+    address := strings.ToLower(res.Address)
     if err := sqldb.Create(&db.SubAddress{Address: address, Asset: blockchain.Ethereum}).Error; err != nil {
       util.GinRespException(c, http.StatusInternalServerError, err)
       return
@@ -108,7 +109,7 @@ func ethereumWithdrawHandle(c *gin.Context) {
   // sub address query by From account
   var subAddress db.SubAddress
   // query from address
-  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", params.From, blockchain.Ethereum).Error; err !=nil && err.Error() == "record not found" {
+  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", strings.ToLower(params.From), blockchain.Ethereum).Error; err !=nil && err.Error() == "record not found" {
     util.GinRespException(c, http.StatusNotFound, fmt.Errorf("SubAddress not found in database: %s : %s", params.From, blockchain.Ethereum))
     return
   }else if err != nil {

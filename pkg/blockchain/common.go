@@ -31,20 +31,6 @@ func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddre
     selectedUTXOs = selectedutxos
     unSignTxHex = *rawTxHex
     vinAmount = *vAmount
-  case "eth":
-    netVersion, rawTxHex, err := ethClient.RawTx(ctx, from, to, amount)
-    if err != nil {
-      return nil, nil, nil, nil, http.StatusBadRequest, err
-    }
-    chainID = *netVersion
-    unSignTxHex = *rawTxHex
-  case "abb", "abb2", "sb":
-    netVersion, rawTxHex, err := ethClient.RawTokenTx(ctx, from, to, asset, amount)
-    if err != nil {
-      return nil, nil, nil, nil, http.StatusBadRequest, err
-    }
-    chainID = *netVersion
-    unSignTxHex = *rawTxHex
   case "omni_first_token":
     vAmount, selectedutxos, rawTxHex, httpStatus, err := btcClient.RawTx(from, to, amount, subAddress, sqldb, true, bitcoinnet)
     if err != nil {
@@ -67,12 +53,6 @@ func SendTx(ctx context.Context, asset, hexSignedTx string, selectedUTXOs []db.U
       return nil, httpStatus, err
     }
     txid = *btcTxid
-  case "eth":
-    ethTxid, err := ethClient.SendTx(ctx, hexSignedTx)
-    if err != nil {
-      return nil, http.StatusInternalServerError, err
-    }
-    txid = *ethTxid
   default:
     return nil, http.StatusBadRequest, errors.New("Unsupported asset")
   }
