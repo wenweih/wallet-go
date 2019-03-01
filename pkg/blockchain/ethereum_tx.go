@@ -86,6 +86,7 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
       return "", fmt.Errorf("EstimateGas %s", err)
     }
     value = big.NewInt(0)
+    to = token
   }
 
   // gas price
@@ -141,8 +142,6 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
   if pendingNonaceAt !=0 && txPoolMaxCount + 1 > pendingNonaceAt {
     pendingNonce = txPoolMaxCount + 1
   }
-
-  configure.Sugar.Info("pendingNonce: ", pendingNonce, " pendingNonaceAt: ", pendingNonaceAt)
 
   tx := types.NewTransaction(pendingNonce, common.HexToAddress(to), value, gasLimit, gasPrice, data)
   rawTxHex, err := EncodeETHTx(tx)
