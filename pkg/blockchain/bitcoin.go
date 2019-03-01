@@ -334,11 +334,6 @@ func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.
 	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
 }
 
-// RawTokenTx omnicore token raw tx
-func (btcClient *BTCRPC) RawTokenTx() {
-
-}
-
 // SendTx broadcast signed tx
 func (btcClient *BTCRPC) SendTx(signedTx string, selectedUTXOs []db.UTXO, sqldb *db.GormDB) (*string, int, error) {
 	tx, err := DecodeBtcTxHex(signedTx)

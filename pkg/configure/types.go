@@ -58,7 +58,6 @@ type Configure struct {
 
 	WalletCoreRPCURL        string
 
-	ETHToken                map[string]interface{}
 	OmniToken               map[string]interface{}
 
 	Chains                  map[string]interface{}
