@@ -19,7 +19,6 @@ var (
   btcClient *blockchain.BTCRPC
   omniClient *blockchain.BTCRPC
   ethereumClient *ethclient.Client
-  ethClient *blockchain.ETHRPC
   eosClient *eos.API
   grpcClient pb.WalletCoreClient
   bitcoinnet *chaincfg.Params
@@ -37,7 +36,7 @@ func main() {
   if err != nil {
     configure.Sugar.Fatal(err.Error())
   }
-  // sqldb, err = db.NewSqlite()
+
   sqldb, err = db.NewMySQL()
   if err != nil {
     configure.Sugar.Fatal(err.Error())
@@ -53,10 +52,6 @@ func main() {
 
   omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
   btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
-  ethClient, err = blockchain.NewEthClient()
-  if err != nil {
-    configure.Sugar.Fatal("Ethereum client error: ", err.Error())
-  }
 
   ethereumClient, err = ethclient.Dial(configure.Config.EthRPC)
   if err != nil {

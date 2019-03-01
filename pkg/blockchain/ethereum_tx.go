@@ -2,7 +2,6 @@ package blockchain
 
 import (
   "fmt"
-  "errors"
   "strings"
   "context"
   "reflect"
@@ -17,23 +16,6 @@ import (
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/crypto/sha3"
 )
-
-// CreateRawETHTx create eth raw tx
-func CreateRawETHTx(nonce uint64, transferAmount, gasPrice *big.Int, hexAddressTo string) (*string, *string, error) {
-	gasLimit := uint64(21000) // in units
-
-	if !common.IsHexAddress(hexAddressTo) {
-		return nil, nil, errors.New(strings.Join([]string{hexAddressTo, "invalidate"}, " "))
-	}
-
-	tx := types.NewTransaction(nonce, common.HexToAddress(hexAddressTo), transferAmount, gasLimit, gasPrice, nil)
-	rawTxHex, err := EncodeETHTx(tx)
-	if err != nil {
-		return nil, nil, errors.New(strings.Join([]string{"encode raw tx error", err.Error()}, " "))
-	}
-	txHashHex := tx.Hash().Hex()
-	return &rawTxHex, &txHashHex, nil
-}
 
 // RawTx ethereum raw tx
 func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error) {

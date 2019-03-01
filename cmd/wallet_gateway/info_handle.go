@@ -5,12 +5,10 @@ import (
   "strconv"
   "strings"
   "net/http"
-  "math/big"
   "encoding/json"
   "github.com/gin-gonic/gin"
   "wallet-transition/pkg/util"
   "github.com/ethereum/go-ethereum/common"
-  "github.com/ethereum/go-ethereum/core/types"
 	"github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -26,17 +24,6 @@ func txHandle(c *gin.Context)  {
   }
 
   switch asset.(string) {
-  case "eth":
-    tx, _, err := ethClient.Client.TransactionByHash(c, common.HexToHash(txParams.Txid))
-    if err != nil {
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
-    c.JSON(http.StatusOK, gin.H {
-      "status": http.StatusOK,
-      "tx": tx,
-    })
-    return
   case "btc":
     txHash, err := chainhash.NewHashFromStr(txParams.Txid)
     if err != nil {
@@ -83,25 +70,6 @@ func blockHandle(c *gin.Context)  {
       "block": block,
     })
     return
-  case "eth":
-    height, ok := new(big.Int).SetString(blockParams.Height, 10)
-    if !ok {
-      util.GinRespException(c, http.StatusBadRequest, errors.New("height param error"))
-      return
-    }
-    ethBlock, err := ethClient.Client.BlockByNumber(c, height)
-    if err !=nil {
-      util.GinRespException(c, http.StatusInternalServerError, err)
-      return
-    }
-    var block struct{Header types.Header; Tx []*types.Transaction}
-    block.Header = *ethBlock.Header()
-    block.Tx = ethBlock.Body().Transactions
-    c.JSON(http.StatusOK, gin.H {
-      "status": http.StatusOK,
-      "block": block,
-    })
-    return
   }
 }
 
@@ -141,17 +109,6 @@ func addressValidator(c *gin.Context) {
 func bestBlock(c *gin.Context)  {
   asset, _ := c.Get("asset")
   switch asset.(string) {
-  case "eth":
-    block, err := ethClient.Client.BlockByNumber(c, nil)
-    if err != nil {
-      util.GinRespException(c, http.StatusBadRequest, err)
-      return
-    }
-    c.JSON(http.StatusOK, gin.H {
-      "status": http.StatusOK,
-      "block_number": block.NumberU64(),
-    })
-    return
   case "btc":
     btcInfo, err := btcClient.Client.GetBlockChainInfo()
     if err != nil {

@@ -14,7 +14,7 @@ func NewBlockchain(wallet ChainWallet, operator TxOperator, query ChainQuery) *B
 }
 
 // RawTx raw transaction for withdraw endpoint
-func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, ethClient *ETHRPC, sqldb *db.GormDB, bitcoinnet *chaincfg.Params) (*string, *string, *int64, []db.UTXO, int, error) {
+func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddress *db.SubAddress, btcClient *BTCRPC, sqldb *db.GormDB, bitcoinnet *chaincfg.Params) (*string, *string, *int64, []db.UTXO, int, error) {
   var (
     chainID     string
     vinAmount   int64
@@ -44,7 +44,7 @@ func RawTx(ctx context.Context, from, to, asset string, amount float64, subAddre
 }
 
 // SendTx broadcast tx
-func SendTx(ctx context.Context, asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, ethClient *ETHRPC, sqldb   *db.GormDB) (*string, int, error) {
+func SendTx(ctx context.Context, asset, hexSignedTx string, selectedUTXOs []db.UTXO, btcClient *BTCRPC, sqldb   *db.GormDB) (*string, int, error) {
   txid := ""
   switch asset {
   case "btc":

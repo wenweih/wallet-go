@@ -112,11 +112,6 @@ type TxPoolInspect struct {
   Queued  map[string]map[uint64]string  `json:"queued"`
 }
 
-// ETHRPC bitcoin-core client alias
-type ETHRPC struct {
-	Client *ethclient.Client
-}
-
 // ChainsOptions chain info
 type ChainsOptions struct {
 	ChainID    string
