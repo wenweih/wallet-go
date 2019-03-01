@@ -54,13 +54,13 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
   }
   balanceDecimal, _ := decimal.NewFromString(bal)
 
-  // if transferAmount >= balanceAmount, return
+  // if transferAmount >= balanceAmount, return (May be ETH or token's balance)
   if balanceDecimal.LessThanOrEqual(transferAmountDecimal) {
     return "", fmt.Errorf("insufficient balance: less than or equal")
   }
 
   // token transfer meta: gasLimit, tx input data, value
-  if token != "" {
+  if token != "" && strings.ToLower(asset) != strings.ToLower(configure.ChainsInfo[Ethereum].Coin){
     tokenAddress := common.HexToAddress(token)
 
     transferFunSignature := []byte("transfer(address,uint256)")
@@ -100,12 +100,27 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
   txFee = txFee.Mul(gasPrice, big.NewInt(int64(gasLimit)))
   feeDecimal, _ := decimal.NewFromString(txFee.String())
 
-  // if totalCost > balance then return
-  totalCost := transferAmountDecimal.Add(feeDecimal)
-  if balanceDecimal.LessThan(totalCost) {
-    totalCostBig, _ := new(big.Int).SetString(totalCost.String(), 10)
-    balanceBig, _ := new(big.Int).SetString(bal, 10)
-    return "", fmt.Errorf("insufficient balance %s : %s", util.ToEther(balanceBig).String(), util.ToEther(totalCostBig).String())
+  if token == "" {
+    // ETH transfer
+    // if totalCost > balance then return
+    totalCost := transferAmountDecimal.Add(feeDecimal)
+    if balanceDecimal.LessThan(totalCost) {
+      totalCostBig, _ := new(big.Int).SetString(totalCost.String(), 10)
+      balanceBig, _ := new(big.Int).SetString(bal, 10)
+      return "", fmt.Errorf("Insufficient ETH balance %s : %s", util.ToEther(balanceBig).String(), util.ToEther(totalCostBig).String())
+    }
+  }else {
+    // Token transfer
+    ethbal, err := c.Balance(ctx, from, configure.ChainsInfo[Ethereum].Coin, "")
+    if err != nil {
+      return "", err
+    }
+    ethBalanceDecimal, _ := decimal.NewFromString(ethbal)
+    if ethBalanceDecimal.LessThan(feeDecimal) {
+      feeCostBig, _ := new(big.Int).SetString(feeDecimal.String(), 10)
+      ethbalanceBig, _ := new(big.Int).SetString(ethbal, 10)
+      return "", fmt.Errorf("Insufficient ETH balance for token transfer fee %s : %s", util.ToEther(ethbalanceBig).String(), util.ToEther(feeCostBig).String())
+    }
   }
 
   // pendingNonceAt account
