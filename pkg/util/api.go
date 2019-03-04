@@ -1,7 +1,7 @@
 package util
 
 import (
-  "errors"
+  "fmt"
   "strconv"
   "strings"
   "net/http"
@@ -36,7 +36,7 @@ func GinEngine() *gin.Engine {
 func noRouteMiddleware(ginInstance *gin.Engine) gin.HandlerFunc {
   return func(c *gin.Context) {
     ginInstance.NoRoute(func(c *gin.Context) {
-      GinRespException(c, http.StatusNotFound, errors.New("Route Error"))
+      GinRespException(c, http.StatusNotFound, fmt.Errorf("Route Error"))
     })
   }
 }
@@ -45,42 +45,41 @@ func apiAuth(rsaPriv *rsa.PrivateKey) gin.HandlerFunc {
   return func (c *gin.Context)  {
     ct := c.GetHeader("Content-Type")
     if ct != "application/json" {
-      GinRespException(c, http.StatusUnauthorized, errors.New("Content-Type must be application/json"))
+      GinRespException(c, http.StatusUnauthorized, fmt.Errorf("Content-Type must be application/json"))
       return
     }
     token := c.Request.Header.Get("Authorization")
     if token == "" {
-      GinRespException(c, http.StatusUnauthorized, errors.New("Authorization can't found in request header"))
+      GinRespException(c, http.StatusUnauthorized, fmt.Errorf("Authorization can't found in request header"))
       return
     }
     configure.Sugar.Info("request token: ", token)
     decodeToken, err := b64.StdEncoding.DecodeString(token)
     if err != nil {
-      GinRespException(c, http.StatusForbidden, errors.New("Decode Token error"))
+      GinRespException(c, http.StatusForbidden, fmt.Errorf("Decode Token error"))
       return
     }
 
     decryptoParamBytes, err := DecryptWithPrivateKey(decodeToken, rsaPriv)
     if err != nil {
-      GinRespException(c, http.StatusForbidden, errors.New(strings.Join([]string{"Decrypt Token error", err.Error()}, ":")))
+      GinRespException(c, http.StatusForbidden, fmt.Errorf("Decrypt Token %s", err))
       return
     }
 
     var params AddressParams
-    if err := json.Unmarshal(decryptoParamBytes, &params); err != nil {
+    if err = json.Unmarshal(decryptoParamBytes, &params); err != nil {
       GinRespException(c, http.StatusBadRequest, err)
       return
     }
 
     asset := strings.ToLower(params.Asset)
     if asset == "" {
-      GinRespException(c, http.StatusBadRequest, errors.New("asset params can't be empty"))
+      GinRespException(c, http.StatusBadRequest, fmt.Errorf("asset params can't be empty"))
       return
     }
 
     if configure.ChainAssets[asset] == "" {
-      e := errors.New(strings.Join([]string{asset, " is't implement yep!"}, ""))
-      GinRespException(c, http.StatusBadRequest, e)
+      GinRespException(c, http.StatusBadRequest, fmt.Errorf("Not implement yep %s", asset))
       return
     }
 
@@ -105,7 +104,7 @@ func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*Wit
     return nil, nil, err
   }
   if withdrawParams.From == "" || withdrawParams.To == "" {
-    return nil, nil, errors.New("from or to params can't be empty")
+    return nil, nil, fmt.Errorf("From or to params can't be empty")
   }
 
   var (
@@ -114,7 +113,7 @@ func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*Wit
 
   // query from address
   if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
-    return nil, nil, errors.New(strings.Join([]string{asset, " ", withdrawParams.From, " not found in database"}, ""))
+    return nil, nil, fmt.Errorf("Record not found %s : %s", asset, withdrawParams.From)
   }else if err != nil {
     return nil, nil, err
   }
@@ -151,10 +150,10 @@ func transferParams(detailParams []byte) (*WithdrawParams, error) {
   // params
   amount, err := strconv.ParseFloat(withdrawParams.Amount, 64)
   if err != nil {
-    return nil, errors.New(strings.Join([]string{"fail to convert amount", err.Error()}, ":"))
+    return nil, fmt.Errorf("Fail to convert amount %s", err)
   }
   if amount <= 0 {
-    return nil, errors.New("amount can't be empty and less than 0")
+    return nil, fmt.Errorf("Amount can't be empty and less than 0")
   }
   return &withdrawParams, nil
 }
@@ -163,26 +162,22 @@ func transferParams(detailParams []byte) (*WithdrawParams, error) {
 func BTCWithdrawAddressValidate(from, to string, bitcoinnet *chaincfg.Params) ([]byte, []byte, error) {
   toAddress, err := btcutil.DecodeAddress(to, bitcoinnet)
   if err != nil {
-    e := errors.New(strings.Join([]string{"To address illegal", err.Error()}, ":"))
-    return nil, nil, e
+    return nil, nil, fmt.Errorf("To address illegal %s", err)
   }
 
   fromAddress, err := btcutil.DecodeAddress(from, bitcoinnet)
   if err != nil {
-    e := errors.New(strings.Join([]string{"From address address illegal", err.Error()}, ":"))
-    return nil, nil, e
+    return nil, nil, fmt.Errorf("From address address illegal %s", err)
   }
 
   toPkScript, err := txscript.PayToAddrScript(toAddress)
   if err != nil {
-    e := errors.New(strings.Join([]string{"to address PayToAddrScript error", err.Error()}, ":"))
-    return nil, nil, e
+    return nil, nil, fmt.Errorf("To address PayToAddrScript %s", err)
   }
 
   fromPkScript, err := txscript.PayToAddrScript(fromAddress)
   if err != nil {
-    e := errors.New(strings.Join([]string{"from address PayToAddrScript error", err.Error()}, ":"))
-    return nil, nil, e
+    return nil, nil, fmt.Errorf("From address PayToAddrScript %s", err)
   }
   return fromPkScript, toPkScript, nil
 }

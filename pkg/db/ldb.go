@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/syndtr/goleveldb/leveldb"
 	"os"
-	"errors"
+	"fmt"
 	"strings"
 	"syscall"
 	"wallet-transition/pkg/configure"
@@ -24,12 +24,12 @@ const (
 func NewLDB(asset string) (*LDB, error) {
 	dir := strings.Join([]string{configure.HomeDir(), configure.Config.DBWalletPath, asset}, "/")
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, errors.New(strings.Join([]string{"NewLDB error: ", err.Error()}, ""))
+		return nil, fmt.Errorf("NewLDB %s", err)
 	}
 
 	db, err := leveldb.OpenFile(dir, nil)
 	if err != nil {
-		return nil, errors.New(strings.Join([]string{"NewLDB error: ", err.Error()}, ""))
+		return nil, fmt.Errorf("NewLDB %s", err)
 	}
 	return &LDB{db}, nil
 }

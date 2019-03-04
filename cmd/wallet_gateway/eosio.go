@@ -2,7 +2,6 @@ package main
 
 import (
   "fmt"
-  "errors"
   "strings"
   "net/http"
   "encoding/json"
@@ -62,7 +61,7 @@ func eosiotxHandle(c *gin.Context) {
   b := blockchain.NewBlockchain(nil, eosChain, eosChain)
 
   if configure.ChainAssets[assetParams.(string)] != blockchain.EOSIO {
-    util.GinRespException(c, http.StatusBadRequest, errors.New("asset params error, should be eos or eos token asset"))
+    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Asset params error, should be eos or eos token asset"))
     return
   }
 
@@ -93,7 +92,7 @@ func eosiotxHandle(c *gin.Context) {
       return
     }
     if paramsQuantity.Amount > balQuantity.Amount {
-      util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("quanyify error: %d : %d", paramsQuantity.Amount, balQuantity.Amount))
+      util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Auanyify error: %d : %d", paramsQuantity.Amount, balQuantity.Amount))
       return
     }
     fromName = name

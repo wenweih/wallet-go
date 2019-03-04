@@ -12,7 +12,7 @@ import (
   pb "wallet-transition/pkg/pb"
 )
 
-func withdrawHandle(c *gin.Context)  {
+func withdrawHandle(c *gin.Context) {
   assetParams, _ := c.Get("asset")
   detailParams, _ := c.Get("detail")
 

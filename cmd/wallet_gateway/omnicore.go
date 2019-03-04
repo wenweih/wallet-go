@@ -3,7 +3,6 @@ package main
 import (
   "fmt"
   "strconv"
-  "errors"
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
@@ -29,7 +28,7 @@ func omniBalanceHandle(c *gin.Context) {
   }
 
   if balanceParams.Address == "" {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("address param is required"))
+    util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("address param is required"))
     return
   }
 

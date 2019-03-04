@@ -3,7 +3,6 @@ package main
 import (
   "fmt"
   "strings"
-  "errors"
   "math/big"
   "net/http"
   "encoding/json"
@@ -56,7 +55,7 @@ func ethereumBalanceHandle(c *gin.Context) {
   }
 
   if balanceParams.Address == "" {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("address param is required"))
+    util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("address param is required"))
     return
   }
 
@@ -69,7 +68,7 @@ func ethereumBalanceHandle(c *gin.Context) {
   }
   amount, ok := new(big.Int).SetString(balance, 10)
   if !ok {
-    util.GinRespException(c, http.StatusInternalServerError, errors.New("Set amount error"))
+    util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("Set amount error"))
     return
   }
   c.JSON(http.StatusOK, gin.H {

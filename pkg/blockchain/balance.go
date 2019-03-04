@@ -3,7 +3,6 @@ package blockchain
 import (
   "fmt"
   "strings"
-  "errors"
   "context"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
@@ -27,11 +26,11 @@ func (c EthereumChain) Balance(ctx context.Context, account, symbol, code string
   tokenAddress := common.HexToAddress(token)
   contractInstance, err := NewEthToken(tokenAddress, c.Client)
   if err != nil {
-    return "", errors.New(strings.Join([]string{"Get token instance error: ", err.Error()}, ""))
+    return "", fmt.Errorf("Get token instance %s", err)
   }
   bal, err := contractInstance.BalanceOf(&bind.CallOpts{}, accountAddress)
   if err!= nil {
-    return "", errors.New(strings.Join([]string{"Get token balance error: ", err.Error()}, ""))
+    return "", fmt.Errorf("Get token balance %s", err)
   }
   return bal.String(), nil
 }
@@ -53,5 +52,5 @@ func (c EOSChain) Balance(ctx context.Context, account, symbol, code string) (st
   if len(balances) > 0 {
     return balances[0].String(), nil
   }
-  return "", errors.New("balance not found")
+  return "", fmt.Errorf("Balance not found")
 }
