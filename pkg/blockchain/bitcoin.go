@@ -274,6 +274,7 @@ func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddr
 
 	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
 }
+
 // RawTx btc raw tx
 func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB, isUSDT bool, net *chaincfg.Params) (*int64, []db.UTXO, *string, int, error) {
 	var (

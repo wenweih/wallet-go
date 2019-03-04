@@ -12,7 +12,6 @@ import (
   "wallet-transition/pkg/db"
   "wallet-transition/pkg/blockchain"
   "wallet-transition/pkg/configure"
-  "github.com/ethereum/go-ethereum/common"
   pb "wallet-transition/pkg/pb"
   empty "github.com/golang/protobuf/ptypes/empty"
 )
@@ -93,16 +92,6 @@ func ethereumWithdrawHandle(c *gin.Context) {
   var params util.EthereumWithdrawParams
   if err := json.Unmarshal(detailParams.([]byte), &params); err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
-    return
-  }
-
-  // from and to address validate
-  if !common.IsHexAddress(params.From) {
-    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Invalid address: %s", params.From))
-    return
-  }
-  if !common.IsHexAddress(params.To) {
-    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("Invalid address: %s", params.To))
     return
   }
 

@@ -23,7 +23,7 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
     return "", fmt.Errorf("Invalid address: %s", from)
   }
   if !common.IsHexAddress(to) {
-    return "", fmt.Errorf("Invalid address: %s", from)
+    return "", fmt.Errorf("Invalid address: %s", to)
   }
 
   // const
