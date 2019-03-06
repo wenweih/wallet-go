@@ -11,13 +11,15 @@ import (
   "github.com/btcsuite/btcd/chaincfg"
   "github.com/eoscanada/eos-go"
   "github.com/ethereum/go-ethereum/ethclient"
+  "github.com/btcsuite/btcd/rpcclient"
 )
 
 var (
   sqldb   *db.GormDB
   rpcConn *grpc.ClientConn
   btcClient *blockchain.BTCRPC
-  omniClient *blockchain.BTCRPC
+  bitcoinClient *rpcclient.Client
+  omniClient *rpcclient.Client
   ethereumClient *ethclient.Client
   eosClient *eos.API
   grpcClient pb.WalletCoreClient
@@ -50,8 +52,14 @@ func main() {
   defer rpcConn.Close()
   grpcClient = pb.NewWalletCoreClient(rpcConn)
 
-  omniClient = &blockchain.BTCRPC{Client: blockchain.NewOmnicoreClient()}
-  btcClient = &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
+  bitcoinClient, err = blockchain.NewbitcoinClient()
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
+  omniClient, err = blockchain.NewOmnicoreClient()
+  if err != nil {
+    configure.Sugar.Fatal(err.Error())
+  }
 
   ethereumClient, err = ethclient.Dial(configure.Config.EthRPC)
   if err != nil {
@@ -69,6 +77,7 @@ func main() {
   r.GET("/eosio/balance", eosioBalanceHandle)
 
   r.POST("/bitcoincore/wallet", bitcoincoreWalletHandle)
+  r.POST("/bitcoincore/tx", bitcoincoreWithdrawHandle)
 
   r.POST("/ethereum/wallet", ethereumWalletHandle)
   r.GET("/ethereum/balance", ethereumBalanceHandle)

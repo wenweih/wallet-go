@@ -29,7 +29,7 @@ import (
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
 
 // NewbitcoinClient bitcoin rpc client
-func NewbitcoinClient() *rpcclient.Client {
+func NewbitcoinClient() (*rpcclient.Client, error) {
 	connCfg := &rpcclient.ConnConfig {
 		Host:         configure.Config.BTCNODEHOST,
 		User:         configure.Config.BTCNODEUSR,
@@ -39,13 +39,13 @@ func NewbitcoinClient() *rpcclient.Client {
 	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		configure.Sugar.Fatal("bitcoind client err: ", err.Error())
+		return nil, fmt.Errorf("Bitcoincore clienr %s", err)
 	}
-	return client
+	return client, nil
 }
 
 // NewOmnicoreClient omnicore rpc client
-func NewOmnicoreClient() *rpcclient.Client {
+func NewOmnicoreClient() (*rpcclient.Client, error) {
 	connCfg := &rpcclient.ConnConfig {
 		Host:         configure.Config.OmniNODEHOST,
 		User:         configure.Config.OmniNODEUSR,
@@ -55,9 +55,9 @@ func NewOmnicoreClient() *rpcclient.Client {
 	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {
-		configure.Sugar.Fatal("omnicore client err: ", err.Error())
+		return nil, fmt.Errorf("Omnicore clienr %s", err)
 	}
-	return client
+	return client, nil
 }
 
 // DumpUTXO dump utxo in wallet

@@ -2,7 +2,6 @@ package main
 
 import (
   "fmt"
-  "strconv"
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
@@ -38,20 +37,16 @@ func omniBalanceHandle(c *gin.Context) {
     return
   }
 
-  token := configure.ChainsInfo[blockchain.Bitcoin].Tokens[balanceParams.Asset]
-  propertyid, err := strconv.Atoi(token)
-  if err != nil {
-    util.GinRespException(c, http.StatusBadRequest, fmt.Errorf("convert to propertyid %s", err))
-    return
-  }
-
-  bal, err := omniClient.GetOmniBalance(balanceParams.Address, propertyid)
+  chain := blockchain.BitcoinCoreChain{Mode: bitcoinnet, Client: omniClient}
+  b := blockchain.NewBlockchain(nil, nil, chain)
+  bal, err := b.Query.Balance(c, balanceParams.Address, balanceParams.Asset, "")
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
   }
+
   c.JSON(http.StatusOK, gin.H {
     "status": http.StatusOK,
-    "balance": bal.Balance,
+    "balance": bal,
   })
 }
