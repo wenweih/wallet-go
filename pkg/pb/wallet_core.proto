@@ -11,6 +11,7 @@ service WalletCore {
   rpc EOSIOWallet (google.protobuf.Empty) returns (WalletResponse);
   rpc SignatureEOSIO (SignatureEOSIOReq) returns (SignTxResp);
   rpc SignatureEthereum (SignatureEthereumReq) returns (SignTxResp);
+  rpc SignatureBitcoincore (SignatureBitcoincoreReq) returns (SignTxResp);
 }
 
 message AddressResp {
@@ -27,6 +28,13 @@ message SignatureEthereumReq {
   string account = 1;
   string rawTxHex = 2;
   string chainID = 3;
+}
+
+message SignatureBitcoincoreReq {
+  string from = 1;
+  string rawTxHex = 2;
+  int64  vinAmount = 4;
+  string mode = 3;
 }
 
 message SignTxReq{
