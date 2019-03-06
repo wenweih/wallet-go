@@ -4,10 +4,51 @@ import (
   "fmt"
   "strings"
   "context"
+  "strconv"
+  "encoding/json"
+  "github.com/btcsuite/btcutil"
   "wallet-transition/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
+
+// Balance omnicore protocol token balance query
+func (c BitcoinCoreChain) Balance(ctx context.Context, account, symbol, code string) (string, error) {
+  token := configure.ChainsInfo[Bitcoin].Tokens[symbol]
+  propertyid, err := strconv.Atoi(token)
+  if err != nil {
+    return "", fmt.Errorf("Convert to propertyid %s", err)
+  }
+
+  _, err = btcutil.DecodeAddress(account, c.Mode)
+  if err != nil {
+    return "", fmt.Errorf("Illegal Bitcoin Address %s : %s", account, err)
+  }
+
+  var params []json.RawMessage
+  {
+    address, err := json.Marshal(account)
+    if err != nil {
+      return "", err
+    }
+    perpertyID, err := json.Marshal(propertyid)
+    if err != nil {
+      return "", err
+    }
+    params = []json.RawMessage{address, perpertyID}
+  }
+
+  info, err := c.Client.RawRequest("omni_getbalance", params)
+	if err != nil {
+		return "", err
+	}
+
+	var omniBalance OmniBalance
+	if err := json.Unmarshal(info, &omniBalance); err != nil {
+		return "", err
+	}
+  return omniBalance.Balance, nil
+}
 
 // Balance get specify token balance of an Ethereum EOA account
 func (c EthereumChain) Balance(ctx context.Context, account, symbol, code string) (string, error) {
