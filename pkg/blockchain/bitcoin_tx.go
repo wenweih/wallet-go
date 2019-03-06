@@ -153,11 +153,9 @@ func (c BitcoinCoreChain) SignedTx(rawTxHex, wif string, options *ChainsOptions)
   fromAddress, _ := btcutil.DecodeAddress(options.From, c.Mode)
   subscript, _ := txscript.PayToAddrScript(fromAddress)
   for i, txIn := range tx.MsgTx().TxIn {
-    sigScript, err := txscript.SignatureScript(tx.MsgTx(), i, subscript, txscript.SigHashAll, ecPriv.PrivKey, true)
-    if err != nil {
+    if txIn.SignatureScript, err = txscript.SignatureScript(tx.MsgTx(), i, subscript, txscript.SigHashAll, ecPriv.PrivKey, true); err != nil{
       return "", fmt.Errorf("SignatureScript %s", err)
     }
-    txIn.SignatureScript = sigScript
   }
 
   //Validate signature
