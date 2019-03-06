@@ -140,7 +140,41 @@ func (c BitcoinCoreChain) RawTx(cxt context.Context, from, to, amount, memo, ass
 
 // SignedTx bitcoin tx signature
 func (c BitcoinCoreChain) SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error) {
-  return "", nil
+  // https://www.experts-exchange.com/questions/29108851/How-to-correctly-create-and-sign-a-Bitcoin-raw-transaction-using-Btcutil-library.html
+  tx, err := DecodeBtcTxHex(rawTxHex)
+  if err != nil {
+    return "", fmt.Errorf("Fail to decode raw tx %s", err)
+  }
+
+  ecPriv, err := btcutil.DecodeWIF(wif)
+  if err != nil {
+    return "", fmt.Errorf("Fail to decode wif %s", err)
+  }
+  fromAddress, _ := btcutil.DecodeAddress(options.From, c.Mode)
+  subscript, _ := txscript.PayToAddrScript(fromAddress)
+  for i, txIn := range tx.MsgTx().TxIn {
+    sigScript, err := txscript.SignatureScript(tx.MsgTx(), i, subscript, txscript.SigHashAll, ecPriv.PrivKey, true)
+    if err != nil {
+      return "", fmt.Errorf("SignatureScript %s", err)
+    }
+    txIn.SignatureScript = sigScript
+  }
+
+  //Validate signature
+  flags := txscript.StandardVerifyFlags
+  vm, err := txscript.NewEngine(subscript, tx.MsgTx(), 0, flags, nil, nil, options.VinAmount)
+  if err != nil {
+    return "", fmt.Errorf("Txscript.NewEngine %s", err)
+  }
+  if err := vm.Execute(); err != nil {
+    return "", fmt.Errorf("Fail to sign tx %s", err)
+  }
+
+  // txToHex
+  buf := bytes.NewBuffer(make([]byte, 0, tx.MsgTx().SerializeSize()))
+  tx.MsgTx().Serialize(buf)
+  txHex := hex.EncodeToString(buf.Bytes())
+  return txHex, nil
 }
 
 // BroadcastTx bitcoin tx broadcast

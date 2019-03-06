@@ -113,8 +113,9 @@ type TxPoolInspect struct {
 
 // ChainsOptions chain info
 type ChainsOptions struct {
-	ChainID    string
-  ModeBTC    string
+	ChainID   string
+  From      string
+  VinAmount int64
 }
 
 // ChainsOption options for tx

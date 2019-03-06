@@ -8,18 +8,30 @@ func ChainID(chainID string) ChainsOption {
   }
 }
 
-// ModeBTC btc mode option
-func ModeBTC(mode string) ChainsOption {
+// ChainFrom from option
+func ChainFrom(from string) ChainsOption {
   return func(args *ChainsOptions)  {
-    args.ModeBTC = mode
+    args.From = from
   }
 }
 
+// ChainVinAmount vin amount option
+func ChainVinAmount(amount int64) ChainsOption {
+  return func(args *ChainsOptions)  {
+    args.VinAmount = amount
+  }
+}
+
+// ModeBTC btc mode option
+// func ModeBTC(mode string) ChainsOption {
+//   return func(args *ChainsOptions)  {
+//     args.ModeBTC = mode
+//   }
+// }
+
 // NewChainsOptions chainsoptions constructor
 func NewChainsOptions(setters ...ChainsOption) *ChainsOptions {
-  args := &ChainsOptions{
-    ModeBTC: BitcoinMainnet,
-  }
+  args := &ChainsOptions{}
 
   for _, setter := range setters {
     setter(args)
