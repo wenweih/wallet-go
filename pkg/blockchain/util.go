@@ -5,6 +5,9 @@ import (
   "bytes"
   "regexp"
   "github.com/eoscanada/eos-go"
+  "github.com/btcsuite/btcutil"
+  "github.com/btcsuite/btcd/txscript"
+  "github.com/btcsuite/btcd/chaincfg"
   "github.com/ethereum/go-ethereum/rlp"
   "github.com/ethereum/go-ethereum/core/types"
   "github.com/ethereum/go-ethereum/common/hexutil"
@@ -51,11 +54,22 @@ func DecodeETHTx(txHex string) (*types.Transaction, error) {
 	}
 
 	var txde types.Transaction
-
 	t, err := &txde, rlp.Decode(bytes.NewReader(txc), &txde)
 	if err != nil {
 		return nil, err
 	}
-
 	return t, nil
+}
+
+// BitcoincoreAddressP2AS bitcoincore address to PayToAddrScript
+func BitcoincoreAddressP2AS(addr string, defaultNet *chaincfg.Params) ([]byte, error){
+  address, err := btcutil.DecodeAddress(addr, defaultNet)
+  if err != nil {
+    return nil, err
+  }
+  p2as, err := txscript.PayToAddrScript(address)
+  if err != nil {
+    return nil, err
+  }
+  return p2as, nil
 }

@@ -5,6 +5,7 @@ import (
   "context"
   "encoding/hex"
   "encoding/json"
+  "wallet-transition/pkg/configure"
   "github.com/eoscanada/eos-go"
   "github.com/eoscanada/eos-go/token"
   "github.com/eoscanada/eos-go/ecc"
@@ -12,6 +13,9 @@ import (
 
 // RawTx eos raw tx
 func (c EOSChain) RawTx(cxt context.Context, from, to, amount, memo, asset string) (string, error) {
+  if configure.ChainAssets[asset] != EOSIO {
+    return "", fmt.Errorf("Unsupport %s in EOSIO", asset)
+  }
   txOpts := &eos.TxOptions{}
   if err := txOpts.FillFromChain(c.Client); err != nil {
     return "", fmt.Errorf("filling tx opts: %s", err)

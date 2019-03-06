@@ -247,7 +247,7 @@ func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddr
 	sqldb.Where("height <= ? AND state = ?", bheader - int32(confs) + 1, "original").Preload("SubAddress").Find(&utxos)
 
 	// coin select
-	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
+	selectedutxos, _, selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
 	if err != nil {
 		return nil, nil, nil, http.StatusBadRequest, err
 	}
@@ -319,7 +319,7 @@ func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.
 	}
 	fee := btcutil.Amount(5000)
 	// coin select
-	selectedutxos,  selectedCoins, err := CoinSelect(int64(bheader), btcAmount + fee, utxos)
+	selectedutxos, _, selectedCoins, err := CoinSelect(int64(bheader), btcAmount + fee, utxos)
 	if err != nil {
 		code := http.StatusInternalServerError
 		if err.Error() == "CoinSelect error: no coin selection possible" {

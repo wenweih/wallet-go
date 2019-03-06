@@ -19,6 +19,9 @@ import (
 
 // RawTx ethereum raw tx
 func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error) {
+  if configure.ChainAssets[asset] != Ethereum {
+    return "", fmt.Errorf("Unsupport %s in Ethereum", asset)
+  }
   if !common.IsHexAddress(from) {
     return "", fmt.Errorf("Invalid address: %s", from)
   }

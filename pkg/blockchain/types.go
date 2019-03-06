@@ -2,6 +2,7 @@ package blockchain
 
 import (
   "context"
+  "wallet-transition/pkg/db"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/btcsuite/btcd/chaincfg"
@@ -31,13 +32,13 @@ const (
 // BitcoinCoreChain bitcoin-core chain type
 type BitcoinCoreChain struct {
   Mode    *chaincfg.Params
-  Info    *WalletInfo
+  Wallet  *WalletInfo
+  Client  *rpcclient.Client
 }
 
 // EthereumChain ethereum chain type
 type EthereumChain struct {
   ChainID int
-  Info    *WalletInfo
   Client  *ethclient.Client
 }
 
@@ -48,10 +49,8 @@ type EOSChain struct {
 
 // WalletInfo wallet info
 type WalletInfo struct {
-  Chain   string
-  Address string
-  Coin    string
-  Tokens  map[string]interface{}
+  Address *db.SubAddress
+  SelectedUTXO []db.UTXO
 }
 
 // TxOperator transaction operator
@@ -83,8 +82,8 @@ type BTCRPC struct {
 	Client *rpcclient.Client
 }
 
-// BtcUTXO utxo type
-type BtcUTXO struct {
+// BTCUTXO utxo type
+type BTCUTXO struct {
 	Txid      string  `json:"txid"`
 	Amount    float64 `json:"amount"`
 	Height    int64   `json:"height"`
