@@ -179,5 +179,14 @@ func (c BitcoinCoreChain) SignedTx(rawTxHex, wif string, options *ChainsOptions)
 
 // BroadcastTx bitcoin tx broadcast
 func (c BitcoinCoreChain) BroadcastTx(ctx context.Context, signedTxHex string) (string, error) {
-  return "", nil
+  tx, err := DecodeBtcTxHex(signedTxHex)
+  if err != nil {
+    return "", fmt.Errorf("Decode signed tx %s", err)
+  }
+
+  txHash, err := c.Client.SendRawTransaction(tx.MsgTx(), false)
+  if err != nil {
+    return "", fmt.Errorf("Bitcoin SendRawTransaction %s", err)
+  }
+  return txHash.String(), nil
 }
