@@ -45,14 +45,14 @@ func NewMySQL() (*GormDB, error) {
 }
 
 // GetBTCBestBlockOrCreate get btc best block in sqlite
-func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult) (*BTCBlock, error) {
+func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult, chain string) (*BTCBlock, error) {
   var bestBlock BTCBlock
   err := db.Order("height desc").First(&bestBlock).Error
   if err != nil && err.Error() == "record not found" {
     configure.Sugar.Info("best block info not found in btc_blocks table, init ....")
     bestBlock.Hash = block.Hash
     bestBlock.Height = block.Height
-    if err = db.BlockInfo2DB(bestBlock, block); err != nil {
+    if err = db.BlockInfo2DB(bestBlock, block, chain); err != nil {
       return nil, err
     }
   } else if err != nil {
@@ -62,7 +62,7 @@ func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult) 
 }
 
 // BlockInfo2DB iterator each block tx
-func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerboseResult) error {
+func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerboseResult, chain string) error {
   ts := db.Begin()
   if err := ts.Create(&dbBlock).Error; err != nil {
     if err = ts.Rollback().Error; err != nil {
@@ -73,7 +73,7 @@ func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerbo
     for _, vout := range tx.Vout {
       for _, address := range vout.ScriptPubKey.Addresses {
         var addrDB SubAddress
-        if err := db.Where("address = ? AND asset = ?", address, "btc").First(&addrDB).Error; err != nil && err.Error() == "record not found" {
+        if err := db.Where("address = ? AND asset = ?", address, chain).First(&addrDB).Error; err != nil && err.Error() == "record not found" {
           continue
         }else if err != nil {
           configure.Sugar.DPanic(strings.Join([]string{"query sub address err: ", address, " ", err.Error()}, ""))
@@ -100,7 +100,7 @@ func (db *GormDB) BlockInfo2DB(dbBlock BTCBlock, rawBlock *btcjson.GetBlockVerbo
 }
 
 // RollbackTrack rollback 6 blocks when add a new btc_block
-func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock *btcjson.GetBlockVerboseResult) (bool, int64) {
+func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock *btcjson.GetBlockVerboseResult, chain string) (bool, int64) {
   trackHeight := rawBlock.Height
   var (
     dbBlock BTCBlock
@@ -109,7 +109,7 @@ func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock
   if err := db.First(&dbBlock, "height = ? AND re_org = ?", rawBlock.Height, false).Related(&utxos).Error; err !=nil && err.Error() == "record not found" {
     dbBlock.Hash = rawBlock.Hash
     dbBlock.Height = rawBlock.Height
-    if err = db.BlockInfo2DB(dbBlock, rawBlock); err != nil {
+    if err = db.BlockInfo2DB(dbBlock, rawBlock, chain); err != nil {
       configure.Sugar.Fatal(err.Error())
     }
   }else if err != nil {
@@ -123,7 +123,7 @@ func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock
         ts.Model(&utxo).Update("re_org", true)
       }
       ts.Commit()
-      if err = db.BlockInfo2DB(BTCBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}, rawBlock); err != nil {
+      if err = db.BlockInfo2DB(BTCBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}, rawBlock, chain); err != nil {
         configure.Sugar.Fatal(err.Error())
       }
       configure.Sugar.Info("reorg:", dbBlock.Height, " ", dbBlock.Hash)

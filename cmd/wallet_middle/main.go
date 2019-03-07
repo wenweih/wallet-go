@@ -39,7 +39,7 @@ func main() {
     configure.Sugar.Fatal("Get Rollback BlockChainInfo error:", err.Error())
   }
 
-  bestBlock, err := sqldb.GetBTCBestBlockOrCreate(rollbackBlock)
+  bestBlock, err := sqldb.GetBTCBestBlockOrCreate(rollbackBlock, blockchain.Bitcoin)
   if err != nil {
     configure.Sugar.Fatal(err.Error())
   }
@@ -52,7 +52,7 @@ func main() {
     if err !=nil {
       configure.Sugar.Fatal("backTracking error:", err.Error())
     }
-    backTracking, trackHeight = sqldb.RollbackTrackBTC(bestBlock.Height, backTracking, trackBlock)
+    backTracking, trackHeight = sqldb.RollbackTrackBTC(bestBlock.Height, backTracking, trackBlock, blockchain.Bitcoin)
   }
 
   dbBestHeight := bestBlock.Height
@@ -62,7 +62,7 @@ func main() {
       configure.Sugar.Fatal(err.Error())
     }
     dbBlock := db.BTCBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}
-    if err = sqldb.BlockInfo2DB(dbBlock, rawBlock); err != nil {
+    if err = sqldb.BlockInfo2DB(dbBlock, rawBlock, blockchain.Bitcoin); err != nil {
       configure.Sugar.Fatal(err.Error())
     }
   }
@@ -91,7 +91,7 @@ func btcBestBlockNotifyHandle(c *gin.Context) {
   }
 
   dbBlock := db.BTCBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}
-  if err = sqldb.BlockInfo2DB(dbBlock, rawBlock); err != nil {
+  if err = sqldb.BlockInfo2DB(dbBlock, rawBlock, blockchain.Bitcoin); err != nil {
     configure.Sugar.Fatal(err.Error())
   }
 
@@ -102,7 +102,7 @@ func btcBestBlockNotifyHandle(c *gin.Context) {
     if err !=nil {
       configure.Sugar.Fatal("backTracking error:", err.Error())
     }
-    backTracking, trackHeight = sqldb.RollbackTrackBTC(rawBlock.Height, backTracking, trackBlock)
+    backTracking, trackHeight = sqldb.RollbackTrackBTC(rawBlock.Height, backTracking, trackBlock, blockchain.Bitcoin)
   }
 
   c.JSON(http.StatusOK, gin.H {
