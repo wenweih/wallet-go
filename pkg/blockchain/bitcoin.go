@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"encoding/hex"
-	"encoding/json"
 	"wallet-transition/pkg/db"
 	"wallet-transition/pkg/util"
 	"wallet-transition/pkg/configure"
@@ -20,10 +19,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/manifoldco/promptui"
-	"github.com/btcsuite/btcd/mempool"
-	"github.com/btcsuite/btcutil/coinset"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
 )
 
 var btcWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "btc.backup"}, "")
@@ -185,35 +181,6 @@ func (btcClient *BTCRPC) ImportPrivateKey()  {
 		configure.Sugar.Fatal("scanner error: ", err.Error())
 	}
 }
-
-// GetOmniBalance omni get balance
-func (btcClient *BTCRPC) GetOmniBalance(address string, propertyid int) (*OmniBalance, error) {
-	var params []json.RawMessage
-	{
-		address, err := json.Marshal(address)
-		if err != nil {
-			return nil, err
-		}
-		perpertyID, err := json.Marshal(propertyid)
-		if err != nil {
-			return nil, err
-		}
-
-		params = []json.RawMessage{address, perpertyID}
-	}
-
-	info, err := btcClient.Client.RawRequest("omni_getbalance", params)
-	if err != nil {
-		return nil, err
-	}
-
-	var omniBalance OmniBalance
-	if err := json.Unmarshal(info, &omniBalance); err != nil {
-		return nil, err
-	}
-	return &omniBalance, nil
-}
-
 // GetBlock get block with tx
 func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult, error) {
 	blockHash, err := btcClient.Client.GetBlockHash(height)
@@ -226,113 +193,6 @@ func (btcClient *BTCRPC) GetBlock(height int64) (*btcjson.GetBlockVerboseResult,
 		return nil, err
 	}
 	return block, nil
-}
-
-// RawSendToAddressTx btc raw tx without specify the from address
-func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddress, to string, sqldb *db.GormDB, net *chaincfg.Params) (*int64, []db.UTXO, *string, int, error) {
-	var (
-		utxos			[]db.UTXO
-		vinAmount	int64
-	)
-	fee := btcutil.Amount(5000)
-
-	// query bitcoin current best height
-	binfo, err := btcClient.Client.GetBlockChainInfo()
-	if err != nil {
-		return nil, nil, nil, http.StatusInternalServerError, err
-	}
-	bheader := binfo.Headers
-
-	confs := configure.Config.Confirmations["btc"].(int)
-	sqldb.Where("height <= ? AND state = ?", bheader - int32(confs) + 1, "original").Preload("SubAddress").Find(&utxos)
-
-	// coin select
-	selectedutxos, _, selectedCoins, err := CoinSelect(int64(bheader), txAmount + fee, utxos)
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, err
-	}
-
-	for _, coin := range selectedCoins.Coins() {
-		vinAmount += int64(coin.Value())
-	}
-
-	feeKB, err := btcClient.Client.EstimateSmartFee(int64(6))
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, err
-	}
-
-	funBackAddressPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(funbackAddress, to, net)
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, err
-	}
-
-	// TODO: add omni support
-	vAmount, unSignTxHex, err := RawBTCTx(funBackAddressPkScript, toPkScript, feeKB, txAmount, btcutil.Amount(5000), selectedCoins, false)
-	if err != nil {
-		return nil, nil, nil, http.StatusInternalServerError, nil
-	}
-
-	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
-}
-
-// RawTx btc raw tx
-func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.SubAddress, sqldb  *db.GormDB, isUSDT bool, net *chaincfg.Params) (*int64, []db.UTXO, *string, int, error) {
-	var (
-		utxos			[]db.UTXO
-	)
-
-	fromPkScript, toPkScript, err := util.BTCWithdrawAddressValidate(from, to, net)
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, err
-	}
-
-	// query bitcoin current best height
-	binfo, err := btcClient.Client.GetBlockChainInfo()
-	if err != nil {
-		return nil, nil, nil, http.StatusInternalServerError, err
-	}
-	bheader := binfo.Headers
-
-	feeKB, err := btcClient.Client.EstimateSmartFee(int64(6))
-	if err != nil {
-		return nil, nil, nil, http.StatusInternalServerError, err
-	}
-
-	// query utxos, which confirmate count is more than 6
-	confs := configure.Config.Confirmations["btc"].(int)
-	if err = sqldb.Model(subAddress).Where("height <= ? AND state = ?", bheader - int32(confs) + 1, "original").Related(&utxos).Error; err !=nil {
-		return nil, nil, nil, http.StatusNotFound, err
-	}
-	configure.Sugar.Info("utxos: ", utxos, " length: ", len(utxos))
-
-	txAmount, err := btcutil.NewAmount(amountF)
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, errors.New(strings.Join([]string{"convert utxo amount(float64) to btc amount(int64 as Satoshi) error:", err.Error()}, ""))
-	}
-
-	btcAmount, err := btcutil.NewAmount(0)
-	if err != nil {
-		return nil, nil, nil, http.StatusBadRequest, errors.New(strings.Join([]string{"init coinselect amount error:", err.Error()}, ""))
-	}
-	if !isUSDT {
-		btcAmount = txAmount
-	}
-	fee := btcutil.Amount(5000)
-	// coin select
-	selectedutxos, _, selectedCoins, err := CoinSelect(int64(bheader), btcAmount + fee, utxos)
-	if err != nil {
-		code := http.StatusInternalServerError
-		if err.Error() == "CoinSelect error: no coin selection possible" {
-			code = http.StatusBadRequest
-		}
-		return nil, nil, nil, code, err
-	}
-
-	vAmount, unSignTxHex, err := RawBTCTx(fromPkScript, toPkScript, feeKB, btcAmount, txAmount, selectedCoins, isUSDT)
-	if err != nil {
-		return nil, nil, nil, http.StatusInternalServerError, err
-	}
-	return vAmount, selectedutxos, unSignTxHex, http.StatusOK, nil
 }
 
 // SendTx broadcast signed tx
@@ -377,68 +237,6 @@ func DecodeBtcTxHex(txHex string) (*btcutil.Tx, error) {
 	}
 
 	return btcutil.NewTx(&msgTx), nil
-}
-
-// RawBTCTx btc raw tx
-func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateSmartFeeResult, btcAmount, txAmount btcutil.Amount, selectedCoins coinset.Coins, isUSDT bool) (*int64, *string, error ) {
-	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
-	var vinAmount int64
-	for _, coin := range selectedCoins.Coins() {
-		vinAmount += int64(coin.Value())
-	}
-
-	vAmount := vinAmount
-
-	if isUSDT {
-		b := txscript.NewScriptBuilder()
-		b.AddOp(txscript.OP_RETURN)
-
-		omniVersion := util.Int2byte(uint64(0), 2)	// omnicore version
-		txType := util.Int2byte(uint64(0), 2)	// omnicore tx type: simple send
-		tokenPropertyid := configure.Config.OmniToken["omni_first_token"].(int)
-		tokenIdentifier := util.Int2byte(uint64(tokenPropertyid), 4)	// omni token identifier
-		tokenAmount := util.Int2byte(uint64(txAmount), 8)	// omni token transfer amount
-
-		b.AddData([]byte("omni"))	// transaction maker
-		b.AddData(omniVersion)
-		b.AddData(txType)
-		b.AddData(tokenIdentifier)
-
-		b.AddData(tokenAmount)
-		pkScript, err := b.Script()
-		if err != nil {
-			return nil, nil, errors.New(strings.Join([]string{"usdt pkScript error", err.Error()}, ":"))
-		}
-		msgTx.AddTxOut(wire.NewTxOut(0, pkScript))
-
-		txOutReference := wire.NewTxOut(0, toPkScript)
-		msgTx.AddTxOut(txOutReference)
-	} else {
-		txOutTo := wire.NewTxOut(int64(btcAmount), toPkScript)
-		msgTx.AddTxOut(txOutTo)
-	}
-
-	txOutReBack := wire.NewTxOut((vinAmount-int64(btcAmount)), funbackPkScript)
-	msgTx.AddTxOut(txOutReBack)
-
-	rate := mempool.SatoshiPerByte(feeKB.FeeRate)
-	fee := rate.Fee(uint32(msgTx.SerializeSize()))
-
-	if fee.String() == "0 BTC" {
-		fee = btcutil.Amount(5000)
-	}
-
-	// sub tx fee
-	for _, out := range msgTx.TxOut {
-		if out.Value != int64(btcAmount) && (vinAmount - int64(btcAmount) - int64(fee)) > 0 {
-			out.Value = vinAmount - int64(btcAmount) - int64(fee)
-		}
-	}
-
-	buf := bytes.NewBuffer(make([]byte, 0, msgTx.SerializeSize()))
-	msgTx.Serialize(buf)
-	rawTxHex := hex.EncodeToString(buf.Bytes())
-	return &vAmount, &rawTxHex, nil
 }
 
 // BitcoinNet bitcoin base chain net

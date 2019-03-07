@@ -69,8 +69,6 @@ func main() {
   eosClient = eos.New(configure.Config.EOSIORPC)
 
   r := util.GinEngine()
-  r.POST("/send", withdrawHandle)
-  r.POST("/sendtoaddress", sendToAddress)
 
   r.POST("/eosio/wallet", eosioWalletHandle)
   r.POST("/eosio/tx", eosiotxHandle)

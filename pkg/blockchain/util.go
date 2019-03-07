@@ -73,3 +73,8 @@ func BitcoincoreAddressP2AS(addr string, defaultNet *chaincfg.Params) ([]byte, e
   }
   return p2as, nil
 }
+
+// NewBlockchain chain object
+func NewBlockchain(wallet ChainWallet, operator TxOperator, query ChainQuery) *Blockchain {
+  return &Blockchain{Wallet: wallet, Operator: operator, Query: query}
+}

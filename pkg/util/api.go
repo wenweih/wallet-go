@@ -10,11 +10,7 @@ import (
   "encoding/json"
   b64 "encoding/base64"
   "github.com/gin-gonic/gin"
-  "github.com/btcsuite/btcutil"
-  "github.com/btcsuite/btcd/txscript"
-  "github.com/btcsuite/btcd/chaincfg"
   "wallet-transition/pkg/configure"
-  "wallet-transition/pkg/db"
 )
 
 // GinEngine api engine
@@ -97,41 +93,6 @@ func GinRespException(c *gin.Context, code int, err error) {
   })
 }
 
-// WithdrawParamsH handle withdraw endpoint request params
-func WithdrawParamsH(detailParams []byte, asset string, sqldb  *db.GormDB) (*WithdrawParams, *db.SubAddress, error) {
-  withdrawParams, err := transferParams(detailParams)
-  if err != nil {
-    return nil, nil, err
-  }
-  if withdrawParams.From == "" || withdrawParams.To == "" {
-    return nil, nil, fmt.Errorf("From or to params can't be empty")
-  }
-
-  var (
-    subAddress db.SubAddress
-  )
-
-  // query from address
-  if err := sqldb.First(&subAddress, "address = ? AND asset = ?", withdrawParams.From, asset).Error; err !=nil && err.Error() == "record not found" {
-    return nil, nil, fmt.Errorf("Record not found %s : %s", asset, withdrawParams.From)
-  }else if err != nil {
-    return nil, nil, err
-  }
-  return withdrawParams, &subAddress, nil
-}
-
-// WithdrawChain withdraw endpoint asset param
-func WithdrawChain(chain string) string {
-  omniTokenkeys := make([]string, len(configure.Config.OmniToken))
-  for k := range configure.Config.OmniToken {
-    omniTokenkeys = append(omniTokenkeys, k)
-  }
-  if Contain(chain, omniTokenkeys) {
-    chain = "btc"
-  }
-  return chain
-}
-
 // SendToAddressParamsH send to address enpoint request params
 func SendToAddressParamsH(detailParams []byte) (*WithdrawParams, error) {
   params, err := transferParams(detailParams)
@@ -156,28 +117,4 @@ func transferParams(detailParams []byte) (*WithdrawParams, error) {
     return nil, fmt.Errorf("Amount can't be empty and less than 0")
   }
   return &withdrawParams, nil
-}
-
-// BTCWithdrawAddressValidate validate withdraw endpoint address params
-func BTCWithdrawAddressValidate(from, to string, bitcoinnet *chaincfg.Params) ([]byte, []byte, error) {
-  toAddress, err := btcutil.DecodeAddress(to, bitcoinnet)
-  if err != nil {
-    return nil, nil, fmt.Errorf("To address illegal %s", err)
-  }
-
-  fromAddress, err := btcutil.DecodeAddress(from, bitcoinnet)
-  if err != nil {
-    return nil, nil, fmt.Errorf("From address address illegal %s", err)
-  }
-
-  toPkScript, err := txscript.PayToAddrScript(toAddress)
-  if err != nil {
-    return nil, nil, fmt.Errorf("To address PayToAddrScript %s", err)
-  }
-
-  fromPkScript, err := txscript.PayToAddrScript(fromAddress)
-  if err != nil {
-    return nil, nil, fmt.Errorf("From address PayToAddrScript %s", err)
-  }
-  return fromPkScript, toPkScript, nil
 }
