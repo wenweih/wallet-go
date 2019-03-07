@@ -256,7 +256,7 @@ func (btcClient *BTCRPC) RawSendToAddressTx(txAmount btcutil.Amount, funbackAddr
 		vinAmount += int64(coin.Value())
 	}
 
-	feeKB, err := btcClient.Client.EstimateFee(int64(6))
+	feeKB, err := btcClient.Client.EstimateSmartFee(int64(6))
 	if err != nil {
 		return nil, nil, nil, http.StatusBadRequest, err
 	}
@@ -293,7 +293,7 @@ func (btcClient *BTCRPC) RawTx(from, to string, amountF float64, subAddress *db.
 	}
 	bheader := binfo.Headers
 
-	feeKB, err := btcClient.Client.EstimateFee(int64(6))
+	feeKB, err := btcClient.Client.EstimateSmartFee(int64(6))
 	if err != nil {
 		return nil, nil, nil, http.StatusInternalServerError, err
 	}
@@ -380,7 +380,7 @@ func DecodeBtcTxHex(txHex string) (*btcutil.Tx, error) {
 }
 
 // RawBTCTx btc raw tx
-func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateFeeResult, btcAmount, txAmount btcutil.Amount, selectedCoins coinset.Coins, isUSDT bool) (*int64, *string, error ) {
+func RawBTCTx(funbackPkScript, toPkScript []byte, feeKB *btcjson.EstimateSmartFeeResult, btcAmount, txAmount btcutil.Amount, selectedCoins coinset.Coins, isUSDT bool) (*int64, *string, error ) {
 	msgTx := coinset.NewMsgTxWithInputCoins(wire.TxVersion, selectedCoins)
 	var vinAmount int64
 	for _, coin := range selectedCoins.Coins() {

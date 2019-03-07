@@ -45,11 +45,16 @@ func (c BitcoinCoreChain) RawTx(cxt context.Context, from, to, amount, memo, ass
   if err != nil {
     return "", err
   }
-  feeKB, err := c.Client.EstimateFee(int64(6))
+  // feeKB, err := c.Client.EstimateFee(int64(6))
+  feeKB, err := c.Client.EstimateSmartFee(int64(6))
   if err != nil {
     return "", err
   }
   feeRate := mempool.SatoshiPerByte(feeKB.FeeRate)
+
+  if feeKB.FeeRate <= 0 {
+    feeRate = mempool.SatoshiPerByte(100)
+  }
 
   var (
     selectedutxos, unselectedutxos []db.UTXO
@@ -125,7 +130,7 @@ func (c BitcoinCoreChain) RawTx(cxt context.Context, from, to, amount, memo, ass
       for _, coin := range selectedCoinsForFee.Coins() {
         vinAmount += int64(coin.Value())
       }
-      txOutReCharge := wire.NewTxOut((vinAmount-int64(txAmountSatoshi) - int64(fee)), fromPkScript)
+      txOutReCharge := wire.NewTxOut((vinAmount - int64(txAmountSatoshi) - int64(fee)), fromPkScript)
       msgTx.AddTxOut(txOutReCharge)
       selectedutxos = append(selectedutxos, selectedutxoForFee...)
     }

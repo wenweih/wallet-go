@@ -130,7 +130,7 @@ func bitcoincoreWithdrawHandle(c *gin.Context) {
 
   // bitcoin chain
   chain := blockchain.BitcoinCoreChain{Mode: bitcoinnet, Client: bitcoinClient, Wallet: &blockchain.WalletInfo{Address: &subAddress}}
-  bc := blockchain.NewBlockchain(nil, nil, chain)
+  bc := blockchain.NewBlockchain(nil, chain, nil)
   rawTxHex, err := bc.Operator.RawTx(c, params.From, params.To, params.Amount, "", params.Asset)
   if err != nil {
     util.GinRespException(c, http.StatusBadRequest, err)
@@ -142,7 +142,7 @@ func bitcoincoreWithdrawHandle(c *gin.Context) {
     return
   }
 
-  txid, err := b.Operator.BroadcastTx(c, res.HexSignedTx)
+  txid, err := bc.Operator.BroadcastTx(c, res.HexSignedTx)
   if err != nil {
     util.GinRespException(c, http.StatusInternalServerError, err)
     return
