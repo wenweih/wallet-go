@@ -138,6 +138,10 @@ func (c EthereumChain) RawTx(ctx context.Context, from, to, amount, memo, asset 
   if err != nil {
     return "", err
   }
+  if response.Error != nil {
+    return "", response.Error
+  }
+
   if err = response.GetObject(&txPoolInspect); err != nil {
     return "", err
   }
