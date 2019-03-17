@@ -40,7 +40,10 @@ var dumpWallet = &cobra.Command {
 	Run: func(cmd *cobra.Command, args []string) {
 		switch asset {
 		case "btc":
-			client := blockchain.NewbitcoinClient()
+			client, err := blockchain.NewbitcoinClient()
+			if err != nil {
+				configure.Sugar.Fatal(err.Error())
+			}
 			btcClient := blockchain.BTCRPC{Client: client}
 			if utxo {
 				btcClient.DumpUTXO()
@@ -86,7 +89,11 @@ var importPrivateKey = &cobra.Command {
 	Use:   "import",
 	Short: "import private key",
 	Run: func(cmd *cobra.Command, args []string){
-		btcClient := &blockchain.BTCRPC{Client: blockchain.NewbitcoinClient()}
+		client, err := blockchain.NewbitcoinClient()
+		if err != nil {
+			configure.Sugar.Fatal(err.Error())
+		}
+		btcClient := blockchain.BTCRPC{Client: client}
 		btcClient.ImportPrivateKey()
 	},
 }
