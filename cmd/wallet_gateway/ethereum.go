@@ -7,11 +7,11 @@ import (
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
-  "wallet-transition/pkg/util"
-  "wallet-transition/pkg/db"
-  "wallet-transition/pkg/blockchain"
-  "wallet-transition/pkg/configure"
-  pb "wallet-transition/pkg/pb"
+  "wallet-go/pkg/util"
+  "wallet-go/pkg/db"
+  "wallet-go/pkg/blockchain"
+  "wallet-go/pkg/configure"
+  pb "wallet-go/pkg/pb"
   empty "github.com/golang/protobuf/ptypes/empty"
 )
 

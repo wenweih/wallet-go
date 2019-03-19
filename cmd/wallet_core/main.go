@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strings"
 	"google.golang.org/grpc"
-	pb "wallet-transition/pkg/pb"
-	"wallet-transition/pkg/rpc"
-	"wallet-transition/pkg/configure"
+	pb "wallet-go/pkg/pb"
+	"wallet-go/pkg/rpc"
+	"wallet-go/pkg/configure"
 	"google.golang.org/grpc/reflection"
 )
 

@@ -10,7 +10,7 @@ import (
   "log"
   "bytes"
   "errors"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/configure"
 )
 
 // https://github.com/smartwalle/alipay/blob/master/encoding/rsa.go

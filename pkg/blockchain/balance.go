@@ -7,7 +7,7 @@ import (
   "strconv"
   "encoding/json"
   "github.com/btcsuite/btcutil"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/configure"
   "github.com/ethereum/go-ethereum/common"
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )

@@ -3,7 +3,7 @@ package blockchain
 import (
   "fmt"
   "strings"
-  "wallet-transition/pkg/db"
+  "wallet-go/pkg/db"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcutil/hdkeychain"
   "github.com/ethereum/go-ethereum/crypto"

@@ -2,8 +2,8 @@ package blockchain
 
 import (
   "strings"
-  "wallet-transition/pkg/util"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/util"
+  "wallet-go/pkg/configure"
 )
 
 var ethWalletBackupPath = strings.Join([]string{configure.Config.BackupWalletPath, "eth.backup"}, "")

@@ -2,7 +2,7 @@ package blockchain
 
 import (
   "context"
-  "wallet-transition/pkg/db"
+  "wallet-go/pkg/db"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/btcsuite/btcd/chaincfg"

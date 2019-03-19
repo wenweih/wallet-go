@@ -7,11 +7,11 @@ import (
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
-  "wallet-transition/pkg/configure"
-  "wallet-transition/pkg/blockchain"
-  "wallet-transition/pkg/db"
-  "wallet-transition/pkg/util"
-  pb "wallet-transition/pkg/pb"
+  "wallet-go/pkg/configure"
+  "wallet-go/pkg/blockchain"
+  "wallet-go/pkg/db"
+  "wallet-go/pkg/util"
+  pb "wallet-go/pkg/pb"
   "github.com/btcsuite/btcutil"
 )
 

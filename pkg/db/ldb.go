@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"syscall"
-	"wallet-transition/pkg/configure"
+	"wallet-go/pkg/configure"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
   // sqlite driven
   _ "github.com/jinzhu/gorm/dialects/sqlite"
   _ "github.com/jinzhu/gorm/dialects/mysql"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/configure"
   "github.com/btcsuite/btcd/btcjson"
 )
 
@@ -21,7 +21,7 @@ func NewSqlite() (*GormDB, error) {
     return nil, errors.New(strings.Join([]string{"MkdirAll error: ", err.Error()}, ""))
   }
 
-  db, err := gorm.Open("sqlite3", strings.Join([]string{configure.Config.BackupWalletPath, "wallet-transition.db"}, ""))
+  db, err := gorm.Open("sqlite3", strings.Join([]string{configure.Config.BackupWalletPath, "wallet-go.db"}, ""))
   if err != nil {
     return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
   }

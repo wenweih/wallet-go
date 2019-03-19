@@ -5,7 +5,7 @@ import (
   "context"
   "encoding/hex"
   "encoding/json"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/configure"
   "github.com/eoscanada/eos-go"
   "github.com/eoscanada/eos-go/token"
   "github.com/eoscanada/eos-go/ecc"

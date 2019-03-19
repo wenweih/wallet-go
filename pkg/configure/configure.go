@@ -10,9 +10,9 @@ const (
 	// LDBPath leveldb folder name for key-pair
 	LDBPath = ".db_wallet"
 	// BackUpWalletPath backup wallet path
-	BackUpWalletPath = "/usr/local/wallet-transition/"
+	BackUpWalletPath = "/usr/local/wallet-go/"
 	// ConfigureFile configure file name
-	ConfigureFile = "wallet-transition"
+	ConfigureFile = "wallet-go"
 )
 
 // InitConfig 配置信息
@@ -31,7 +31,7 @@ func InitConfig() *Configure {
 	if err == nil {
 		Sugar.Info("Using Configure file: ", viper.ConfigFileUsed(), " Time: ", time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	} else {
-		Sugar.Fatal("Error: wallet-transition not found in: ", HomeDir(), err.Error())
+		Sugar.Fatal("Error: wallet-go not found in: ", HomeDir(), err.Error())
 	}
 
 	for key, value := range viper.AllSettings() {

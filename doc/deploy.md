@@ -6,7 +6,7 @@
 5. 启动 ```wallet_core``` 服务 (部署在服务器 A)
 6. 启动 ```wallet_gateway```
 
-3,4,5,6 均使用放在当前服务器用户目录下的 ```wallet-transition.yml``` 文件，配置文件内容均不同，下文会给出。
+3,4,5,6 均使用放在当前服务器用户目录下的 ```wallet-go.yml``` 文件，配置文件内容均不同，下文会给出。
 
 > **注意：服务 ```wallet_gateway``` 要在 ```wallet_middle``` 和 ```wallet_core``` 之后启动**
 
@@ -17,7 +17,7 @@
 2. 导入私钥到签名服务器 (签名服务器上操作)
 
 #### 从节点导出私钥 (本地操作)
-配置文件放置在本地当前用户目录下，```wallet-transition.yml``` 内容：
+配置文件放置在本地当前用户目录下，```wallet-go.yml``` 内容：
 ```yml
 # BTC node info
 btc_node_host:  "192.168.12.100:18443"
@@ -45,19 +45,19 @@ ks_pass: ""
 ```
 根据不同平台编译可执行文件 ```wallet_tools```，修改配置文件中比特币旧节点的信息、新旧服务器的登录信息之后执行如下命令：
 ```shell
-wallet-transition|master⚡ ⇒ wallet_tools dump -a btc
-{"level":"info","msg":"Using Configure file: /Users/lianxi/wallet-transition.yml Time: Tue Jan 15 13:50:59 2019"}
+wallet-go|master⚡ ⇒ wallet_tools dump -a btc
+{"level":"info","msg":"Using Configure file: /Users/lianxi/wallet-go.yml Time: Tue Jan 15 13:50:59 2019"}
 {"level":"info","msg":"dump old btc wallet result: success"}
-{"level":"info","msg":"Copy to new server: 192.168.12.100:22:/usr/local/wallet-transition/btc.backup_new"}
+{"level":"info","msg":"Copy to new server: 192.168.12.100:22:/usr/local/wallet-go/btc.backup_new"}
 
-wallet-transition|master⚡ ⇒ wallet_tools dump -a eth
-{"level":"info","msg":"Using Configure file: /Users/lianxi/wallet-transition.yml Time: Tue Jan 15 13:57:54 2019"}
+wallet-go|master⚡ ⇒ wallet_tools dump -a eth
+{"level":"info","msg":"Using Configure file: /Users/lianxi/wallet-go.yml Time: Tue Jan 15 13:57:54 2019"}
 {"level":"info","msg":"Ethereum account: 0xB642728F152Fd6935425925adaD25f1311020880"}
 {"level":"warn","msg":"Keystore DecryptKey error: could not decrypt key with given passphrase"}
-{"level":"info","msg":"Copy to new server: 192.168.12.101:22:/usr/local/wallet-transition/eth.backup_new"}
+{"level":"info","msg":"Copy to new server: 192.168.12.101:22:/usr/local/wallet-go/eth.backup_new"}
 ```
 #### 导入私钥到独立签名服务器 (签名服务器上操作)
-编译好 ```wallet_tools``` 的源码之后，把可执行文件复制 (scp) 签名服务器，在当前用户下的配置文件 ```wallet-transition.yml``` 内容为:
+编译好 ```wallet_tools``` 的源码之后，把可执行文件复制 (scp) 签名服务器，在当前用户下的配置文件 ```wallet-go.yml``` 内容为:
 ```yml
 // 根据数据库配置修改
 db_mysql: "root:12345678@tcp(localhost:32781)/wallet_transition_dev"
@@ -85,7 +85,7 @@ wallet_tools migrate -a eth // 导入 eth 私钥
 // IP 要改成 wallet_middle 所在服务的内网 ip
 blocknotify=curl http://192.168.12.101:3001/btc-best-block-notify?hash=%s
 ```
-wallet_middle 服务要使用到的 ```wallet-transition.yml``` 内容格式如下，内容要根据配置的信息做修改：
+wallet_middle 服务要使用到的 ```wallet-go.yml``` 内容格式如下，内容要根据配置的信息做修改：
 ```yml
 # BTC node info
 #btc_node_host:  "192.168.12.100:18443"
@@ -102,13 +102,13 @@ db_mysql: "root:12345678@tcp(192.168.12.127:32781)/wallet_transition_staging"
 
 ```wallet_core ``` 服务使用的配置文件如下：
 ```shell
-wallet-transition|master⚡ ⇒ cat ~/wallet-transition.yml
+wallet-go|master⚡ ⇒ cat ~/wallet-go.yml
 wallet_core_rpc_url: "localhost:50051"
 ```
 ### wallet_gateway 外部接口服务
 该服务放在最后启动。配置文件格式如下，内容要做对应修改：
 ```yml
-wallet-transition|master⚡ ⇒ cat ~/wallet-transition.yml
+wallet-go|master⚡ ⇒ cat ~/wallet-go.yml
 # BTC node info
 btc_node_host:  "192.168.12.100:18443"
 btc_node_usr:   "btcrpc"

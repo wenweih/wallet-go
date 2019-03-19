@@ -5,9 +5,9 @@ import (
   "strings"
   "context"
   "encoding/hex"
-  "wallet-transition/pkg/pb"
-  "wallet-transition/pkg/db"
-  "wallet-transition/pkg/blockchain"
+  "wallet-go/pkg/pb"
+  "wallet-go/pkg/db"
+  "wallet-go/pkg/blockchain"
 )
 
 // SignatureEOSIO eosio transaction signature

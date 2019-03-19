@@ -7,7 +7,7 @@ import (
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
-  "wallet-transition/pkg/util"
+  "wallet-go/pkg/util"
   "github.com/ethereum/go-ethereum/common"
 	"github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"

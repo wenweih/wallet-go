@@ -10,7 +10,7 @@ import (
   "encoding/json"
   b64 "encoding/base64"
   "github.com/gin-gonic/gin"
-  "wallet-transition/pkg/configure"
+  "wallet-go/pkg/configure"
 )
 
 // GinEngine api engine

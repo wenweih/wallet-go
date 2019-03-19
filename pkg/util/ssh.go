@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
-	"wallet-transition/pkg/configure"
+	"wallet-go/pkg/configure"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 )

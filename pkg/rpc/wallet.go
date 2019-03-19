@@ -2,8 +2,8 @@ package rpc
 
 import (
   "context"
-  "wallet-transition/pkg/pb"
-  "wallet-transition/pkg/blockchain"
+  "wallet-go/pkg/pb"
+  "wallet-go/pkg/blockchain"
   empty "github.com/golang/protobuf/ptypes/empty"
 )
 

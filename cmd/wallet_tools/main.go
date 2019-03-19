@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"wallet-transition/pkg/blockchain"
-	"wallet-transition/pkg/configure"
-	"wallet-transition/pkg/db"
-	"wallet-transition/pkg/util"
+	"wallet-go/pkg/blockchain"
+	"wallet-go/pkg/configure"
+	"wallet-go/pkg/db"
+	"wallet-go/pkg/util"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 )
 
 var rootCmd = &cobra.Command {
-	Use:   "wallet-transition-tool",
+	Use:   "wallet-go-tool",
 	Short: "Commandline to for anbi exchange wallet module",
 }
 

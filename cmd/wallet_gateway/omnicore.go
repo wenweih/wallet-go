@@ -5,9 +5,9 @@ import (
   "net/http"
   "encoding/json"
   "github.com/gin-gonic/gin"
-  "wallet-transition/pkg/configure"
-  "wallet-transition/pkg/util"
-  "wallet-transition/pkg/blockchain"
+  "wallet-go/pkg/configure"
+  "wallet-go/pkg/util"
+  "wallet-go/pkg/blockchain"
   "github.com/btcsuite/btcutil"
 )
 
