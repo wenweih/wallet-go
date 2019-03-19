@@ -58,11 +58,7 @@ type Configure struct {
 
 	WalletCoreRPCURL        string
 
-	OmniToken               map[string]interface{}
-
 	Chains                  map[string]interface{}
-
-	Confirmations           map[string]interface{}
 }
 
 // ChainInfo chain info

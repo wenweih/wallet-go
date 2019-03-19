@@ -105,12 +105,8 @@ func InitConfig() *Configure {
 			conf.KSPass = value.(string)
 		case "wallet_core_rpc_url":
 			conf.WalletCoreRPCURL = value.(string)
-		case "omni_token":
-			conf.OmniToken = viper.Sub("omni_token").AllSettings()
 		case "chains":
 			conf.Chains = viper.Sub("chains").AllSettings()
-		case "confirmations":
-			conf.Confirmations = viper.Sub("confirmations").AllSettings()
 		}
 	}
 	return &conf

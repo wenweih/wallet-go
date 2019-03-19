@@ -56,12 +56,6 @@ chains:
         accounts:
             "eosaccount": "EOS8QKrsDdC6fLwvDwQvGh59PF7FmpCP8y5vu6KpYpXDwy4mQbwuy"
 
-omni_token:
-    "omni_first_token": 2147483651
-
-confirmations:
-    "btc": 2
-
 db_mysql_host: "localhost:32769"
 db_mysql_user: "root"
 db_mysql_pass: "12345678"
