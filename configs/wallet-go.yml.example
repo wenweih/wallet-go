@@ -60,3 +60,5 @@ db_mysql_host: "localhost:32769"
 db_mysql_user: "root"
 db_mysql_pass: "12345678"
 db_mysql_name: ""
+
+mq: "amqp://guest:guest@host:port/"

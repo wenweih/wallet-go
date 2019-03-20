@@ -30,8 +30,8 @@ func NewbitcoinClient() (*rpcclient.Client, error) {
 		Host:         configure.Config.BTCNODEHOST,
 		User:         configure.Config.BTCNODEUSR,
 		Pass:         configure.Config.BTCNODEPASS,
-		HTTPPostMode: configure.Config.BTCHTTPPostMode,
-		DisableTLS:   configure.Config.BTCDisableTLS,
+		HTTPPostMode: true,
+		DisableTLS:   true,
 	}
 	client, err := rpcclient.New(connCfg, nil)
 	if err != nil {

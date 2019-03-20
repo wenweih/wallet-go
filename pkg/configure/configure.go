@@ -43,10 +43,6 @@ func InitConfig() *Configure {
 			conf.BTCNODEUSR = value.(string)
 		case "btc_node_pass":
 			conf.BTCNODEPASS = value.(string)
-		case "btc_http_mode":
-			conf.BTCHTTPPostMode = value.(bool)
-		case "btc_disable_tls":
-			conf.BTCDisableTLS = value.(bool)
 
 		case "omni_node_host":
 			conf.OmniNODEHOST = value.(string)
@@ -107,6 +103,8 @@ func InitConfig() *Configure {
 			conf.WalletCoreRPCURL = value.(string)
 		case "chains":
 			conf.Chains = viper.Sub("chains").AllSettings()
+		case "mq":
+			conf.MQ = value.(string)
 		}
 	}
 	return &conf

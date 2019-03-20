@@ -20,8 +20,6 @@ type Configure struct {
 	BTCNODEHOST     string
 	BTCNODEUSR      string
 	BTCNODEPASS     string
-	BTCHTTPPostMode bool
-	BTCDisableTLS   bool
 
 	OmniNODEHOST     string
 	OmniNODEUSR      string
@@ -59,6 +57,8 @@ type Configure struct {
 	WalletCoreRPCURL        string
 
 	Chains                  map[string]interface{}
+
+	MQ                       string
 }
 
 // ChainInfo chain info
