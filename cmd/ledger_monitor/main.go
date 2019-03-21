@@ -3,15 +3,12 @@ package main
 import (
   "fmt"
   "context"
-  "net/http"
-  "encoding/json"
+  "math/big"
   "wallet-go/pkg/mq"
-  "wallet-go/pkg/util"
   "wallet-go/pkg/configure"
   "wallet-go/pkg/blockchain"
   "github.com/spf13/cobra"
   "github.com/gin-gonic/gin"
-  "github.com/btcsuite/btcd/chaincfg/chainhash"
   "github.com/ethereum/go-ethereum/ethclient"
   "github.com/ethereum/go-ethereum/core/types"
 )
@@ -40,7 +37,6 @@ var blockMonitor = &cobra.Command {
         configure.Sugar.Fatal(err.Error())
       }
       btcClient = &blockchain.BTCRPC{Client: c}
-
       gin.SetMode(gin.ReleaseMode)
       r := gin.Default()
       r.GET("/btc-best-block-notify", btcBestBlockNotifyHandle)
@@ -58,12 +54,21 @@ var blockMonitor = &cobra.Command {
       if err != nil {
         configure.Sugar.Error(err.Error())
       }
+
+      var (
+        // maintain orderHeight and increase 1 each subscribe callback, because head.number would jump blocks
+        orderHeight = new(big.Int)
+      )
       for {
         select {
         case err := <-sub.Err():
           configure.Sugar.Fatal(err.Error())
         case head := <-blockCh:
-          configure.Sugar.Info(head.Hash().String())
+          ordertmp, err := subHandle(orderHeight, head, ethereumClient)
+          if err != nil {
+            configure.Sugar.Error(err.Error())
+          }
+          orderHeight = ordertmp
         }
       }
     case "eosio":
@@ -81,32 +86,6 @@ func execute() {
 
 func main()  {
   execute()
-}
-
-func btcBestBlockNotifyHandle(c *gin.Context) {
-  strHash := c.Query("hash")
-  blockHash, err := chainhash.NewHashFromStr(strHash)
-  if err != nil {
-    configure.Sugar.DPanic(err.Error())
-    util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("NewHashFromStr %s", err))
-    return
-  }
-  rawBlock, err := btcClient.Client.GetBlockVerboseTxM(blockHash)
-  if err != nil {
-    configure.Sugar.DPanic(err.Error())
-    util.GinRespException(c, http.StatusInternalServerError, fmt.Errorf("GetBlockVerboseTxM %s", err))
-    return
-  }
-  configure.Sugar.Info(rawBlock)
-  body, err := json.Marshal(rawBlock)
-  if err != nil {
-    configure.Sugar.Warn("json Marshal raw block error", err.Error())
-  }
-  messageClient.Publish(body, "bestblock", "direct", "bitcoincore", "eth_deposit_queue")
-  c.JSON(http.StatusOK, gin.H {
-    "status": http.StatusOK,
-    "address": "hi",
-  })
 }
 
 func init()  {
