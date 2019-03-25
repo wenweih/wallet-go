@@ -6,11 +6,6 @@ import (
   "github.com/syndtr/goleveldb/leveldb"
 )
 
-// DBClient database client
-type DBClient interface {
-  New() (*GormDB, error)
-}
-
 // LDB level db
 type LDB struct {
 	*leveldb.DB
@@ -29,13 +24,14 @@ type SubAddress struct {
   UTXOs   []UTXO
 }
 
-// BTCBlock notify block info
-type BTCBlock struct {
+// Block notify block info
+type Block struct {
   gorm.Model
   Hash    string `gorm:"not null;index"`
   Height  int64   `gorm:"not null"`
   UTXOs   []UTXO
   ReOrg   bool    `gorm:"default:false"`
+  Chain    string
 }
 
 // UTXO utxo model
@@ -49,7 +45,7 @@ type UTXO struct {
   SubAddress    SubAddress
   UsedBy        string
   SubAddressID  uint
-  BTCBlock      BTCBlock
+  Block         Block
   BTCBlockID    uint
   transition.Transition
 }
