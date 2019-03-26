@@ -2,6 +2,7 @@ package db
 
 import (
   "os"
+  "fmt"
   "errors"
   "strings"
   "path/filepath"
@@ -12,6 +13,7 @@ import (
   _ "github.com/jinzhu/gorm/dialects/sqlite"
   _ "github.com/jinzhu/gorm/dialects/mysql"
   "wallet-go/pkg/configure"
+  "wallet-go/pkg/common"
   "github.com/btcsuite/btcd/btcjson"
 )
 
@@ -25,7 +27,7 @@ func NewSqlite() (*GormDB, error) {
   if err != nil {
     return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
   }
-  db.AutoMigrate(&SubAddress{}, &Block{}, &UTXO{}, &transition.StateChangeLog{})
+  db.AutoMigrate(&SubAddress{}, &SimpleBitcoinBlock{}, &UTXO{}, &transition.StateChangeLog{})
   return &GormDB{db}, nil
 }
 
@@ -40,13 +42,14 @@ func NewMySQL() (*GormDB, error) {
   if err != nil {
     return nil, errors.New(strings.Join([]string{"failed to connect database:", err.Error()}, ""))
   }
-  db.AutoMigrate(&SubAddress{}, &Block{}, &UTXO{}, &transition.StateChangeLog{})
+  configure.Sugar.Info("database connecting...")
+  db.AutoMigrate(&SubAddress{}, &SimpleBitcoinBlock{}, &UTXO{}, &transition.StateChangeLog{})
   return &GormDB{db}, nil
 }
 
 // GetBTCBestBlockOrCreate get btc best block in sqlite
-func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult, chain string) (*Block, error) {
-  var bestBlock Block
+func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult, chain string) (*SimpleBitcoinBlock, error) {
+  var bestBlock SimpleBitcoinBlock
   err := db.Order("height desc").First(&bestBlock).Error
   if err != nil && err.Error() == "record not found" {
     configure.Sugar.Info("best block info not found in btc_blocks table, init ....")
@@ -61,8 +64,56 @@ func (db *GormDB) GetBTCBestBlockOrCreate(block *btcjson.GetBlockVerboseResult, 
   return &bestBlock, nil
 }
 
+// CreateBitcoinBlockWithUTXOs save block and utxo related with subAddress blockResultCh <-chan
+func (db *GormDB) CreateBitcoinBlockWithUTXOs(queryBlockResultCh <- chan common.QueryBlockResult) (<-chan common.CreateBlockResult) {
+  createBlockCh := make(chan common.CreateBlockResult)
+  go func() {
+    defer close(createBlockCh)
+    var (
+      rawBlock *btcjson.GetBlockVerboseResult
+      chain string
+    )
+    for b := range queryBlockResultCh {
+      if b.Error != nil {
+        createBlockCh <- common.CreateBlockResult{Error: b.Error}
+        return
+      }
+      rawBlock = b.Block.(*btcjson.GetBlockVerboseResult)
+      chain = b.Chain
+    }
+    var utxos []UTXO
+    for _, tx := range rawBlock.Tx {
+      for _, vout := range tx.Vout {
+        for _, address := range vout.ScriptPubKey.Addresses {
+          var addr SubAddress
+          if err := db.Where("address = ? AND asset = ?", address, chain).First(&addr).Error; err != nil && err.Error() == "record not found" {
+            continue
+          }else if err != nil {
+            createBlockCh <- common.CreateBlockResult{Error: fmt.Errorf("Query sub address err: %s", err)}
+            return
+          }
+          utxo := UTXO{Txid: tx.Txid, Amount: vout.Value, Height: rawBlock.Height, VoutIndex: vout.N, SubAddress: addr}
+          utxos = append(utxos, utxo)
+        }
+      }
+    }
+    block := SimpleBitcoinBlock{
+      Hash: rawBlock.Hash,
+      Height: rawBlock.Height,
+      UTXOs: utxos,
+      Chain: chain,
+    }
+    if err := db.FirstOrCreate(&block).Error; err != nil {
+      createBlockCh <- common.CreateBlockResult{Error: fmt.Errorf("create block error: %s", err)}
+      return
+    }
+    createBlockCh <- common.CreateBlockResult{}
+  }()
+  return createBlockCh
+}
+
 // BlockInfo2DB iterator each block tx
-func (db *GormDB) BlockInfo2DB(dbBlock Block, rawBlock *btcjson.GetBlockVerboseResult, chain string) error {
+func (db *GormDB) BlockInfo2DB(dbBlock SimpleBitcoinBlock, rawBlock *btcjson.GetBlockVerboseResult, chain string) error {
   ts := db.Begin()
   if err := ts.Create(&dbBlock).Error; err != nil {
     if err = ts.Rollback().Error; err != nil {
@@ -103,7 +154,7 @@ func (db *GormDB) BlockInfo2DB(dbBlock Block, rawBlock *btcjson.GetBlockVerboseR
 func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock *btcjson.GetBlockVerboseResult, chain string) (bool, int64) {
   trackHeight := rawBlock.Height
   var (
-    dbBlock Block
+    dbBlock SimpleBitcoinBlock
     utxos []UTXO
   )
   if err := db.First(&dbBlock, "height = ? AND re_org = ?", rawBlock.Height, false).Related(&utxos).Error; err !=nil && err.Error() == "record not found" {
@@ -123,7 +174,7 @@ func (db *GormDB) RollbackTrackBTC(bestHeight int64, backTracking bool, rawBlock
         ts.Model(&utxo).Update("re_org", true)
       }
       ts.Commit()
-      if err = db.BlockInfo2DB(Block{Hash: rawBlock.Hash, Height: rawBlock.Height}, rawBlock, chain); err != nil {
+      if err = db.BlockInfo2DB(SimpleBitcoinBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}, rawBlock, chain); err != nil {
         configure.Sugar.Fatal(err.Error())
       }
       configure.Sugar.Info("reorg:", dbBlock.Height, " ", dbBlock.Hash)
