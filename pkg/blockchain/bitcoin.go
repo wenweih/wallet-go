@@ -37,6 +37,7 @@ func NewbitcoinClient() (*rpcclient.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Bitcoincore clienr %s", err)
 	}
+	configure.Sugar.Info("bitcoin core connecting...")
 	return client, nil
 }
 

@@ -61,7 +61,7 @@ func main() {
     if err != nil {
       configure.Sugar.Fatal(err.Error())
     }
-    dbBlock := db.Block{Hash: rawBlock.Hash, Height: rawBlock.Height}
+    dbBlock := db.SimpleBitcoinBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}
     if err = sqldb.BlockInfo2DB(dbBlock, rawBlock, blockchain.Bitcoin); err != nil {
       configure.Sugar.Fatal(err.Error())
     }
@@ -90,7 +90,7 @@ func btcBestBlockNotifyHandle(c *gin.Context) {
     return
   }
 
-  dbBlock := db.Block{Hash: rawBlock.Hash, Height: rawBlock.Height}
+  dbBlock := db.SimpleBitcoinBlock{Hash: rawBlock.Hash, Height: rawBlock.Height}
   if err = sqldb.BlockInfo2DB(dbBlock, rawBlock, blockchain.Bitcoin); err != nil {
     configure.Sugar.Fatal(err.Error())
   }
