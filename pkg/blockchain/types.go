@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-  "context"
   "wallet-go/pkg/db"
   "github.com/btcsuite/btcutil"
   "github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -51,23 +50,6 @@ type EOSChain struct {
 type WalletInfo struct {
   Address *db.SubAddress
   SelectedUTXO []db.UTXO
-}
-
-// TxOperator transaction operator
-type TxOperator interface {
-  RawTx(ctx context.Context, from, to, amount, memo, asset string) (string, error)
-  SignedTx(rawTxHex, wif string, options *ChainsOptions) (string, error)
-  BroadcastTx(ctx context.Context, signedTxHex string) (string, error)
-}
-
-// ChainWallet chain wallet
-type ChainWallet interface {
-  Create() (string, error)
-}
-
-// ChainQuery blockchain client query
-type ChainQuery interface {
-  Balance(ctx context.Context, account, symbol, code string) (string, error)
 }
 
 // Blockchain chain info
