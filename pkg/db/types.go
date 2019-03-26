@@ -24,11 +24,11 @@ type SubAddress struct {
   UTXOs   []UTXO
 }
 
-// Block notify block info
-type Block struct {
+// SimpleBitcoinBlock notify block info
+type SimpleBitcoinBlock struct {
   gorm.Model
-  Hash    string `gorm:"not null;index"`
-  Height  int64   `gorm:"not null"`
+  Hash    string `gorm:"not null;unique_index:idx_hash_height"`
+  Height  int64   `gorm:"not null;unique_index:idx_hash_height"`
   UTXOs   []UTXO
   ReOrg   bool    `gorm:"default:false"`
   Chain    string
@@ -45,7 +45,7 @@ type UTXO struct {
   SubAddress    SubAddress
   UsedBy        string
   SubAddressID  uint
-  Block         Block
+  Block         SimpleBitcoinBlock
   BTCBlockID    uint
   transition.Transition
 }
