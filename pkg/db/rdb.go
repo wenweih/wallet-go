@@ -35,7 +35,7 @@ func NewMySQL() (*GormDB, error) {
 // CreateBitcoinBlockWithUTXOs save block and utxo related with subAddress blockResultCh <-chan
 func (db *GormDB) CreateBitcoinBlockWithUTXOs(queryBlockResultCh <- chan common.QueryBlockResult) (<-chan common.CreateBlockResult) {
   createBlockCh := make(chan common.CreateBlockResult)
-  go func(db *GormDB) {
+  go func() {
     defer close(createBlockCh)
     var (
       rawBlock *btcjson.GetBlockVerboseResult
@@ -89,7 +89,7 @@ func (db *GormDB) CreateBitcoinBlockWithUTXOs(queryBlockResultCh <- chan common.
     }
     configure.Sugar.Info("Saved block to database, height: ", block.Height, " hash: ", block.Hash)
     createBlockCh <- common.CreateBlockResult{Block: block}
-  }(db)
+  }()
   return createBlockCh
 }
 
