@@ -95,7 +95,8 @@ func bitcoinMQ(wg *sync.WaitGroup)  {
 func onBitcoinMessage(d amqp.Delivery) {
 	var mqdata *btcjson.GetBlockVerboseResult
 	if err := json.Unmarshal(d.Body, &mqdata); err != nil {
-    configure.Sugar.DPanic(err.Error())
+    configure.Sugar.Warn(err.Error())
+    return
   }
   configure.Sugar.Info("consumer bitcoin new block: ", mqdata.Hash, mqdata.Height)
 
