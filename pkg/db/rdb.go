@@ -41,14 +41,13 @@ func (db *GormDB) CreateBitcoinBlockWithUTXOs(queryBlockResultCh <- chan common.
       rawBlock *btcjson.GetBlockVerboseResult
       chain string
     )
-    for b := range queryBlockResultCh {
-      if b.Error != nil {
-        createBlockCh <- common.CreateBlockResult{Error: b.Error}
-        return
-      }
-      rawBlock = b.Block.(*btcjson.GetBlockVerboseResult)
-      chain = b.Chain
+    b := <- queryBlockResultCh
+    if b.Error != nil {
+      createBlockCh <- common.CreateBlockResult{Error: b.Error}
+      return
     }
+    rawBlock = b.Block.(*btcjson.GetBlockVerboseResult)
+    chain = b.Chain
 
     var block SimpleBitcoinBlock
     ts := db.Begin()
@@ -103,14 +102,12 @@ func (db *GormDB) TrackBlock(bestBlockHeight int64, isTracking bool, queryBlockR
     utxos []UTXO
   )
 
-  for b := range queryBlockResultCh {
-    if b.Error != nil {
-      configure.Sugar.Fatal(b.Error.Error())
-    }
-    rawBlock = b.Block.(*btcjson.GetBlockVerboseResult)
-    chain = b.Chain
+  b := <- queryBlockResultCh
+  if b.Error != nil {
+    configure.Sugar.Fatal(b.Error.Error())
   }
-
+  rawBlock = b.Block.(*btcjson.GetBlockVerboseResult)
+  chain = b.Chain
   trackHeight := rawBlock.Height
 
   if err := db.First(&dbBlock, "height = ? AND re_org = ?", rawBlock.Height, false).Related(&utxos).Error; err !=nil && err.Error() == "record not found" {
