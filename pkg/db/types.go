@@ -16,6 +16,23 @@ type GormDB struct {
 	*gorm.DB
 }
 
+// UTXO utxo model
+type UTXO struct {
+  gorm.Model
+  Txid                  string    `gorm:"not null"`
+  Amount                float64   `gorm:"not null"`
+  Height                int64     `gorm:"not null"`
+  VoutIndex             uint32    `gorm:"not null"`
+  ReOrg                 bool      `gorm:"not null;default:false"`
+  UsedBy                string
+  Chain                 string
+  SubAddress            SubAddress
+  SubAddressID          uint
+  SimpleBitcoinBlock    SimpleBitcoinBlock
+  SimpleBitcoinBlockID  uint
+  transition.Transition
+}
+
 // SubAddress 监听地址
 type SubAddress struct {
 	gorm.Model
@@ -27,25 +44,9 @@ type SubAddress struct {
 // SimpleBitcoinBlock notify block info
 type SimpleBitcoinBlock struct {
   gorm.Model
-  Hash    string `gorm:"not null;unique_index:idx_hash_height"`
+  Hash    string  `gorm:"not null;unique_index:idx_hash_height"`
   Height  int64   `gorm:"not null;unique_index:idx_hash_height"`
-  UTXOs   []UTXO
+  UTXOs   []UTXO  `gorm:"foreignkey:SimpleBitcoinBlockID;association_foreignkey:Refer"`
   ReOrg   bool    `gorm:"default:false"`
   Chain    string
-}
-
-// UTXO utxo model
-type UTXO struct {
-  gorm.Model
-  Txid          string    `gorm:"not null"`
-  Amount        float64   `gorm:"not null"`
-  Height        int64     `gorm:"not null"`
-  VoutIndex     uint32    `gorm:"not null"`
-  ReOrg         bool      `gorm:"not null;default:false"`
-  SubAddress    SubAddress
-  UsedBy        string
-  SubAddressID  uint
-  Block         SimpleBitcoinBlock
-  BTCBlockID    uint
-  transition.Transition
 }

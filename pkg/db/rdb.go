@@ -129,7 +129,7 @@ func (db *GormDB) BlockInfo2DB(dbBlock SimpleBitcoinBlock, rawBlock *btcjson.Get
         }else if err != nil {
           configure.Sugar.DPanic(strings.Join([]string{"query sub address err: ", address, " ", err.Error()}, ""))
         }
-        utxo := UTXO{Txid: tx.Txid, Amount: vout.Value, Height: rawBlock.Height, VoutIndex: vout.N, SubAddress: addrDB, Block: dbBlock}
+        utxo := UTXO{Txid: tx.Txid, Amount: vout.Value, Height: rawBlock.Height, VoutIndex: vout.N, SubAddress: addrDB, SimpleBitcoinBlock: dbBlock}
         utxo.SetState("original")
         if err := ts.Create(&utxo).Error; err != nil {
           if err := ts.Rollback().Error; err != nil {
